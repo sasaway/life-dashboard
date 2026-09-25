@@ -178,9 +178,9 @@ function openGear(id) {
   openSheet("gearSheet");
 }
 
-// 워프레임 쪽 위 [오늘 · 모딩 · 이름 찾기] 전환 (돈 탭처럼)
+// 워프레임 쪽 위 [오늘 · 모딩] 전환 (돈 탭처럼)
 function showWfPage(page) {
-  for (const p of ["today", "mod", "names"]) $(`wf-page-${p}`).hidden = p !== page;
+  for (const p of ["today", "mod"]) $(`wf-page-${p}`).hidden = p !== page;
   $("wfPick").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.page === page)));
   if (page === "today") {
     renderLive();

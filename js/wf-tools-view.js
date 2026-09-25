@@ -1,8 +1,8 @@
-// 워프레임 쪽 '모딩' · '이름 찾기': 게임 자료 받기(폰에 한 번 저장), 이름 찾기, A/B/C 모딩 시뮬레이터.
+// 워프레임 쪽 '모딩': 게임 자료 받기(폰에 한 번 저장), A/B/C 모딩 시뮬레이터.
 import { store } from "./store.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import { chip } from "./wuwa-view.js";
-import { CAT_KO, prepareGameData, searchNames, searchItems, searchMods } from "./wf-game.js";
+import { prepareGameData, searchItems, searchMods } from "./wf-game.js";
 import {
   KINDS, SLOT_KO, POLARITIES, polSym, BUILD_NAMES, modCost, capacity, formaCount, setPol, placeMod, clearMod, setRank,
   toggleBoost, rebase, modsFor, canPlace, addEquip, removeEquip, buildOf, setBuild,
@@ -21,7 +21,7 @@ const FIELDS = "uniqueName,name,category,type,polarity,baseDrain,fusionLimit,com
 const EN_URL = `https://api.warframestat.us/items?only=${FIELDS}`;
 const KO_URL = "https://api.warframestat.us/items?language=ko&only=uniqueName,name";
 
-let data = null; // { at, names, items, mods }
+let data = null; // { at, items, mods }
 let modIndex = new Map();
 let equipNames = [];
 let loading = null;
@@ -72,7 +72,6 @@ function loadData() {
   })().finally(() => {
     loading = null;
     renderDataMsg(false);
-    renderNames();
     renderMod();
   });
   return loading;
@@ -85,16 +84,6 @@ function renderDataMsg(busy) {
     : failed ? `새로 못 받아서 ${days}일 전 자료로 보여 줘.`
     : data ? `게임 자료: warframestat.us · ${days ? `${days}일 전` : "오늘"} 받음` : "";
   document.querySelectorAll(".wf-data-msg").forEach((el) => { el.textContent = text; });
-}
-
-// ---------- 이름 찾기 ----------
-function renderNames() {
-  const q = $("nameSearch").value;
-  const hits = data ? searchNames(data.names, q) : [];
-  $("nameHits").innerHTML = hits.map((h) => `<li>
-    <span class="nm"><b>${esc(h.ko)}</b><span class="en">${esc(h.en)}</span></span><span class="tag">${CAT_KO[h.cat]}</span>
-  </li>`).join("");
-  $("nameEmpty").hidden = !data || !q.trim() || hits.length > 0;
 }
 
 // ---------- 모딩 ----------
@@ -153,7 +142,7 @@ function renderMod() {
   $("modSpecial").hidden = !b.slots.some((s) => s !== "general");
   $("modSlots").innerHTML = idx.filter((i) => b.slots[i] === "general").map((i) => slotTile(b, i)).join("");
   const base = b.base.filter(Boolean).map(polSym);
-  $("modBase").textContent = `원래 극성: ${base.length ? base.join(" ") : "없음"} (게임 자료). 게임과 다르면 칸을 맞춘 뒤 아래 버튼을 눌러.`;
+  $("modBase").textContent = `원래 극성: ${base.length ? base.join(" ") : "없음"} (게임 자료). 게임과 다르면 칸 극성을 게임처럼 맞추고 '포르마 개수 초기화' 를 눌러.`;
   if (slotIdx !== null && !$("slotSheet").hidden) renderSlot();
 }
 
@@ -218,16 +207,13 @@ function renderEquipHits() {
 }
 
 // ---------- 시작 ----------
-// 워프레임 쪽 위 전환에서 '모딩' · '이름 찾기' 를 열 때 부른다
+// 워프레임 쪽 위 전환에서 '모딩' 을 열 때 부른다
 export function openTools() {
   loadData();
   renderMod();
-  renderNames();
 }
 
 export function startWfTools() {
-  $("nameSearch").addEventListener("input", renderNames);
-
   $("modAddEquip").addEventListener("click", () => {
     $("equipSearch").value = "";
     renderEquipHits();
@@ -269,11 +255,11 @@ export function startWfTools() {
     if (b) openSlot(Number(b.dataset.slot));
   });
   $("modRebase").addEventListener("click", () => {
-    if (confirm("지금 칸 극성을 게임의 원래 극성으로 볼까? 포르마 개수가 0 부터 다시 세져.")) updateBuild(rebase);
+    if (confirm("포르마 개수를 0 으로 되돌릴까? 지금 칸 극성이 원래 극성이 돼.")) updateBuild(rebase);
   });
   $("modRemove").addEventListener("click", () => {
     const e = current();
-    if (!e || !confirm(`'${e.ko}' 을(를) 모딩 목록에서 뺄까? A/B/C 빌드도 같이 지워져.`)) return;
+    if (!e || !confirm(`'${e.ko}' 모딩을 제거할까? A/B/C 빌드도 같이 지워져.`)) return;
     equips = removeEquip(equips, e.id);
     sel = { id: equips[0]?.id ?? null, build: "A" };
     saveEquips();

@@ -1,14 +1,9 @@
-// 워프레임 게임 데이터: warframestat.us 의 영어·한국어 목록을 줄여서 이름 찾기·모딩에 쓴다.
-// 목록은 폰에 한 번 받아 두고(wf-data-view.js) 여기 함수들은 그 목록을 정리하고 찾기만 한다.
+// 워프레임 게임 데이터: warframestat.us 의 영어·한국어 목록을 줄여서 모딩에 쓴다.
+// 목록은 폰에 한 번 받아 두고(wf-tools-view.js) 여기 함수들은 그 목록을 정리하고 찾기만 한다.
 
-// 이름 찾기에 넣는 분류 (스킨·글리프·시길·적 등은 뺀다. 유물·지역은 한국어 번역이 없어 뺀다)
-export const CAT_KO = {
-  Warframes: "워프레임", Primary: "주무기", Secondary: "보조무기", Melee: "근접무기",
-  Pets: "동반자", Sentinels: "센티넬", "Arch-Gun": "아크건", "Arch-Melee": "아크 근접", Archwing: "아크윙",
-  Mods: "모드", Arcanes: "아케인", Resources: "자원", Gear: "장비품", Misc: "기타", Quests: "퀘스트", Fish: "물고기",
-};
-const CAT_ORDER = Object.keys(CAT_KO);
+// 모딩할 장비 분류 → 장비 종류. 찾을 때도 이 순서로 보여 준다 (모드는 맨 뒤)
 const KIND_OF = { Warframes: "warframe", Primary: "primary", Secondary: "secondary", Melee: "melee", Pets: "companion" };
+const CAT_ORDER = [...Object.keys(KIND_OF), "Mods"];
 
 // ---------- 글자 맞추기 ----------
 // 한글은 자모로 풀고, 자주 헷갈리는 모음(ㅐ/ㅔ, ㅒ/ㅖ, ㅙ/ㅚ/ㅞ)은 같은 것으로 본다. 띄어쓰기·기호는 무시
@@ -76,17 +71,15 @@ const first = (p) => (Array.isArray(p) ? p[0] : p) ?? null;
 
 export function prepareGameData(enList, koList) {
   const ko = new Map(koList.map((x) => [x.uniqueName, cleanName(x.name)]));
-  const names = new Map(); // "한국어|영어" → [한국어, 영어, 분류]
   const items = [];
   const mods = new Map(); // 영어 이름 → 모드 (같은 이름이면 기본 모드 하나)
 
   for (const x of enList) {
     const cat = x.category;
-    if (!CAT_KO[cat] || (cat === "Mods" && skipMod(x))) continue;
+    if (!CAT_ORDER.includes(cat) || (cat === "Mods" && skipMod(x))) continue;
     const en = cleanName(x.name);
     const k = ko.get(x.uniqueName);
     if (!en || !k) continue;
-    if (k !== en) names.set(`${k}|${en}`, [k, en, cat]); // 번역이 없는 건 찾을 이유가 없다
 
     const kind = KIND_OF[cat];
     if (kind && (kind !== "companion" || x.type === "Pets")) {
@@ -102,16 +95,10 @@ export function prepareGameData(enList, koList) {
       }
     }
   }
-  return { names: [...names.values()], items, mods: [...mods.values()] };
+  return { items, mods: [...mods.values()] };
 }
 
-// ---------- 찾기 ----------
-// 이름 찾기: [한국어, 영어, 분류] 줄에서
-export const searchNames = (names, text, limit = 30) =>
-  search(names, text, (r) => [normalize(r[0]), normalize(r[1])], (r) => r[2], limit)
-    .map(([ko, en, cat]) => ({ ko, en, cat }));
-
-// 모딩 장비·모드 고르기
+// ---------- 찾기 (모딩 장비·모드 고르기) ----------
 const KIND_CAT = { warframe: "Warframes", primary: "Primary", secondary: "Secondary", melee: "Melee", companion: "Pets" };
 export const searchItems = (items, text, limit = 30) =>
   search(items, text, (i) => [normalize(i.ko), normalize(i.en)], (i) => KIND_CAT[i.kind], limit);

@@ -217,10 +217,9 @@
 
     <div class="hobby-page" id="hobby-wf" hidden>
       <header class="top sub-top"><button class="icon-btn" data-hobby="hub" aria-label="취미로 돌아가기"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><h1>워프레임</h1></header>
-      <div class="seg three" id="wfPick">
+      <div class="seg" id="wfPick">
         <button data-page="today" aria-pressed="true">오늘</button>
         <button data-page="mod" aria-pressed="false">모딩</button>
-        <button data-page="names" aria-pressed="false">이름 찾기</button>
       </div>
 
       <div class="money-page" id="wf-page-today">
@@ -283,21 +282,12 @@
           <ol class="mod-slots" id="modSlots"></ol>
           <p class="mini" id="modBase"></p>
           <div class="btns">
-            <button class="btn btn-text" id="modRebase">지금 극성을 원래 극성으로</button>
-            <button class="btn btn-text" id="modRemove">목록에서 빼기</button>
+            <button class="btn btn-text" id="modRebase">포르마 개수 초기화</button>
+            <button class="btn btn-text" id="modRemove">모딩 제거</button>
           </div>
         </section>
       </div>
 
-      <div class="money-page" id="wf-page-names" hidden>
-        <section class="card" aria-label="이름 찾기">
-          <div class="card-h"><h2>이름 찾기</h2><small>한국어 ↔ 영어</small></div>
-          <input class="field" id="nameSearch" type="search" placeholder="예: 밴쉬, 서레이션, 포르마" aria-label="이름 찾기" autocomplete="off">
-          <ul class="name-hits" id="nameHits"></ul>
-          <p class="empty" id="nameEmpty" hidden>찾는 이름이 없어. 게임 표기와 많이 다르거나, 아직 자료에 없는 새 장비일 수 있어.</p>
-          <p class="msg wf-data-msg" role="status"></p>
-        </section>
-      </div>
     </div>
   </section>
 </main>
