@@ -2,9 +2,10 @@
 // 앱 파일은 '한 버전 사본' 에서만 꺼낸다 → 새 화면과 옛 코드가 섞이지 않는다.
 // 새 버전은 파일을 전부 새로 받아 온 뒤에만 자리를 잡고, 그때 화면이 한 번 새로 그려진다 (app.js).
 // 파일을 고치면 VERSION 을 올린다 (js/version.js 도 같이). 그래야 폰이 새 버전을 알아챈다.
-const VERSION = "v18";
+const VERSION = "v19";
 const CACHE = `life-dashboard-${VERSION}`;
 const ICONS = "encore-icons"; // 명조 캐릭터 얼굴 (버전이 바뀌어도 남긴다)
+const WF_DATA = "wf-data"; // 워프레임 게임 자료 (이름 찾기·모딩, 버전이 바뀌어도 남긴다)
 
 const FILES = [
   "./",
@@ -38,6 +39,9 @@ const FILES = [
   "js/wuwa-view.js",
   "js/warframe.js",
   "js/warframe-view.js",
+  "js/wf-game.js",
+  "js/modding.js",
+  "js/wf-tools-view.js",
   "fonts/Pretendard-Regular.subset.woff2",
   "fonts/Pretendard-Medium.subset.woff2",
   "fonts/Pretendard-SemiBold.subset.woff2",
@@ -75,7 +79,7 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== ICONS).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => ![CACHE, ICONS, WF_DATA].includes(k)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });

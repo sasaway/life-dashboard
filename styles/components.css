@@ -364,3 +364,41 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gear-pick small{font-size:var(--fs-tiny);color:var(--faint)}
 .gear-pick .checks,#gearWish{gap:6px}
 #gearRemove{align-self:flex-start;min-height:var(--touch)}
+
+/* 워프레임: 모딩 */
+.pick.equip{display:flex;flex-direction:column;gap:0}
+.pick .sub,.mod-pick .sub{font-size:var(--fs-tiny);color:var(--faint);font-weight:400}
+.mod-build{display:flex;flex-direction:column;gap:12px}
+.mod-build .card-h{margin-bottom:0;flex-wrap:wrap}
+.mod-sum .stat{margin:2px 0 6px}
+.mod-sum .mini{margin:0}
+.mod-sum .meter+.mini{margin-top:8px}
+.mod-slots{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mod-slot{width:100%;min-height:72px;text-align:left;display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface)}
+.mod-slot.empty{border-style:dashed}
+.ms-top{display:flex;align-items:center;gap:6px}
+.pol{flex:none;display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 4px;border:1.5px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:var(--fs-tiny);font-weight:600;color:var(--ink)}
+.ms-kind{font-size:var(--fs-tiny);color:var(--faint);min-width:0}
+.ms-top .cost{margin-left:auto;font-size:var(--fs-small);color:var(--sub)}
+.ms-name{font-size:var(--fs-small);font-weight:600;overflow-wrap:anywhere;line-height:1.35}
+.mod-slot.empty .ms-name{color:var(--faint);font-weight:400}
+.ms-rank{font-size:var(--fs-tiny);color:var(--faint)}
+#modBase{margin:0}
+.stepper{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.stepper .icon-btn{font-size:18px;color:var(--ink)}
+.stepper .mini{margin:0}
+#slotCur .btn{min-height:var(--touch)}
+.mod-hits{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.mod-pick{width:100%;min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface)}
+.mod-pick[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent}
+.mod-pick .nm,.name-hits .nm{display:flex;flex-direction:column;min-width:0;line-height:1.35}
+.mod-pick .mono{flex:none;font-size:var(--fs-small);color:var(--sub)}
+
+/* 워프레임: 이름 찾기 */
+.name-hits{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column}
+.name-hits:empty{display:none}
+.name-hits li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.name-hits li:first-child{border-top:0}
+.name-hits .en{font-size:var(--fs-body);color:var(--ink);user-select:text;-webkit-user-select:text}
+.name-hits .tag{flex:none;margin:0}
+.wf-data-msg:empty{display:none}

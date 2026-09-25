@@ -2,6 +2,7 @@
 import { store } from "./store.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import { chip } from "./wuwa-view.js";
+import { openTools } from "./wf-tools-view.js";
 import {
   DAILY, PLAYSTYLES, SORTIE_TYPES, GEAR_FIELDS, DEFAULT_GEAR, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo,
   removeTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame,
@@ -25,7 +26,8 @@ let liveFailed = false;
 let editing = null; // 고치고 있는 워프레임 id
 
 const pct = (c) => `${(c.done / c.total) * 100}%`;
-const wfOpen = () => !$("screen-hobby").hidden && !$("hobby-wf").hidden;
+// 실시간 현황은 워프레임 쪽 '오늘' 을 보고 있을 때만 새로 받는다
+const wfOpen = () => !$("screen-hobby").hidden && !$("hobby-wf").hidden && !$("wf-page-today").hidden;
 
 // ---------- 오늘 체크 (메인 카드와 워프레임 쪽이 같이 쓴다) ----------
 function renderChecks() {
@@ -176,6 +178,18 @@ function openGear(id) {
   openSheet("gearSheet");
 }
 
+// 워프레임 쪽 위 [오늘 · 모딩 · 이름 찾기] 전환 (돈 탭처럼)
+function showWfPage(page) {
+  for (const p of ["today", "mod", "names"]) $(`wf-page-${p}`).hidden = p !== page;
+  $("wfPick").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.page === page)));
+  if (page === "today") {
+    renderLive();
+    loadLive();
+  } else {
+    openTools();
+  }
+}
+
 // ---------- 시작 ----------
 export function renderWarframe() {
   renderChecks();
@@ -195,9 +209,13 @@ export function startWarframe() {
   for (const id of ["wwMainCard", "wfTodayCard"]) $(id).addEventListener("click", onCheckClick);
 
   document.addEventListener("hobby-open", (e) => {
-    if (e.detail !== "wf") return;
+    if (e.detail !== "wf" || !wfOpen()) return;
     renderLive();
     loadLive();
+  });
+  $("wfPick").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-page]");
+    if (b) showWfPage(b.dataset.page);
   });
   $("wfRefresh").addEventListener("click", () => loadLive(true));
 

@@ -217,6 +217,13 @@
 
     <div class="hobby-page" id="hobby-wf" hidden>
       <header class="top sub-top"><button class="icon-btn" data-hobby="hub" aria-label="취미로 돌아가기"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><h1>워프레임</h1></header>
+      <div class="seg three" id="wfPick">
+        <button data-page="today" aria-pressed="true">오늘</button>
+        <button data-page="mod" aria-pressed="false">모딩</button>
+        <button data-page="names" aria-pressed="false">이름 찾기</button>
+      </div>
+
+      <div class="money-page" id="wf-page-today">
       <section class="card game" id="wfTodayCard" aria-label="워프레임 오늘">
         <div class="game-h"><b>워프레임 · 오늘</b><span class="mono" id="wfDailyCount"></span></div>
         <div class="meter"><i id="wfDailyBar"></i></div>
@@ -249,6 +256,48 @@
           <button class="btn btn-ghost">추가</button>
         </form>
       </section>
+      </div>
+
+      <div class="money-page" id="wf-page-mod" hidden>
+        <section class="card" aria-label="모딩할 장비">
+          <div class="card-h"><h2>모딩할 장비</h2><button class="btn btn-text" id="modAddEquip">장비 추가</button></div>
+          <ul class="picks" id="modEquips"></ul>
+          <p class="empty" id="modEquipsEmpty">'장비 추가' 를 눌러 모딩할 워프레임·무기·동반자를 골라 봐.</p>
+          <p class="msg wf-data-msg" role="status"></p>
+        </section>
+        <section class="card mod-build" id="modBuildCard" aria-label="빌드" hidden>
+          <div class="card-h"><h2 id="modName"></h2><small id="modSub"></small></div>
+          <div class="seg three" id="modPickBuild">
+            <button data-build="A" aria-pressed="true">A</button>
+            <button data-build="B" aria-pressed="false">B</button>
+            <button data-build="C" aria-pressed="false">C</button>
+          </div>
+          <div class="mod-sum">
+            <div class="row-h"><span class="mini">용량</span><span class="mini" id="modLeft"></span></div>
+            <p class="stat mono" id="modCap"></p>
+            <div class="meter"><i id="modBar"></i></div>
+            <p class="mini" id="modForma"></p>
+          </div>
+          <div class="checks" id="modBoost"></div>
+          <ol class="mod-slots" id="modSpecial"></ol>
+          <ol class="mod-slots" id="modSlots"></ol>
+          <p class="mini" id="modBase"></p>
+          <div class="btns">
+            <button class="btn btn-text" id="modRebase">지금 극성을 원래 극성으로</button>
+            <button class="btn btn-text" id="modRemove">목록에서 빼기</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="money-page" id="wf-page-names" hidden>
+        <section class="card" aria-label="이름 찾기">
+          <div class="card-h"><h2>이름 찾기</h2><small>한국어 ↔ 영어</small></div>
+          <input class="field" id="nameSearch" type="search" placeholder="예: 밴쉬, 서레이션, 포르마" aria-label="이름 찾기" autocomplete="off">
+          <ul class="name-hits" id="nameHits"></ul>
+          <p class="empty" id="nameEmpty" hidden>찾는 이름이 없어. 게임 표기와 많이 다르거나, 아직 자료에 없는 새 장비일 수 있어.</p>
+          <p class="msg wf-data-msg" role="status"></p>
+        </section>
+      </div>
     </div>
   </section>
 </main>
@@ -360,6 +409,39 @@
     <form class="gear-form" id="gearForm" autocomplete="off"></form>
     <p class="msg">쓰는 대로 저장돼.</p>
     <button class="btn btn-ghost" id="gearRemove">목록에서 지우기</button>
+  </div>
+</div>
+
+<!-- 모딩: 장비 추가 -->
+<div class="sheet-wrap" id="equipSheet" hidden>
+  <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="equipTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="equipTitle">장비 추가</h2>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <input class="field" id="equipSearch" type="search" placeholder="워프레임·무기·동반자 이름 (예: 오락시아)" aria-label="장비 찾기" autocomplete="off">
+    <ul class="picks" id="equipHits"></ul>
+    <p class="empty" id="equipEmpty" hidden>찾는 장비가 없어.</p>
+  </div>
+</div>
+
+<!-- 모딩: 칸 하나 (극성 · 모드 · 랭크) -->
+<div class="sheet-wrap" id="slotSheet" hidden>
+  <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="slotTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <div><h2 id="slotTitle">칸</h2><p class="date" id="slotBase"></p></div>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <section class="card">
+      <div class="card-h"><h2>극성</h2><small>바꾸면 포르마 하나</small></div>
+      <div class="checks" id="slotPols"></div>
+    </section>
+    <section class="card" id="slotCur" hidden></section>
+    <input class="field" id="modSearch" type="search" placeholder="모드 이름 (예: 서레이션, 인텐시파이)" aria-label="모드 찾기" autocomplete="off">
+    <ul class="mod-hits" id="modHits"></ul>
+    <p class="empty" id="modHitsEmpty" hidden>이 칸에 넣을 수 있는 모드 중에 없어.</p>
   </div>
 </div>
 

@@ -10,6 +10,7 @@ import { startRecipes } from "./recipe-view.js";
 import { startWorkout, renderWorkout } from "./workout-view.js";
 import { startWuwa, renderWuwa } from "./wuwa-view.js";
 import { startWarframe, renderWarframe } from "./warframe-view.js";
+import { startWfTools } from "./wf-tools-view.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -115,6 +116,7 @@ startRecipes();
 startWorkout();
 startWuwa();
 startWarframe();
+startWfTools();
 startClock();
 startTabs();
 startSettings();
