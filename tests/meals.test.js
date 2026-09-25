@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   DISHES, LEFTOVER, homeMeals, workMeal, planMeals, planWeek, mondayOf, withOverride,
 } from "../js/meals.js";
-import { IDEAS, ideasFor } from "../js/meal-tips.js";
+import { IDEAS, ideasFor, MAX_IDEAS } from "../js/meal-tips.js";
 import { DEFAULT_SETTINGS } from "../js/schedule.js";
 
 const slots = (n) => Array.from({ length: n }, (_, i) => ({ key: `s${i}` }));
@@ -107,4 +107,15 @@ test("한 글자 낱말은 이름이 똑같을 때만: '햄' 은 '햄버거 번'
   assert.deepEqual(ideaNames(ideasFor([{ name: "양파", day: "2026-09-25" }], today)), ["양파 계란덮밥"]);
   assert.ok(ideaNames(ideasFor([{ name: "햄", day: "2026-09-25" }], today)).includes("스팸마요 덮밥"));
   assert.equal(ideasFor([{ name: "햄버거 번", day: "2026-09-25" }], today).length, 0);
+});
+
+test("추천은 2개까지만, 가장 최근에 가져온 재료 것부터", () => {
+  assert.equal(MAX_IDEAS, 2);
+  const r = ideasFor([
+    { name: "계란", day: "2026-09-20" },
+    { name: "두부", day: "2026-09-23" },
+    { name: "김치", day: "2026-09-25" },
+  ], today);
+  assert.equal(r.length, 2);
+  assert.deepEqual(ideaNames(r), ["김치찌개", "두부조림"]);
 });

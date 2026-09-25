@@ -6,6 +6,7 @@ import { openSheet, startSheets } from "./sheet.js";
 import { startShopping } from "./shopping-view.js";
 import { startBudget } from "./budget-view.js";
 import { startMeals, renderAll as renderMeals } from "./meals-view.js";
+import { startRecipes } from "./recipe-view.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -90,6 +91,7 @@ startReview();
 startShopping();
 startBudget();
 startMeals();
+startRecipes();
 startClock();
 startTabs();
 startSettings();

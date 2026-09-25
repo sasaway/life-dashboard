@@ -74,6 +74,10 @@
       <p class="mini week-hint">메뉴를 누르면 바꿀 수 있어.</p>
       <ol class="week-meals" id="mealWeek"></ol>
     </section>
+    <section class="card" aria-label="레시피">
+      <div class="card-h"><h2>레시피</h2><small>불 쓰는 단계엔 타이머</small></div>
+      <ul class="recipe-list" id="recipeList"></ul>
+    </section>
     <section class="card" aria-label="산 재료로 새로 해 볼 요리">
       <div class="card-h"><h2>산 재료로 새로 해 볼 요리</h2><small>최근 2주</small></div>
       <ul class="ideas" id="mealTips"></ul>
@@ -234,7 +238,27 @@
       <div><h2 id="pickTitle">바꾸기</h2><p class="date" id="pickDate"></p></div>
       <button class="btn btn-ghost" data-close>닫기</button>
     </div>
+    <button class="btn btn-ghost pick-recipe" id="pickRecipe">이 요리 레시피 보기</button>
     <ul class="picks" id="pickList"></ul>
+  </div>
+</div>
+
+<!-- 레시피 -->
+<div class="sheet-wrap" id="recipeSheet" hidden>
+  <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="recipeTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <div><h2 id="recipeTitle">레시피</h2><p class="date" id="recipeMeta"></p></div>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <div class="seg" id="recipeVariants" hidden></div>
+    <p class="mini why" id="recipeWhy" hidden></p>
+    <section class="card" aria-label="재료">
+      <div class="card-h"><h2>재료</h2></div>
+      <ul class="ingredients" id="recipeIngredients"></ul>
+    </section>
+    <ol class="steps" id="recipeSteps"></ol>
+    <p class="msg" id="recipeSource"></p>
   </div>
 </div>
 

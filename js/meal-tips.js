@@ -48,9 +48,10 @@ const DAY_MS = 864e5;
 const parse = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
 const matches = (name, word) => (word.length === 1 ? name === word : name.includes(word));
 
-// 최근 days 일(오늘 포함) 안에 가져온 재료로 할 수 있는 새 요리.
+// 최근 days 일(오늘 포함) 안에 가져온 재료로 할 수 있는 새 요리. 너무 많으면 부담이라 limit 개까지만.
 // 요리마다 어떤 재료 때문에 추천됐는지(from)와 그 재료를 가져온 가장 최근 날짜(day)를 붙인다.
-export function ideasFor(bought, today, days = 14) {
+export const MAX_IDEAS = 2;
+export function ideasFor(bought, today, days = 14, limit = MAX_IDEAS) {
   const from = new Date(today.getFullYear(), today.getMonth(), today.getDate()) - (days - 1) * DAY_MS;
   const recent = bought.filter((b) => parse(b.day) >= from);
   const out = [];
@@ -62,5 +63,5 @@ export function ideasFor(bought, today, days = 14) {
     out.push({ ...idea, from: names, day });
   }
   // 최근에 가져온 재료로 할 수 있는 요리부터
-  return out.sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : 0));
+  return out.sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : 0)).slice(0, limit);
 }

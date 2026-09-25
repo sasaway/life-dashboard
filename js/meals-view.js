@@ -5,6 +5,7 @@ import { getScheduleSettings } from "./schedule-view.js";
 import { ymd } from "./schedule.js";
 import { planWeek, mondayOf, withOverride, pickable } from "./meals.js";
 import { ideasFor } from "./meal-tips.js";
+import { openRecipeForDish } from "./recipe-view.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -23,7 +24,9 @@ const workLine = (label) => `<li class="work"><span class="t"></span><span class
 // ---------- 메인 카드: 오늘 메뉴만 ----------
 export function renderMealMain() {
   const t = todayOf(week());
-  $("mealMain").innerHTML = t.meals.map((m) => `<li>${mealLine(m)}</li>`).join("") + (t.work ? workLine(t.work) : "");
+  $("mealMain").innerHTML = t.meals.map((m) =>
+    `<li><button class="meal-link" data-recipe-dish="${esc(m.dish.id)}" aria-label="${esc(m.label)} ${esc(m.dish.short)} 레시피 보기">${mealLine(m)}<span class="go">레시피</span></button></li>`).join("")
+    + (t.work ? workLine(t.work) : "");
 }
 
 // ---------- 식단 탭 ----------
@@ -64,6 +67,7 @@ function openPicker(key) {
   picking = m;
   $("pickTitle").textContent = `${m.label} 바꾸기`;
   $("pickDate").textContent = shortDay(new Date(`${m.day}T00:00`));
+  $("pickRecipe").dataset.dish = m.dish.id;
   $("pickList").innerHTML = pickable().map((dish) => `
     <li><button class="pick" data-dish="${dish.id}" aria-pressed="${!m.auto && m.dish.id === dish.id}">${esc(dish.name)}</button></li>`).join("")
     + `<li><button class="pick" data-dish="" aria-pressed="${m.auto}">자동으로 (돌림 순서대로)</button></li>`;
@@ -89,6 +93,12 @@ export function startMeals() {
     closeSheet();
     renderAll();
   });
+  // 오늘 메뉴를 누르거나, 고르기 창에서 '레시피 보기' 를 누르면 레시피
+  $("mealMain").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-recipe-dish]");
+    if (b) openRecipeForDish(b.dataset.recipeDish);
+  });
+  $("pickRecipe").addEventListener("click", () => openRecipeForDish($("pickRecipe").dataset.dish));
   // 일과표(알바 요일·주)나 산 재료가 바뀌면 다시 그린다
   document.addEventListener("schedule-change", renderAll);
   document.addEventListener("bought-change", renderMealTab);
