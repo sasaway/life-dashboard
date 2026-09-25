@@ -59,6 +59,12 @@
       <div class="card-h"><h2>식단</h2><small>오늘</small></div>
       <ul class="meal-list" id="mealMain"></ul>
     </section>
+    <section class="card" aria-label="오늘 운동">
+      <div class="card-h"><h2>운동</h2><small class="num" id="gymMainTime"></small></div>
+      <p class="main-line" id="gymMainLabel"></p>
+      <div class="meter"><i id="gymMainBar"></i></div>
+      <p class="mini" id="gymMainNote"></p>
+    </section>
     <section class="card" aria-label="사야 할 것">
       <div class="card-h"><h2>사야 할 것</h2><small>별표만 보기</small></div>
       <ul class="buy" id="buyMain"></ul>
@@ -98,7 +104,18 @@
   <!-- 운동 -->
   <section class="screen" id="screen-gym" aria-label="운동" hidden>
     <header class="top"><h1>운동</h1></header>
-    <section class="card"><p class="empty">오늘 운동이 여기 들어와.</p></section>
+    <section class="card" aria-label="오늘 운동 요약">
+      <div class="card-h"><h2 id="gymTitle">오늘</h2><small class="num" id="gymTime"></small></div>
+      <div class="stat mono" id="gymProgress"></div>
+      <div class="meter"><i id="gymBar"></i></div>
+      <p class="mini" id="gymHint"></p>
+    </section>
+    <div class="money-page" id="gymGroups"></div>
+    <section class="card" aria-label="요일별 메뉴">
+      <div class="card-h"><h2>요일별 메뉴</h2><small>같은 근육이 하루씩 쉬게</small></div>
+      <ol class="gym-week" id="gymWeek"></ol>
+    </section>
+    <p class="msg credit" id="gymCredit"></p>
   </section>
 
   <!-- 돈 -->

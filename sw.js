@@ -1,7 +1,7 @@
 // 서비스 워커: 앱 파일 사본을 폰에 두어 인터넷이 없어도 열리게 한다.
 // 인터넷이 되면 늘 새 파일을 먼저 받고, 안 될 때만 사본을 쓴다.
 // 파일을 고치면 VERSION 을 올린다 (js/version.js 도 같이). 그래야 폰이 새 버전을 알아챈다.
-const VERSION = "v11";
+const VERSION = "v12";
 const CACHE = `life-dashboard-${VERSION}`;
 const NETWORK_WAIT_MS = 4000; // 인터넷이 느리면 이만큼 기다리고 사본을 쓴다
 
@@ -31,12 +31,25 @@ const FILES = [
   "js/recipes.js",
   "js/timer.js",
   "js/recipe-view.js",
+  "js/workout.js",
+  "js/workout-view.js",
   "fonts/Pretendard-Regular.subset.woff2",
   "fonts/Pretendard-Medium.subset.woff2",
   "fonts/Pretendard-SemiBold.subset.woff2",
   "fonts/Pretendard-Bold.subset.woff2",
   "fonts/IBMPlexMono-Medium.woff2",
   "fonts/IBMPlexMono-SemiBold.woff2",
+  "images/exercise/walk.jpg",
+  "images/exercise/roll.jpg",
+  "images/exercise/legpress.jpg",
+  "images/exercise/latpull.jpg",
+  "images/exercise/row.jpg",
+  "images/exercise/chest.jpg",
+  "images/exercise/shoulder.jpg",
+  "images/exercise/pecdeck.jpg",
+  "images/exercise/backext.jpg",
+  "images/exercise/crunch.jpg",
+  "images/exercise/cardio.jpg",
   "icons/icon-180.png",
   "icons/icon-192.png",
   "icons/icon-512.png",

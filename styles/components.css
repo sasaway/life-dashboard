@@ -236,3 +236,22 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 /* 지금 단계(연한 포인트 바탕) 안에서도 막대 바탕과 보조 버튼이 보이게 */
 .steps>li.cur .meter{background:var(--surface)}
 .steps>li.cur .btn-ghost{background:var(--surface)}
+
+/* ---------- 운동 ---------- */
+.main-line{margin:0 0 8px;font-size:var(--fs-body);font-weight:600}
+.group-title{margin:6px 2px -4px;font-size:var(--fs-small);color:var(--sub);font-weight:600}
+.ex img{display:block;width:calc(100% + var(--pad-card) * 2);height:auto;aspect-ratio:16/9;object-fit:cover;margin:calc(var(--pad-card) * -1) calc(var(--pad-card) * -1) 12px;border-radius:var(--r-card) var(--r-card) 0 0;background:var(--line)}
+.ex .card-h{margin-bottom:2px}
+.ex .amount{margin:0 0 6px;font-weight:600;color:var(--ink)}
+.ex-tips{margin:0 0 10px;padding-left:18px;font-size:var(--fs-small);color:var(--sub)}
+.sets{display:flex;gap:8px;flex-wrap:wrap}
+.set{min-width:var(--touch);min-height:var(--touch);border-radius:var(--r-btn);border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-variant-numeric:tabular-nums;color:var(--sub)}
+.set.extra{border-style:dashed}
+.set.single{padding:0 16px}
+.set[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.ex .yt{display:inline-block;margin-top:6px;text-decoration:none;min-height:var(--touch);line-height:calc(var(--touch) - 16px)}
+.gym-week{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.gym-week li{display:grid;grid-template-columns:28px 1fr;gap:8px;padding:8px 10px;border-radius:10px;border:1px solid transparent;font-size:var(--fs-small);color:var(--sub)}
+.gym-week li b{color:var(--ink)}
+.gym-week li.cur{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent);color:var(--ink);font-weight:600}
+.credit a{color:var(--accent)}
