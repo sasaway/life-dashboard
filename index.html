@@ -69,11 +69,20 @@
   <!-- 식단 -->
   <section class="screen" id="screen-meal" aria-label="식단" hidden>
     <header class="top"><h1>식단</h1></header>
+    <div class="seg" id="mealPick">
+      <button data-page="week" aria-pressed="true">이번 주 식단</button>
+      <button data-page="recipes" aria-pressed="false">레시피</button>
+    </div>
+
+    <div class="money-page" id="meal-page-week">
     <section class="card" aria-label="이번 주 식단">
       <div class="card-h"><h2>이번 주 식단</h2><small class="num" id="mealWeekRange"></small></div>
       <p class="mini week-hint">메뉴를 누르면 바꿀 수 있어.</p>
       <ol class="week-meals" id="mealWeek"></ol>
     </section>
+    </div>
+
+    <div class="money-page" id="meal-page-recipes" hidden>
     <section class="card" aria-label="레시피">
       <div class="card-h"><h2>레시피</h2><small>불 쓰는 단계엔 타이머</small></div>
       <ul class="recipe-list" id="recipeList"></ul>
@@ -83,6 +92,7 @@
       <ul class="ideas" id="mealTips"></ul>
       <p class="empty" id="mealTipsEmpty">최근 2주에 가져온 재료로 추천할 요리가 없어. 돈 탭 '사야 할 것' 에서 '가져옴' 을 누르면 여기 떠.</p>
     </section>
+    </div>
   </section>
 
   <!-- 운동 -->

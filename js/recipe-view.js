@@ -76,27 +76,41 @@ export function openRecipeForDish(dishId) {
 }
 
 // ---------- 소리 · 화면 켜 두기 ----------
+// 부엌에서도 들리게: 높은 두 음을 번갈아 4번, 소리를 키우되 찢어지지 않게 눌러 준다(compressor).
+export const ALARM = { repeats: 4, tones: [1320, 1760], toneSec: 0.14, gapSec: 0.06, restSec: 0.35, gain: 0.9 };
+
 let audio = null;
 function unlockAudio() {
-  // 아이폰은 사용자가 누를 때만 소리를 켤 수 있어서, 시작 버튼을 누를 때 준비해 둔다
+  // 아이폰은 사용자가 누를 때만 소리를 켤 수 있어서, 시작 버튼을 누를 때 준비해 둔다.
+  // audioSession 'playback': 무음 스위치를 켜 둬도 들리게 한다 (iOS 17 이상, 없으면 넘어간다)
   try {
+    if (navigator.audioSession) navigator.audioSession.type = "playback";
     audio = audio ?? new (window.AudioContext || window.webkitAudioContext)();
     audio.resume?.();
   } catch { audio = null; }
 }
 function beep() {
   if (!audio) return;
-  const t0 = audio.currentTime;
-  for (let i = 0; i < 3; i++) {
-    const o = audio.createOscillator();
-    const g = audio.createGain();
-    o.frequency.value = 880;
-    g.gain.setValueAtTime(0.0001, t0 + i * 0.35);
-    g.gain.exponentialRampToValueAtTime(0.3, t0 + i * 0.35 + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.35 + 0.25);
-    o.connect(g).connect(audio.destination);
-    o.start(t0 + i * 0.35);
-    o.stop(t0 + i * 0.35 + 0.3);
+  const out = audio.createDynamicsCompressor();
+  out.connect(audio.destination);
+  const { repeats, tones, toneSec, gapSec, restSec, gain } = ALARM;
+  let t = audio.currentTime + 0.05;
+  for (let r = 0; r < repeats; r++) {
+    for (const freq of tones) {
+      const o = audio.createOscillator();
+      const g = audio.createGain();
+      o.type = "square"; // 사인파보다 또렷하게 들린다
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
+      g.gain.setValueAtTime(gain, t + toneSec - 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + toneSec);
+      o.connect(g).connect(out);
+      o.start(t);
+      o.stop(t + toneSec + 0.02);
+      t += toneSec + gapSec;
+    }
+    t += restSec;
   }
 }
 

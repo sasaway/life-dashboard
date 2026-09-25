@@ -79,8 +79,19 @@ export function renderAll() {
   renderMealTab();
 }
 
+// 식단 탭 위 전환: [이번 주 식단 · 레시피] (돈 탭과 같은 모양)
+function showMealPage(page) {
+  document.querySelectorAll("#mealPick button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.page === page)));
+  $("meal-page-week").hidden = page !== "week";
+  $("meal-page-recipes").hidden = page !== "recipes";
+}
+
 export function startMeals() {
   renderAll();
+  $("mealPick").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-page]");
+    if (b) showMealPage(b.dataset.page);
+  });
   $("mealWeek").addEventListener("click", (e) => {
     const b = e.target.closest("button[data-slot]");
     if (b) openPicker(b.dataset.slot);
