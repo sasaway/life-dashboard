@@ -2,7 +2,7 @@
 import { store } from "./store.js";
 import {
   DEFAULT_SETTINGS, SHIFTS, dayPlan, nowInfo, leftLabel, setThisWeek,
-  shiftFor, checkTemplate, sortBlocks, toMin,
+  shiftFor, checkTemplate, sortBlocks, toMin, upgradeTemplates,
 } from "./schedule.js";
 import { $, esc } from "./dom.js";
 
@@ -12,7 +12,12 @@ const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]; // 월요일부터 보여 준다
 
 function loadSettings() {
   const saved = store.load(KEY, null);
-  return saved ? { ...DEFAULT_SETTINGS, ...saved } : DEFAULT_SETTINGS;
+  if (!saved) return DEFAULT_SETTINGS;
+  // 옛 기본 일과표(취미 20:00 / 08:00)가 그대로 저장돼 있으면 새 기본값으로 (직접 고친 건 그대로)
+  const templates = upgradeTemplates(saved.templates ?? DEFAULT_SETTINGS.templates);
+  const next = { ...DEFAULT_SETTINGS, ...saved, templates };
+  if (saved.templates && JSON.stringify(templates) !== JSON.stringify(saved.templates)) store.save(KEY, next);
+  return next;
 }
 let settings = loadSettings();
 export const getScheduleSettings = () => settings;

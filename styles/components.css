@@ -125,11 +125,14 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 /* ---------- 입력 + 추가 버튼 한 줄 ---------- */
 .add-row{display:flex;gap:8px}
 .add-row .btn{min-height:var(--touch);flex:none}
+.add-row~.buy{margin-top:10px} /* 입력칸과 목록 사이 (워프레임 할 일과 같은 간격) */
+
+/* ---------- 카드를 세로로 쌓는 묶음 (탭 안 전환 페이지 등) ---------- */
+.stack{display:flex;flex-direction:column;gap:var(--gap)}
+.stack>.msg:empty{display:none}
 
 /* ---------- 돈 탭 ---------- */
 .seg.three{grid-template-columns:repeat(3,1fr)}
-.money-page{display:flex;flex-direction:column;gap:var(--gap)}
-.money-page>.msg:empty{display:none}
 .stat{font-size:var(--fs-hero);font-weight:600;letter-spacing:-.02em}
 .stat span{font-size:var(--fs-small);color:var(--faint);font-weight:500}
 .stat #budgetTotal{font-size:inherit;color:inherit;font-weight:inherit}
@@ -254,7 +257,8 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gym-week li{display:grid;grid-template-columns:28px 1fr;gap:8px;padding:8px 10px;border-radius:10px;border:1px solid transparent;font-size:var(--fs-small);color:var(--sub)}
 .gym-week li b{color:var(--ink)}
 .gym-week li.cur{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent);color:var(--ink);font-weight:600}
-.credit a{color:var(--accent)}
+.credit a{color:var(--accent);position:relative}
+.credit a::after{content:"";position:absolute;inset:-13px -4px} /* 글줄 간격은 그대로, 누르는 자리만 40px */
 
 /* ---------- 명조 (시안 .game .checks .boss) ---------- */
 .game{display:flex;flex-direction:column;gap:12px}
@@ -267,7 +271,8 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .chk .box svg{width:12px;height:12px;stroke:var(--on-accent);stroke-width:2.4;fill:none;opacity:0;transition:opacity .15s}
 .chk[aria-pressed="true"] .box svg{opacity:1}
 .chk[aria-pressed="true"] .lbl{color:var(--sub)}
-.chk.small{min-height:36px;padding:6px 10px;font-size:var(--fs-tiny)}
+.chk.small{min-height:36px;padding:6px 10px;font-size:var(--fs-tiny);position:relative}
+.chk.small::after{content:"";position:absolute;inset:-3px -1px} /* 모양은 36px, 누르는 자리는 40px (테두리 1px 포함) */
 .boss{display:flex;gap:6px;align-items:center;font-size:var(--fs-small);color:var(--sub)}
 .boss button{width:28px;height:28px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);position:relative}
 .boss button::after{content:"";position:absolute;inset:-6px}
@@ -401,7 +406,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .lib-tile-h{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
 .lib-tile-h b{font-size:var(--fs-label);font-weight:600}
 .lib-tile-h .mono{font-size:var(--fs-small);color:var(--sub)}
-.lib-tile .sub{font-size:var(--fs-tiny);color:var(--faint);line-height:1.35}
+.lib-tile .sub{font-size:var(--fs-tiny);color:var(--faint);line-height:1.35;word-break:keep-all} /* '결과물' 이 '결/과물' 로 끊기지 않게 */
 .memo{min-height:96px;line-height:1.55}
 .seg.four{grid-template-columns:repeat(4,1fr)}
 .seg.four button{font-size:var(--fs-small);padding:0 2px}

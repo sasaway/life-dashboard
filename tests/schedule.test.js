@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   DEFAULT_SETTINGS, DEFAULT_TEMPLATES, SHIFTS, toMin, shiftFor, setThisWeek,
-  dayPlan, currentIndex, nowInfo, leftLabel, checkTemplate, sortBlocks,
+  dayPlan, currentIndex, nowInfo, leftLabel, checkTemplate, sortBlocks, upgradeTemplates,
 } from "../js/schedule.js";
 
 // 칸마다 [시작, 끝] 분. 마지막 칸은 다음 날 첫 칸까지.
@@ -74,6 +74,22 @@ test("취미 시간은 두 주가 같거나 12시간 차이다", () => {
   assert.ok(a === c || Math.abs(a - c) === 720);
 });
 
+test("저녁 취미는 인터넷이 몰리는 8시 전, 7시에 시작한다 (Notion 22:25)", () => {
+  assert.equal(find(DEFAULT_TEMPLATES.open, "hobby")[0].start, "19:00");
+  assert.equal(find(DEFAULT_TEMPLATES.close, "hobby")[0].start, "07:00");
+});
+
+test("폰에 옛 기본 일과표가 그대로 있으면 새 기본값으로, 직접 고친 건 그대로", () => {
+  const b = (start, name) => ({ start, kind: "x", name, note: "" });
+  const oldOpen = ["06:00 휴식", "07:30 출근 준비", "08:30 알바 · 오픈반", "15:30 휴식", "16:00 운동", "18:00 샤워",
+    "18:30 저녁", "19:30 가사", "20:00 취미", "22:00 휴식", "22:30 리뷰", "23:00 취침"].map((x) => b(x.slice(0, 5), x.slice(6)));
+  const mine = [b("06:00", "기상"), b("23:00", "취침")];
+  const up = upgradeTemplates({ open: oldOpen, close: mine });
+  assert.equal(up.open, DEFAULT_TEMPLATES.open);
+  assert.equal(up.close, mine);
+  assert.equal(upgradeTemplates(DEFAULT_TEMPLATES).open, DEFAULT_TEMPLATES.open);
+});
+
 // ---------- 격주 ----------
 test("2026-09-21 주는 마감반, 다음 주는 오픈반, 그 전 주도 오픈반", () => {
   assert.equal(shiftFor(new Date(2026, 8, 21), DEFAULT_SETTINGS), "close");
@@ -99,7 +115,7 @@ test("오픈반 주 쉬는 날: 알바·출근 준비 대신 휴식, 12:00 점�
   assert.equal(plan.working, false);
   assert.equal(plan.blocks.some((x) => x.kind === "work" || x.kind === "prep"), false);
   assert.deepEqual(plan.blocks.slice(0, 4).map((x) => [x.start, x.name]),
-    [["06:00", "휴식"], ["12:00", "점심"], ["13:00", "휴식"], ["16:00", "운동"]]);
+    [["06:00", "휴식"], ["12:00", "점심"], ["13:00", "휴식"], ["15:30", "운동"]]);
 });
 
 test("마감반 주 쉬는 날: 18:00 저녁이 생긴다", () => {
@@ -120,10 +136,10 @@ test("일요일은 운동·샤워 칸이 휴식이 되고, 이어진 휴식은 �
   const sun = dayPlan(new Date(2026, 8, 27), DEFAULT_SETTINGS); // 마감반 주 일요일
   assert.equal(sun.blocks.some((x) => x.kind === "exercise" || x.kind === "shower"), false);
   assert.deepEqual(sun.blocks.slice(0, 5).map((x) => `${x.start} ${x.name}`),
-    ["06:00 가사", "06:30 휴식", "08:00 취미", "10:00 휴식", "12:30 점심"]);
+    ["06:00 가사", "06:30 휴식", "07:00 취미", "09:00 휴식", "12:30 점심"]);
   const openSun = dayPlan(new Date(2026, 9, 4), DEFAULT_SETTINGS); // 오픈반 주 일요일
   assert.deepEqual(openSun.blocks.slice(3, 6).map((x) => `${x.start} ${x.name}`),
-    ["15:30 휴식", "18:30 저녁", "19:30 가사"]);
+    ["15:30 휴식", "18:00 저녁", "19:00 취미"]);
 });
 
 test("쉬는 일요일: 쉬는 날 규칙과 운동 없음이 같이 적용된다", () => {
@@ -155,7 +171,7 @@ test("'지금' 카드 값: 남은 시간과 진행률", () => {
   assert.equal(info.end, "15:30");
   assert.equal(info.leftMin, 360);
   assert.equal(info.pct, 14);
-  assert.equal(info.next.name, "휴식");
+  assert.equal(info.next.name, "운동");
   assert.equal(leftLabel(360), "남은 시간 6시간 0분");
   assert.equal(leftLabel(45), "남은 시간 45분");
 });

@@ -31,6 +31,9 @@ export function bring(list, bought, id, day) {
   };
 }
 
+// 잘못 넣은 것 지우기: 산 재료로 남기지 않는다 (가져옴과 다른 점)
+export const removeItem = (list, id) => list.filter((x) => x.id !== id);
+
 export const starred = (list) => list.filter((x) => x.star);
 
 // 메인 카드의 빈 목록 문구

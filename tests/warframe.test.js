@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   DAILY, dayKey, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo, removeTodo, pruneTodos, leftTodos,
   PLAYSTYLES, SORTIE_TYPES, DEFAULT_GEAR, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish,
-  removeFrame, addOther, removeOther,
+  removeFrame, isBlankFrame, addOther, removeOther,
   sortieView, rewardHits, invasionView, alertView, timeLeft, missionKo, factionKo,
 } from "../js/warframe.js";
 
@@ -154,4 +154,14 @@ test("남은 시간 글자", () => {
   assert.equal(timeLeft(3 * 3600e3 + 12 * 60e3 + 30e3), "3시간 12분");
   assert.equal(timeLeft(12 * 60e3), "12분");
   assert.equal(timeLeft(30e3), "곧 끝나");
+});
+
+test("워프레임 추가 후 아무것도 안 적은 카드만 빈 카드로 본다", () => {
+  const g = addFrame(DEFAULT_GEAR, "n1");
+  const blank = g.frames.at(-1);
+  assert.equal(isBlankFrame(blank), true);
+  assert.equal(isBlankFrame(updateFrame(g, "n1", { melee: "보" }).frames.at(-1)), false);
+  assert.equal(isBlankFrame(toggleStyle(g, "n1", "Damage").frames.at(-1)), false);
+  assert.equal(isBlankFrame(toggleWish(g, "n1").frames.at(-1)), false);
+  assert.equal(DEFAULT_GEAR.frames.some(isBlankFrame), false);
 });

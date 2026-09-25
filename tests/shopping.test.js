@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addItem, toggleStar, bring, starred, mainEmptyText } from "../js/shopping.js";
+import { addItem, toggleStar, bring, removeItem, starred, mainEmptyText } from "../js/shopping.js";
 
 test("물건을 추가하면 목록 끝에 별표 없이 들어간다", () => {
   const { list, error } = addItem([], "  계란   30구 ", "a");
@@ -51,4 +51,10 @@ test("산 재료는 최근 100개까지만 남긴다", () => {
 test("메인 카드 빈 문구: 목록이 비었을 때와 별표만 없을 때가 다르다", () => {
   assert.equal(mainEmptyText([]), "다 샀어. 목록이 비었어.");
   assert.match(mainEmptyText([{ id: "a", name: "두부", star: false }]), /별표 붙인 게 없어/);
+});
+
+test("잘못 넣은 물건 지우기: 목록에서만 빠지고 산 재료로 남지 않는다", () => {
+  const list = [{ id: "a", name: "두부", star: true }, { id: "b", name: "계란", star: false }];
+  assert.deepEqual(removeItem(list, "a"), [{ id: "b", name: "계란", star: false }]);
+  assert.deepEqual(removeItem(list, "없음"), list);
 });

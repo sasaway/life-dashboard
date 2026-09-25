@@ -99,7 +99,7 @@
       <button data-page="recipes" aria-pressed="false">레시피</button>
     </div>
 
-    <div class="money-page" id="meal-page-week">
+    <div class="stack" id="meal-page-week">
     <section class="card" aria-label="이번 주 식단">
       <div class="card-h"><h2>이번 주 식단</h2><small class="num" id="mealWeekRange"></small></div>
       <p class="mini week-hint">메뉴를 누르면 바꿀 수 있어.</p>
@@ -107,7 +107,7 @@
     </section>
     </div>
 
-    <div class="money-page" id="meal-page-recipes" hidden>
+    <div class="stack" id="meal-page-recipes" hidden>
     <section class="card" aria-label="레시피">
       <div class="card-h"><h2>레시피</h2><small>불 쓰는 단계엔 타이머</small></div>
       <ul class="recipe-list" id="recipeList"></ul>
@@ -129,7 +129,7 @@
       <div class="meter"><i id="gymBar"></i></div>
       <p class="mini" id="gymHint"></p>
     </section>
-    <div class="money-page" id="gymGroups"></div>
+    <div class="stack" id="gymGroups"></div>
     <section class="card" aria-label="요일별 메뉴">
       <div class="card-h"><h2>요일별 메뉴</h2><small>같은 근육이 하루씩 쉬게</small></div>
       <ol class="gym-week" id="gymWeek"></ol>
@@ -146,17 +146,17 @@
       <button data-page="buy" aria-pressed="false">사야 할 것</button>
     </div>
 
-    <div class="money-page" id="page-budget">
+    <div class="stack" id="page-budget">
       <section class="card" aria-label="한 달 예산">
         <div class="card-h"><h2 id="budgetTitle">이번 달 예산</h2></div>
         <div class="stat mono"><span id="budgetTotal">0</span><span>원</span></div>
         <p class="mini">'고정' 을 켠 항목만 다음 달 예산으로 넘어가.</p>
       </section>
       <p class="msg" id="budgetMsg" role="status"></p>
-      <div class="money-page" id="budgetCats"></div>
+      <div class="stack" id="budgetCats"></div>
     </div>
 
-    <div class="money-page" id="page-settle" hidden>
+    <div class="stack" id="page-settle" hidden>
       <div class="week-nav">
         <button class="icon-btn" id="prevMonth" aria-label="이전 달"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
         <span id="monthLabel"></span>
@@ -169,10 +169,10 @@
       </section>
       <p class="empty" id="settleEmpty" hidden>예산 항목이 없어. 예산부터 적어 줘.</p>
       <p class="msg" id="settleMsg" role="status"></p>
-      <div class="money-page" id="settleCats"></div>
+      <div class="stack" id="settleCats"></div>
     </div>
 
-    <div class="money-page" id="page-buy" hidden>
+    <div class="stack" id="page-buy" hidden>
     <section class="card" aria-label="사야 할 것">
       <div class="card-h"><h2>사야 할 것</h2><small id="buyCount"></small></div>
       <form class="add-row" id="buyForm" autocomplete="off">
@@ -231,7 +231,7 @@
         <button data-page="mod" aria-pressed="false">모딩</button>
       </div>
 
-      <div class="money-page" id="wf-page-today">
+      <div class="stack" id="wf-page-today">
       <section class="card game" id="wfTodayCard" aria-label="워프레임 오늘">
         <div class="game-h"><b>워프레임 · 오늘</b><span class="mono" id="wfDailyCount"></span></div>
         <div class="meter"><i id="wfDailyBar"></i></div>
@@ -266,7 +266,7 @@
       </section>
       </div>
 
-      <div class="money-page" id="wf-page-mod" hidden>
+      <div class="stack" id="wf-page-mod" hidden>
         <section class="card" aria-label="모딩할 장비">
           <div class="card-h"><h2>모딩할 장비</h2><button class="btn btn-text" id="modAddEquip">장비 추가</button></div>
           <ul class="picks" id="modEquips"></ul>

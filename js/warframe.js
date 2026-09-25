@@ -100,6 +100,9 @@ export const toggleStyle = (gear, id, style) =>
 export const setSortie = (gear, id, type) => patchFrame(gear, id, (f) => ({ sortie: f.sortie === type ? "" : type }));
 export const toggleWish = (gear, id) => patchFrame(gear, id, (f) => ({ wish: !f.wish }));
 export const removeFrame = (gear, id) => ({ ...gear, frames: gear.frames.filter((f) => f.id !== id) });
+// '워프레임 추가' 를 누르고 아무것도 안 적은 채 닫았는지
+export const isBlankFrame = (f) =>
+  !f.wish && !f.styles.length && !["frame", "sortie", ...GEAR_FIELDS.map(([k]) => k)].some((k) => f[k]);
 export function addOther(gear, name) {
   const n = name.trim();
   return n ? { ...gear, others: [...gear.others, n] } : gear;

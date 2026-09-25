@@ -1,6 +1,6 @@
 // 라이브러리 · 메모: 메인 맨 아래 위젯 두 개, 라이브러리 목록 창, 기록 쓰기 창.
 import { store } from "./store.js";
-import { openSheet } from "./sheet.js";
+import { openSheet, guardSheet } from "./sheet.js";
 import { newId } from "./shopping.js";
 import { pad } from "./schedule.js";
 import { chip } from "./wuwa-view.js";
@@ -13,7 +13,7 @@ const SOURCE_HINT = { index: "책 이름, 영상 주소 등", profile: "교육 �
 let list = store.load("library", []);
 let cat = "index";
 let draft = null; // 쓰고 있는 기록
-let isNew = false;
+let original = ""; // 창을 연 때(또는 저장한 때)의 기록 — 달라졌으면 저장 안 한 게 있다
 let added = []; // 이번에 새로 넣은 사진 (저장 안 하고 나가면 지운다)
 let removed = []; // 이번에 뺀 원래 사진 (저장할 때 지운다)
 
@@ -97,7 +97,7 @@ function fieldHtml(f, c) {
 function openEntry(entry, fresh) {
   if (added.length) deletePhotos(added); // 지난번에 저장 안 하고 나간 사진 정리
   draft = { ...entry, photos: [...entry.photos] };
-  isNew = fresh;
+  original = JSON.stringify(draft);
   added = [];
   removed = [];
   const c = catOf(draft.cat);
@@ -140,9 +140,15 @@ function save() {
   list = next;
   deletePhotos(removed);
   added = [];
+  markSaved();
   renderMain();
   openList(draft.cat);
 }
+
+// 저장 안 하고 나가려 하면 한 번 묻는다 (바깥 누르기 · Esc · 목록으로)
+const unsaved = () => draft && JSON.stringify(draft) !== original;
+const okToLeave = () => !unsaved() || confirm("저장 안 하고 나갈까? 쓴 내용이 사라져.");
+const markSaved = () => { original = JSON.stringify(draft); };
 
 // ---------- 메모 (한 장, 쓰는 대로 저장) ----------
 let memo = store.load("memo", { text: "", at: null });
@@ -200,7 +206,10 @@ export function startLibrary() {
     e.target.value = "";
   });
   $("libSave").addEventListener("click", save);
+  guardSheet("libEntrySheet", okToLeave);
   $("libBack").addEventListener("click", () => {
+    if (!okToLeave()) return;
+    markSaved(); // 방금 물어봤으니 목록을 열 때 또 묻지 않는다
     deletePhotos(added);
     added = [];
     openList(draft.cat);
@@ -212,6 +221,7 @@ export function startLibrary() {
     store.save("library", list);
     deletePhotos([...(saved?.photos ?? []), ...added]);
     added = [];
+    markSaved();
     renderMain();
     openList(draft.cat);
   });

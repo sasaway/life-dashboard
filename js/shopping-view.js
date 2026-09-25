@@ -1,8 +1,8 @@
 // 사야 할 것 화면: 메인 카드(별표만)와 돈 탭 목록.
 import { store } from "./store.js";
-import { addItem, toggleStar, bring, starred, mainEmptyText } from "./shopping.js";
+import { addItem, toggleStar, bring, removeItem, starred, mainEmptyText } from "./shopping.js";
 import { ymd } from "./schedule.js";
-import { $, esc } from "./dom.js";
+import { $, esc, X_SVG } from "./dom.js";
 
 let list = store.load("shopping", []);  // [{ id, name, star }]
 let bought = store.load("bought", []);  // [{ name, day }] 식단 추천용
@@ -28,6 +28,7 @@ function render() {
     <li>
       <button class="star-btn" data-star="${esc(x.id)}" aria-pressed="${x.star}" aria-label="${esc(x.name)} 별표">${x.star ? "★" : "☆"}</button>
       <span class="name">${esc(x.name)}</span>${bringBtn(x)}
+      <button class="icon-btn del" data-remove="${esc(x.id)}" aria-label="${esc(x.name)} 지우기 (잘못 넣었을 때)">${X_SVG}</button>
     </li>`).join("");
   $("buyAllEmpty").hidden = list.length > 0;
   $("buyCount").textContent = list.length ? `${list.length}개 · 별표 ${top.length}개` : "";
@@ -65,6 +66,13 @@ export function startShopping() {
     $(id).addEventListener("click", (e) => {
       const bringB = e.target.closest("button[data-bring]");
       if (bringB) return bringItem(bringB);
+      const rm = e.target.closest("button[data-remove]");
+      if (rm) {
+        list = removeItem(list, rm.dataset.remove);
+        save();
+        render();
+        return;
+      }
       const starB = e.target.closest("button[data-star]");
       if (starB) {
         const sid = starB.dataset.star;

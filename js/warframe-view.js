@@ -5,7 +5,7 @@ import { chip } from "./wuwa-view.js";
 import { openTools } from "./wf-tools-view.js";
 import {
   DAILY, PLAYSTYLES, SORTIE_TYPES, GEAR_FIELDS, DEFAULT_GEAR, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo,
-  removeTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame,
+  removeTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame, isBlankFrame,
   addOther, removeOther, sortieView, invasionView, alertView, timeLeft,
 } from "./warframe.js";
 import { $, esc, X_SVG } from "./dom.js";
@@ -268,6 +268,15 @@ export function startWarframe() {
     gear = removeFrame(gear, editing);
     saveGear();
     closeSheet();
+    renderGear();
+  });
+
+  // '워프레임 추가' 후 아무것도 안 적고 닫으면 빈 카드를 남기지 않는다
+  document.addEventListener("sheet-close", (e) => {
+    const f = editingFrame();
+    if (e.detail !== "gearSheet" || !f || !isBlankFrame(f)) return;
+    gear = removeFrame(gear, editing);
+    saveGear();
     renderGear();
   });
 

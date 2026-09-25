@@ -3,6 +3,8 @@
 // 기본 양념(간장·설탕·소금·기름·고춧가루)은 집에 있다고 본다.
 // 재료 이름에 words 낱말이 들어 있으면 추천한다 (한 글자 낱말은 이름이 똑같을 때만: '파' ≠ '양파').
 // 새 요리는 여기에 하나 더한다.
+import { parseDate } from "./schedule.js";
+
 export const IDEAS = [
   { name: "전자레인지 계란찜", words: ["계란", "달걀"], why: "5분, 불 없이 단백질 한 그릇",
     steps: ["계란 2개 + 물 100ml + 소금 한 꼬집을 그릇에 풀기", "랩 씌우고 구멍 몇 개, 전자레인지 2분 30초"] },
@@ -45,7 +47,6 @@ export const IDEAS = [
 ];
 
 const DAY_MS = 864e5;
-const parse = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
 const matches = (name, word) => (word.length === 1 ? name === word : name.includes(word));
 
 // 최근 days 일(오늘 포함) 안에 가져온 재료로 할 수 있는 새 요리. 너무 많으면 부담이라 limit 개까지만.
@@ -53,7 +54,7 @@ const matches = (name, word) => (word.length === 1 ? name === word : name.includ
 export const MAX_IDEAS = 2;
 export function ideasFor(bought, today, days = 14, limit = MAX_IDEAS) {
   const from = new Date(today.getFullYear(), today.getMonth(), today.getDate()) - (days - 1) * DAY_MS;
-  const recent = bought.filter((b) => parse(b.day) >= from);
+  const recent = bought.filter((b) => parseDate(b.day) >= from);
   const out = [];
   for (const idea of IDEAS) {
     const hits = recent.filter((b) => idea.words.some((w) => matches(b.name.trim(), w)));
