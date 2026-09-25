@@ -1,6 +1,8 @@
 import { greeting, dateLabel } from "./time.js";
 import { askToKeepData } from "./store.js";
 import { startSchedule, renderToday, openScheduleSettings } from "./schedule-view.js";
+import { startReview, renderReviewCard } from "./review-view.js";
+import { openSheet, startSheets } from "./sheet.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -12,6 +14,7 @@ function renderClock() {
   $("greet").textContent = greeting(d.getHours());
   $("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   renderToday();
+  renderReviewCard(); // 06:00 에 오늘 회고로 넘어간다
 }
 
 // 다음 분이 시작될 때 맞춰 다시 그린다
@@ -48,13 +51,10 @@ function startTabs() {
 
 // ---------- 설정 창 ----------
 function startSettings() {
-  const sheet = $("settings");
-  const open = () => { openScheduleSettings(); sheet.hidden = false; $("closeSettings").focus(); };
-  const close = () => { sheet.hidden = true; $("openSettings").focus(); };
-  $("openSettings").addEventListener("click", open);
-  $("closeSettings").addEventListener("click", close);
-  sheet.addEventListener("click", (e) => { if (e.target === sheet) close(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !sheet.hidden) close(); });
+  $("openSettings").addEventListener("click", () => {
+    openScheduleSettings();
+    openSheet("settings");
+  });
 }
 
 // ---------- 오프라인 준비 ----------
@@ -66,7 +66,9 @@ function registerServiceWorker() {
   }
 }
 
+startSheets();
 startSchedule();
+startReview();
 startClock();
 startTabs();
 startSettings();

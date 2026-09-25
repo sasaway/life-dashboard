@@ -44,6 +44,16 @@
       <div class="card-h"><h2>오늘 일정<span class="tag" id="shiftTag"></span></h2><small class="mono" id="clock">--:--</small></div>
       <ol class="sched" id="sched"></ol>
     </section>
+    <section class="card" aria-label="회고">
+      <div class="card-h"><h2>회고</h2><small id="reviewStatus"></small></div>
+      <div class="meter"><i id="reviewBar"></i></div>
+      <p class="mini" id="reviewHint"></p>
+      <div class="btns">
+        <button class="btn btn-primary" id="openReview">쓰기</button>
+        <button class="btn btn-text" id="openWeekly">주간 회고</button>
+        <button class="btn btn-text" id="openPast">지난 회고</button>
+      </div>
+    </section>
   </section>
 
   <!-- 식단 -->
@@ -86,7 +96,7 @@
     <div class="grab"></div>
     <div class="sheet-h">
       <h2 id="settingsTitle">설정</h2>
-      <button class="btn btn-ghost" id="closeSettings">닫기</button>
+      <button class="btn btn-ghost" data-close>닫기</button>
     </div>
     <section class="card" aria-label="이번 주 알바">
       <div class="card-h"><h2>이번 주 알바</h2><small>한 주씩 번갈아 가</small></div>
@@ -113,6 +123,55 @@
         <button class="btn btn-text" id="resetRows">기본값으로</button>
       </div>
     </section>
+  </div>
+</div>
+
+<!-- 회고 쓰기 -->
+<div class="sheet-wrap" id="reviewSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <div><h2 id="reviewTitle">오늘 회고</h2><p class="date" id="reviewDate"></p></div>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <section class="card" id="reviewForm"></section>
+    <p class="msg" id="reviewSaved" role="status"></p>
+  </div>
+</div>
+
+<!-- 주간 회고 -->
+<div class="sheet-wrap" id="weeklySheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="weeklyTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="weeklyTitle">주간 회고</h2>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <div class="week-nav">
+      <button class="icon-btn" id="prevWeek" aria-label="지난주"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <span id="weekLabel"></span>
+      <button class="icon-btn" id="nextWeek" aria-label="다음 주"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <ul class="entries" id="weekDays"></ul>
+    <section class="card">
+      <label class="qa">
+        <span class="q">이번 주는 어땠어?</span>
+        <textarea class="field" rows="3" id="weekNote"></textarea>
+      </label>
+    </section>
+    <p class="msg" id="weekSaved" role="status"></p>
+  </div>
+</div>
+
+<!-- 지난 회고 -->
+<div class="sheet-wrap" id="pastSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pastTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="pastTitle">지난 회고</h2>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <ul class="entries" id="pastList"></ul>
   </div>
 </div>
 
