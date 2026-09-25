@@ -52,6 +52,7 @@ function startTabs() {
 
 // ---------- 설정 창 ----------
 function startSettings() {
+  $("appVersion").textContent = `앱 버전 ${self.APP_VERSION}`;
   $("openSettings").addEventListener("click", () => {
     openScheduleSettings();
     openSheet("settings");
@@ -60,11 +61,24 @@ function startSettings() {
 
 // ---------- 오프라인 준비 ----------
 function registerServiceWorker() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(() => {
-      // https 가 아닌 곳(같은 와이파이 확인 등)에서는 등록이 안 된다. 앱은 그대로 돈다.
+  if (!("serviceWorker" in navigator)) return;
+  const hadWorker = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.register("sw.js").then((reg) => {
+    // 앱으로 돌아올 때마다 새 버전이 올라왔는지 확인한다
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) reg.update().catch(() => {});
     });
-  }
+  }).catch(() => {
+    // https 가 아닌 곳(같은 와이파이 확인 등)에서는 등록이 안 된다. 앱은 그대로 돈다.
+  });
+  // 새 버전이 자리 잡으면 화면을 한 번 새로 그린다 (처음 설치 때는 제외)
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadWorker && !reloaded) {
+      reloaded = true;
+      location.reload();
+    }
+  });
 }
 
 startSheets();

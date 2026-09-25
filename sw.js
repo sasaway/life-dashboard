@@ -1,7 +1,9 @@
 // 서비스 워커: 앱 파일 사본을 폰에 두어 인터넷이 없어도 열리게 한다.
-// 파일을 고치면 VERSION 을 올린다. 그래야 폰이 새 사본을 받는다.
-const VERSION = "v4";
+// 인터넷이 되면 늘 새 파일을 먼저 받고, 안 될 때만 사본을 쓴다.
+// 파일을 고치면 VERSION 을 올린다 (js/version.js 도 같이). 그래야 폰이 새 버전을 알아챈다.
+const VERSION = "v5";
 const CACHE = `life-dashboard-${VERSION}`;
+const NETWORK_WAIT_MS = 4000; // 인터넷이 느리면 이만큼 기다리고 사본을 쓴다
 
 const FILES = [
   "./",
@@ -11,6 +13,7 @@ const FILES = [
   "styles/fonts.css",
   "styles/components.css",
   "js/app.js",
+  "js/version.js",
   "js/time.js",
   "js/store.js",
   "js/schedule.js",
@@ -32,7 +35,12 @@ const FILES = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  // cache: "reload" — 폰이 잠깐 들고 있던 옛 파일 말고 서버의 새 파일을 받는다
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: "reload" }))))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener("activate", (e) => {
@@ -43,20 +51,29 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// 사본을 먼저 보여 주고(빠름), 뒤에서 새 파일을 받아 사본을 바꿔 둔다
+// 새 파일을 먼저 받는다. 인터넷이 없거나 느리면 사본을 보여 준다.
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET" || new URL(req.url).origin !== location.origin) return;
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
+      // no-cache: 서버에 '바뀌었어?' 를 꼭 물어본다 (안 바뀌었으면 짧은 대답만 온다)
+      const network = fetch(req, { cache: "no-cache" }).then((res) => {
+        if (res.ok) cache.put(req, res.clone());
+        return res;
+      });
+      network.catch(() => {}); // 사본을 보여 준 뒤 실패해도 조용히 넘어간다
+      const slow = new Promise((resolve) => setTimeout(resolve, NETWORK_WAIT_MS));
+      let res;
+      try {
+        res = await Promise.race([network, slow]);
+        if (res?.ok) return res;
+      } catch {
+        // 인터넷 없음 → 아래에서 사본
+      }
+      // 인터넷이 없거나, 느리거나, 서버가 오류를 돌려주면 사본
       const cached = await cache.match(req, { ignoreSearch: true });
-      const fresh = fetch(req)
-        .then((res) => {
-          if (res.ok) cache.put(req, res.clone());
-          return res;
-        })
-        .catch(() => cached);
-      return cached || fresh;
+      return cached || res || network;
     }),
   );
 });
