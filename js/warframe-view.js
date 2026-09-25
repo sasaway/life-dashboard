@@ -130,13 +130,15 @@ const slotsOf = (f) => [
 ].filter(([, v]) => v);
 
 function renderGear() {
-  // 위시리스트는 맨 아래로
+  // 위시리스트(구매할 예정)는 맨 아래로
   const list = [...gear.frames.filter((f) => !f.wish), ...gear.frames.filter((f) => f.wish)];
   $("wfGear").innerHTML = list.map((f) => {
-    const slots = slotsOf(f).map(([label, v]) => `<span class="k">${label}</span><span>${esc(v)}</span>`).join("");
+    // Sortie 분류는 플레이스타일처럼 작은 알약으로
+    const slots = slotsOf(f).map(([label, v]) => `<span class="k">${label}</span>${label === "Sortie 분류"
+      ? `<span><span class="tag">${esc(v)}</span></span>` : `<span>${esc(v)}</span>`}`).join("");
     const styles = f.styles.map((st) => `<span class="tag">${esc(st)}</span>`).join("");
     return `<li><button class="gear-row${f.wish ? " wish" : ""}" data-gear="${esc(f.id)}">
-      <span class="gear-top"><b>${esc(f.frame || "이름 없는 워프레임")}</b>${f.wish ? '<span class="sub">위시리스트</span>' : ""}</span>
+      <span class="gear-top"><b>${esc(f.frame || "이름 없는 워프레임")}</b>${f.wish ? '<span class="sub">위시리스트 · 구매 예정</span>' : ""}</span>
       ${styles ? `<span class="gear-styles">${styles}</span>` : ""}
       ${slots ? `<span class="gear-slots">${slots}</span>` : '<span class="empty">비어 있어. 눌러서 채워 봐.</span>'}
     </button></li>`;
@@ -155,7 +157,7 @@ function renderGearChips() {
   const f = editingFrame();
   $("gearStyles").innerHTML = PLAYSTYLES.map((st) => chip(`type="button" data-style="${st}"`, st, f.styles.includes(st), true)).join("");
   $("gearSortie").innerHTML = SORTIE_TYPES.map((t) => chip(`type="button" data-sortie="${t}"`, t, f.sortie === t, true)).join("");
-  $("gearWish").innerHTML = chip('type="button" data-wish', "위시리스트 (아직 안 키움)", f.wish, true);
+  $("gearWish").innerHTML = chip('type="button" data-wish', "위시리스트 (구매할 예정)", f.wish, true);
 }
 
 function openGear(id) {

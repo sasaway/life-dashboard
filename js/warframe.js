@@ -53,7 +53,7 @@ export const GEAR_FIELDS = [
   ["companion", "동반자"],
 ];
 
-// { id, frame, styles: [플레이스타일], wish: 위시리스트, sortie, primary, secondary, melee, companion }
+// { id, frame, styles: [플레이스타일], wish: 위시리스트(구매할 예정 — 사용자 설명), sortie, primary, secondary, melee, companion }
 const frame = (id, name = "", styles = [], wish = false, sortie = "", primary = "", secondary = "", melee = "", companion = "") =>
   ({ id, frame: name, styles, wish, sortie, primary, secondary, melee, companion });
 

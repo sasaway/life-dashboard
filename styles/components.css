@@ -350,6 +350,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gear-top b{font-size:var(--fs-body);font-weight:700}
 .gear-slots{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:var(--fs-small)}
 .gear-slots .k{color:var(--faint)}
+.gear-slots .tag{margin:0;vertical-align:1px}
 .gear-row .empty{font-size:var(--fs-small)}
 .gear-sub{margin:16px 0 8px;font-size:var(--fs-small);font-weight:600;color:var(--sub)}
 .others{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
