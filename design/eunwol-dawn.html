@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>은월 새벽 달빛</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* ── 새벽 달빛 : 확정 (라이트 단일 테마) ── */
+:root{
+  --bg:#EEF2F7; --surface:#FFFFFF; --ink:#1C2940; --sub:#5B6B82; --faint:#7E8BA0;
+  --line:#DCE3EC; --accent:#2F6FA8; --accent-soft:#CFE4F6; --on-accent:#FFFFFF;
+  --hero:#2A3A57; --hero-ink:#FFFFFF; --hero-sub:#B9C6D8; --hero-accent:#A9D6F5;
+  --moon:#E9EEF5; --tab:rgba(255,255,255,.88); --shadow:0 1px 2px rgba(28,41,64,.06),0 4px 16px rgba(28,41,64,.05);
+  --good:#2E7D5B; --warn:#B7791F;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:12px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+.app{max-width:440px;margin:0 auto;padding-inline:16px;padding-block:20px calc(96px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* 인사 */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:4px 2px 2px}
+.date{font-size:13px;color:var(--sub);margin:0}
+h1{font-size:26px;line-height:1.25;font-weight:700;margin:2px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.lead{margin:2px 0 0;color:var(--sub);font-size:14px}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none}
+.icon-btn svg{width:20px;height:20px;stroke:var(--sub);fill:none;stroke-width:1.7}
+
+/* 지금 카드 : 남아 있는 밤 */
+.now{position:relative;overflow:hidden;background:var(--hero);color:var(--hero-ink);border-radius:16px;padding:18px 18px 16px}
+.now::before{content:"";position:absolute;right:-26px;top:-30px;width:110px;height:110px;border-radius:50%;background:var(--moon);opacity:.9;
+  box-shadow:0 0 40px rgba(233,238,245,.25)}
+.now::after{content:"";position:absolute;right:-6px;top:-40px;width:110px;height:110px;border-radius:50%;background:var(--hero)}
+.now>*{position:relative;z-index:1}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--hero-accent);font-weight:600;margin:0}
+.now-title{font-size:22px;font-weight:700;margin:6px 0 2px;letter-spacing:-.01em}
+.now-meta{color:var(--hero-sub);font-size:13px;margin:0}
+.bar{height:6px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden;margin-top:14px}
+.bar>i{display:block;height:100%;width:0;background:var(--hero-accent);border-radius:inherit;transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.now-foot{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--hero-sub)}
+
+/* 일반 카드 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.card-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.card-h h2{font-size:14px;font-weight:600;margin:0}
+.card-h small{font-size:12px;color:var(--faint)}
+.example{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:99px;padding:1px 7px;margin-left:6px;font-weight:500;vertical-align:1px}
+
+/* 일정 */
+.sched{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.sched li{display:grid;grid-template-columns:52px 12px 1fr;gap:10px;align-items:start;padding:9px 10px;border-radius:10px;border:1px solid transparent}
+.sched .t{font-size:13px;color:var(--sub);padding-top:1px}
+.sched .dot{width:7px;height:7px;border-radius:50%;background:var(--line);margin-top:8px;justify-self:center}
+.sched .n{font-weight:500}
+.sched .p{font-size:12px;color:var(--faint)}
+.sched li.past .n,.sched li.past .t{color:var(--faint)}
+.sched li.cur{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.sched li.cur .dot{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.sched li.cur .n{font-weight:700}
+.sched li.cur .t{color:var(--ink);font-weight:600}
+.pill{display:inline-block;font-size:11px;font-weight:600;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+
+/* 2열 */
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{font-size:22px;font-weight:600;letter-spacing:-.02em}
+.stat span{font-size:13px;color:var(--faint);font-weight:500}
+.mini{font-size:13px;color:var(--sub);margin:4px 0 0}
+.meter{height:6px;border-radius:99px;background:var(--accent-soft);overflow:hidden;margin-top:10px}
+.meter>i{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+
+/* 사야 할 것 */
+.buy{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.buy li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);transition:opacity .25s,transform .25s}
+.buy li:first-child{border-top:0;padding-top:2px}
+.buy li.gone{opacity:0;transform:translateX(12px)}
+.star{color:var(--accent);font-size:14px}
+.buy .name{flex:1}
+.btn{border:0;border-radius:10px;padding:8px 14px;font-weight:600;font-size:13px;min-height:36px}
+.btn-primary{background:var(--accent);color:var(--on-accent)}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn-text{background:none;color:var(--accent);padding-inline:4px}
+.empty{color:var(--faint);font-size:13px;padding:6px 0 0}
+
+/* 게임 */
+.game{display:flex;flex-direction:column;gap:12px}
+.game-h{display:flex;justify-content:space-between;align-items:baseline}
+.game-h b{font-size:14px}
+.game-h span{font-size:12px;color:var(--sub)}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.chk{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font-size:13px;min-height:40px}
+.chk .box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--faint);display:grid;place-items:center;transition:background .2s,border-color .2s}
+.chk .box svg{width:12px;height:12px;stroke:var(--on-accent);stroke-width:2.4;fill:none;opacity:0;transition:opacity .15s}
+.chk[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent}
+.chk[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
+.chk[aria-pressed="true"] .box svg{opacity:1}
+.chk[aria-pressed="true"] .lbl{color:var(--sub)}
+.boss{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--sub)}
+.boss button{width:28px;height:28px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface)}
+.boss button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
+.divider{height:1px;background:var(--line);margin:2px 0}
+
+/* 하단 탭 */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--tab);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+.tabs nav{max-width:440px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:11px;color:var(--faint)}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7}
+.tab[aria-current="page"]{color:var(--accent);font-weight:600}
+
+/* 스타일 시트 */
+.sheet-wrap{position:fixed;inset:0;background:rgba(15,22,36,.4);z-index:10;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:440px;max-height:86%;overflow:auto;border-radius:20px 20px 0 0;padding:10px 16px calc(24px + env(safe-area-inset-bottom,0px));animation:up .3s cubic-bezier(.2,.7,.2,1)}
+@keyframes up{from{transform:translateY(24px);opacity:.6}}
+.grab{width:40px;height:4px;border-radius:9px;background:var(--line);margin:4px auto 14px}
+.sheet h3{font-size:13px;color:var(--sub);font-weight:600;margin:18px 0 8px;letter-spacing:.02em}
+.sw{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sw div{font-size:11px;color:var(--sub)}
+.sw i{display:block;height:44px;border-radius:10px;border:1px solid var(--line);margin-bottom:4px}
+.sw code{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg button{border:0;background:none;border-radius:9px;padding:9px;font-weight:600;font-size:14px;color:var(--sub)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.types p{margin:6px 0}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.note{font-size:12px;color:var(--faint);margin-top:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<main class="app">
+  <header class="top">
+    <div>
+      <p class="date" id="today">금요일, 9월 25일</p>
+      <h1 id="greet">좋은 하루</h1>
+      <p class="lead">오늘도 한 칸씩 채워 가자.</p>
+    </div>
+    <button class="icon-btn" id="openSheet" aria-label="디자인 스타일 보기">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+    </button>
+  </header>
+
+  <section class="now" aria-label="지금 하는 일">
+    <p class="eyebrow">지금</p>
+    <p class="now-title" id="nowTitle">알바 · 오픈반</p>
+    <p class="now-meta" id="nowMeta">08:30 – 15:30 · 다음: 휴식</p>
+    <div class="bar"><i id="nowBar"></i></div>
+    <div class="now-foot"><span id="nowLeft">남은 시간 계산 중</span><span class="mono" id="nowPct">0%</span></div>
+  </section>
+
+  <section class="card" aria-label="오늘 일정">
+    <div class="card-h"><h2>오늘 일정<span class="example">예시 · 오픈반 주</span></h2><small class="mono" id="clock">--:--</small></div>
+    <ol class="sched" id="sched"></ol>
+  </section>
+
+  <div class="row">
+    <section class="card" aria-label="오늘 식단">
+      <div class="card-h"><h2>식단</h2></div>
+      <div class="stat mono">2<span> / 3끼</span></div>
+      <p class="mini">저녁 · 차돌 짜글이 (어제 남은 분)</p>
+      <div class="meter"><i style="width:66%"></i></div>
+    </section>
+    <section class="card" aria-label="오늘 운동">
+      <div class="card-h"><h2>운동</h2></div>
+      <div class="stat mono">2<span> 시간</span></div>
+      <p class="mini">16:30 시작 · 샤워 30분 포함 전</p>
+      <div class="meter"><i style="width:0%" id="gymBar"></i></div>
+    </section>
+  </div>
+
+  <section class="card" aria-label="사야 할 것">
+    <div class="card-h"><h2>사야 할 것</h2><small>별표만 보기</small></div>
+    <ul class="buy" id="buy">
+      <li><span class="star" aria-hidden="true">★</span><span class="name">백설 3분링</span><button class="btn btn-ghost">가져옴</button></li>
+      <li><span class="star" aria-hidden="true">★</span><span class="name">냉동 대패삼겹 1kg</span><button class="btn btn-ghost">가져옴</button></li>
+      <li><span class="star" aria-hidden="true">★</span><span class="name">계란 30구</span><button class="btn btn-ghost">가져옴</button></li>
+    </ul>
+    <p class="empty" id="buyEmpty" hidden>다 샀어. 목록이 비었어.</p>
+  </section>
+
+  <section class="card game" aria-label="취미">
+    <div class="game-h"><b>명조 · 오늘</b><span class="mono" id="wwCount">0 / 4</span></div>
+    <div class="meter" style="margin-top:0"><i id="wwBar" style="width:0%"></i></div>
+    <div class="checks" data-group="ww">
+      <button class="chk" aria-pressed="true"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></span><span class="lbl">일일 의뢰</span></button>
+      <button class="chk" aria-pressed="false"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></span><span class="lbl">플레이트 소모</span></button>
+      <button class="chk" aria-pressed="false"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></span><span class="lbl">잔상군락</span></button>
+      <button class="chk" aria-pressed="false"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></span><span class="lbl">이벤트 확인</span></button>
+    </div>
+    <div class="boss">주간보스
+      <button aria-pressed="true" aria-label="주간보스 1회"></button>
+      <button aria-pressed="false" aria-label="주간보스 2회"></button>
+      <button aria-pressed="false" aria-label="주간보스 3회"></button>
+    </div>
+    <div class="divider"></div>
+    <div class="game-h"><b>워프레임 · 오늘</b><span class="mono" id="wfCount">0 / 2</span></div>
+    <div class="checks" data-group="wf">
+      <button class="chk" aria-pressed="false"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></span><span class="lbl">출격</span></button>
+      <button class="chk" aria-pressed="false"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></span><span class="lbl">포르마 제작</span></button>
+    </div>
+  </section>
+</main>
+
+<div class="tabs"><nav aria-label="하단 탭">
+  <button class="tab" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>메인</button>
+  <button class="tab"><svg viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2.5 5-2 8h2v10"/></svg>식단</button>
+  <button class="tab"><svg viewBox="0 0 24 24"><path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12"/></svg>운동</button>
+  <button class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>돈</button>
+  <button class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="4"/><path d="M8 10v4M6 12h4M15.5 11h.01M17.5 13h.01"/></svg>취미</button>
+</nav></div>
+
+<div class="sheet-wrap" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="디자인 스타일">
+    <div class="grab"></div>
+    <h3>색</h3>
+    <div class="sw" id="swatches"></div>
+    <h3>글자</h3>
+    <div class="types">
+      <p style="font-size:26px;font-weight:700">제목 26 · 굵게</p>
+      <p style="font-size:22px;font-weight:600" class="mono">숫자 22 · 2 / 3</p>
+      <p style="font-size:15px">본문 15 · 편안하게 읽히는 크기</p>
+      <p style="font-size:12px;color:var(--faint)">보조 12 · 장소, 시간 설명</p>
+    </div>
+    <h3>버튼</h3>
+    <div class="btns">
+      <button class="btn btn-primary">저장</button>
+      <button class="btn btn-ghost">가져옴</button>
+      <button class="btn btn-text">더 보기</button>
+    </div>
+    <p class="note">앱에서는 한글 글꼴을 Pretendard(무료)로 바꿀 예정이야. 이 미리보기는 비슷한 IBM Plex Sans KR을 쓰고 있어.</p>
+    <div class="btns" style="margin-top:14px"><button class="btn btn-ghost" id="closeSheet" style="width:100%">닫기</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // 예시 일과표 (Notion 규칙: 취침 23–06, 오픈반 08:30–15:30, 운동 2h + 샤워 30m, 가사 30m, 자기 전 리뷰)
+  const plan=[
+    ["06:00","기상 · 아침","집"],["08:30","알바 · 오픈반","식대 제공"],["15:30","휴식",""],
+    ["16:30","운동","이동 포함 2시간"],["18:30","샤워",""],["19:00","저녁","차돌 짜글이"],
+    ["20:00","가사","30분"],["20:30","자유 시간","명조 · 워프레임"],["22:30","리뷰","오늘 4가지 질문"],["23:00","취침",""]
+  ];
+  const toMin=s=>{const[h,m]=s.split(":").map(Number);return h*60+m};
+  const days=["일","월","화","수","목","금","토"];
+  const pad=n=>String(n).padStart(2,"0");
+  const $=id=>document.getElementById(id);
+
+  function render(){
+    const d=new Date(), now=d.getHours()*60+d.getMinutes();
+    $("today").textContent=`${days[d.getDay()]}요일, ${d.getMonth()+1}월 ${d.getDate()}일`;
+    const h=d.getHours();
+    $("greet").textContent=h<5?"편안한 밤":h<12?"좋은 아침":h<18?"좋은 오후":"좋은 저녁";
+    $("clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    let cur=-1;
+    plan.forEach((p,i)=>{const s=toMin(p[0]),e=i<plan.length-1?toMin(plan[i+1][0]):24*60;if(now>=s&&now<e)cur=i});
+    if(cur<0)cur=plan.length-1; // 00:00~06:00 → 취침
+    $("sched").innerHTML=plan.map((p,i)=>`<li class="${i<cur?"past":i===cur?"cur":""}"><span class="t mono">${p[0]}</span><span class="dot"></span><span><span class="n">${p[1]}</span>${i===cur?'<span class="pill">진행 중</span>':""}${p[2]?`<div class="p">${p[2]}</div>`:""}</span></li>`).join("");
+    const s=toMin(plan[cur][0]); let e=cur<plan.length-1?toMin(plan[cur+1][0]):24*60+360;
+    let n=now<s?now+1440:now;
+    const pct=Math.max(0,Math.min(100,Math.round((n-s)/(e-s)*100))), left=e-n;
+    $("nowTitle").textContent=plan[cur][1];
+    const next=plan[cur+1]?plan[cur+1][1]:"기상";
+    $("nowMeta").textContent=`${plan[cur][0]} – ${cur<plan.length-1?plan[cur+1][0]:"06:00"} · 다음: ${next}`;
+    $("nowBar").style.width=pct+"%"; $("nowPct").textContent=pct+"%";
+    $("nowLeft").textContent=`남은 시간 ${Math.floor(left/60)?Math.floor(left/60)+"시간 ":""}${left%60}분`;
+    const g0=toMin("16:30"),g1=toMin("18:30");
+    $("gymBar").style.width=Math.max(0,Math.min(100,(now-g0)/(g1-g0)*100))+"%";
+  }
+  render(); setInterval(render,30000);
+
+  // 체크리스트
+  function count(group,label,bar){
+    const all=[...document.querySelectorAll(`[data-group="${group}"] .chk`)],done=all.filter(b=>b.getAttribute("aria-pressed")==="true").length;
+    $(label).textContent=`${done} / ${all.length}`; if(bar)$(bar).style.width=done/all.length*100+"%";
+  }
+  document.querySelectorAll(".chk").forEach(b=>b.addEventListener("click",()=>{
+    b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")==="true"?"false":"true");
+    count("ww","wwCount","wwBar");count("wf","wfCount");
+  }));
+  count("ww","wwCount","wwBar");count("wf","wfCount");
+  document.querySelectorAll(".boss button").forEach(b=>b.addEventListener("click",()=>b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")==="true"?"false":"true")));
+
+  // 가져옴
+  document.querySelectorAll("#buy .btn").forEach(b=>b.addEventListener("click",()=>{
+    const li=b.closest("li");li.classList.add("gone");
+    setTimeout(()=>{li.remove();if(!$("buy").children.length)$("buyEmpty").hidden=false},260);
+  }));
+
+  // 탭 (미리보기라 메인만 동작)
+  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.removeAttribute("aria-current"));t.setAttribute("aria-current","page");
+  }));
+
+  // 스타일 시트
+  const root=document.documentElement;
+  const sw=[["배경","--bg"],["카드","--surface"],["글자","--ink"],["보조","--sub"],["포인트","--accent"],["연한 포인트","--accent-soft"],["지금 카드","--hero"],["선","--line"]];
+  function paintSw(){
+    const cs=getComputedStyle(root);
+    $("swatches").innerHTML=sw.map(([n,v])=>`<div><i style="background:var(${v})"></i>${n}<br><code>${cs.getPropertyValue(v).trim()}</code></div>`).join("");
+  }
+  $("openSheet").addEventListener("click",()=>{paintSw();$("sheet").hidden=false});
+  $("closeSheet").addEventListener("click",()=>$("sheet").hidden=true);
+  $("sheet").addEventListener("click",e=>{if(e.target.id==="sheet")$("sheet").hidden=true});
+})();
+</script>
+</body>
+</html>

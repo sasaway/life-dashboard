@@ -1,0 +1,38 @@
+/* ==========================================================
+   부품 모양 — tokens.css 에 없는 것만 여기 둔다.
+   기준 시안: design/eunwol-dawn.html
+   색·크기는 tokens.css 변수만 쓴다. (색 코드 직접 쓰기 금지)
+   ========================================================== */
+
+/* ---------- 화면 틀: 아이폰 노치·상태 표시줄 자리 비우기 ---------- */
+.app{padding-top:calc(20px + env(safe-area-inset-top,0px))}
+.screen{display:flex;flex-direction:column;gap:var(--gap)}
+
+/* ---------- 머리말 (인사 · 화면 제목) ---------- */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:4px 2px 2px}
+.date{font-size:var(--fs-small);color:var(--sub);margin:0}
+.top h1{font-size:var(--fs-title);line-height:1.25;font-weight:700;margin:2px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.lead{margin:2px 0 0;color:var(--sub);font-size:var(--fs-label)}
+.icon-btn{width:var(--touch);height:var(--touch);border-radius:var(--r-card);border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none}
+.icon-btn svg{width:20px;height:20px;stroke:var(--sub);fill:none;stroke-width:1.7}
+
+/* ---------- 빈 상태 문구 ---------- */
+.empty{color:var(--faint);font-size:var(--fs-small);margin:0}
+
+/* ---------- 버튼: 모양은 시안 그대로, 누르는 자리만 40px 로 넓힌다 ---------- */
+.btn{position:relative}
+.btn::after{content:"";position:absolute;inset-inline:0;inset-block:min(0px,calc((100% - var(--touch)) / 2))}
+
+/* ---------- 하단 탭 아이콘 ---------- */
+.tab{min-height:var(--touch)}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* ---------- 아래에서 올라오는 창 (설정) ---------- */
+.sheet-wrap{position:fixed;inset:0;background:color-mix(in srgb,var(--ink) 40%,transparent);z-index:10;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:440px;max-height:86%;overflow:auto;border-radius:20px 20px 0 0;
+  padding:10px var(--gutter) calc(24px + env(safe-area-inset-bottom,0px));animation:sheet-up .3s var(--ease);
+  display:flex;flex-direction:column;gap:var(--gap)}
+@keyframes sheet-up{from{transform:translateY(24px);opacity:.6}}
+.grab{width:40px;height:4px;border-radius:9px;background:var(--line);margin:4px auto 0}
+.sheet-h{display:flex;justify-content:space-between;align-items:center}
+.sheet-h h2{font-size:var(--fs-hero);font-weight:700;margin:0}

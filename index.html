@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>라이프대시보드</title>
+<meta name="description" content="혼자 쓰는 생활 보조 앱">
+<!-- 아이폰 홈 화면 앱 설정. 색은 tokens.css 의 --bg 와 같다 -->
+<meta name="theme-color" content="#EEF2F7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="라이프">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles/fonts.css">
+<link rel="stylesheet" href="design/tokens.css">
+<link rel="stylesheet" href="styles/components.css">
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+
+<main class="app">
+  <!-- 메인 -->
+  <section class="screen" id="screen-main" aria-label="메인">
+    <header class="top">
+      <div>
+        <p class="date" id="today"></p>
+        <h1 id="greet">좋은 하루</h1>
+        <p class="lead">오늘도 한 칸씩 채워 가자.</p>
+      </div>
+      <button class="icon-btn" id="openSettings" aria-label="설정 열기">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </header>
+    <section class="card" aria-label="오늘 일정">
+      <div class="card-h"><h2>오늘 일정</h2><small class="mono" id="clock">--:--</small></div>
+      <p class="empty">일과표는 다음 단계에서 채워져.</p>
+    </section>
+  </section>
+
+  <!-- 식단 -->
+  <section class="screen" id="screen-meal" aria-label="식단" hidden>
+    <header class="top"><h1>식단</h1></header>
+    <section class="card"><p class="empty">주간 식단과 레시피가 여기 들어와.</p></section>
+  </section>
+
+  <!-- 운동 -->
+  <section class="screen" id="screen-gym" aria-label="운동" hidden>
+    <header class="top"><h1>운동</h1></header>
+    <section class="card"><p class="empty">오늘 운동이 여기 들어와.</p></section>
+  </section>
+
+  <!-- 돈 -->
+  <section class="screen" id="screen-money" aria-label="돈" hidden>
+    <header class="top"><h1>돈</h1></header>
+    <section class="card"><p class="empty">사야 할 것과 예산이 여기 들어와.</p></section>
+  </section>
+
+  <!-- 취미 -->
+  <section class="screen" id="screen-hobby" aria-label="취미" hidden>
+    <header class="top"><h1>취미</h1></header>
+    <section class="card"><p class="empty">명조와 워프레임 체크리스트가 여기 들어와.</p></section>
+  </section>
+</main>
+
+<!-- 하단 탭 (아이콘은 시안 그대로) -->
+<div class="tabs"><nav aria-label="하단 탭">
+  <button class="tab" data-screen="main" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>메인</button>
+  <button class="tab" data-screen="meal"><svg viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2.5 5-2 8h2v10"/></svg>식단</button>
+  <button class="tab" data-screen="gym"><svg viewBox="0 0 24 24"><path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12"/></svg>운동</button>
+  <button class="tab" data-screen="money"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>돈</button>
+  <button class="tab" data-screen="hobby"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="4"/><path d="M8 10v4M6 12h4M15.5 11h.01M17.5 13h.01"/></svg>취미</button>
+</nav></div>
+
+<!-- 설정 -->
+<div class="sheet-wrap" id="settings" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="settingsTitle">설정</h2>
+      <button class="btn btn-ghost" id="closeSettings">닫기</button>
+    </div>
+    <section class="card" aria-label="일과표 규칙">
+      <div class="card-h"><h2>일과표 규칙</h2></div>
+      <p class="empty">취침·알바·운동·가사·리뷰 시간을 여기서 고칠 수 있게 돼.</p>
+    </section>
+  </div>
+</div>
+
+</body>
+</html>

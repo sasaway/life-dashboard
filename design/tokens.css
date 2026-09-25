@@ -1,0 +1,104 @@
+/* ==========================================================
+   라이프대시보드 디자인 토큰 — "새벽 달빛" (확정 2026-09-25)
+   키워드: 밤 · 은빛 · 차분함 · 결의
+   라이트 단일 테마. 폰이 다크 모드여도 이 색을 그대로 쓴다.
+   모든 화면은 아래 변수만 써서 색을 칠한다. (색 코드 직접 쓰기 금지)
+   ========================================================== */
+:root{
+  color-scheme: light;
+
+  /* 색 */
+  --bg:#EEF2F7;          /* 배경 · 새벽 하늘 은회색 */
+  --surface:#FFFFFF;     /* 카드 · 달빛 흰색 */
+  --ink:#1C2940;         /* 기본 글자 · 밤하늘 남색 */
+  --sub:#5B6B82;         /* 보조 글자 */
+  --faint:#7E8BA0;       /* 흐린 글자 · 지나간 일정, 설명 */
+  --line:#DCE3EC;        /* 테두리 · 구분선 */
+  --accent:#2F6FA8;      /* 포인트(결의) · 진행 중, 기본 버튼, 진행 막대, 체크 완료에만 */
+  --accent-soft:#CFE4F6; /* 연한 포인트 · 진행 막대 바탕, 선택된 칸 */
+  --on-accent:#FFFFFF;   /* 포인트 위 글자 */
+  --hero:#2A3A57;        /* '지금' 카드 · 화면에 하나뿐인 밤 */
+  --hero-ink:#FFFFFF;
+  --hero-sub:#B9C6D8;
+  --hero-accent:#A9D6F5;
+  --moon:#E9EEF5;        /* '지금' 카드 구석의 초승달 */
+  --good:#2E7D5B;        /* 상태색: 예산 안 */
+  --warn:#B7791F;        /* 상태색: 예산 주의 */
+  --danger:#B42318;      /* 상태색: 예산 초과 */
+
+  /* 글꼴 */
+  --sans:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace; /* 시간·숫자 */
+
+  /* 글자 크기 */
+  --fs-title:26px;  /* 화면 제목 · 700 */
+  --fs-hero:22px;   /* '지금' 카드 제목, 큰 숫자 · 600~700 */
+  --fs-body:15px;   /* 본문 · 400~500 */
+  --fs-label:14px;  /* 카드 제목 · 600 */
+  --fs-small:13px;  /* 보조 설명 */
+  --fs-tiny:12px;   /* 장소·메모 */
+  --fs-tab:11px;    /* 하단 탭 */
+
+  /* 모양과 간격 */
+  --r-card:12px; --r-hero:16px; --r-btn:10px; --r-pill:999px;
+  --gap:14px;         /* 카드 사이 */
+  --pad-card:16px;    /* 카드 안쪽 */
+  --gutter:16px;      /* 화면 좌우 여백 */
+  --touch:40px;       /* 누를 수 있는 것의 최소 높이 */
+  --shadow:0 1px 2px rgba(28,41,64,.06),0 4px 16px rgba(28,41,64,.05);
+
+  /* 움직임 */
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --t-fast:.2s; --t-bar:.6s;
+}
+
+/* ---------- 기본 ---------- */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs-body)/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- 화면 틀 ---------- */
+.app{max-width:440px;margin:0 auto;padding-inline:var(--gutter);
+  padding-block:20px calc(96px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:var(--gap)}
+
+/* ---------- 카드 ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow);padding:var(--pad-card)}
+.card-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.card-h h2{font-size:var(--fs-label);font-weight:600;margin:0}
+.card-h small{font-size:var(--fs-tiny);color:var(--faint)}
+
+/* '지금' 카드 — 한 화면에 하나만 */
+.hero{position:relative;overflow:hidden;background:var(--hero);color:var(--hero-ink);border-radius:var(--r-hero);padding:18px 18px 16px}
+.hero::before{content:"";position:absolute;right:-26px;top:-30px;width:110px;height:110px;border-radius:50%;background:var(--moon);box-shadow:0 0 40px rgba(233,238,245,.25)}
+.hero::after{content:"";position:absolute;right:-6px;top:-40px;width:110px;height:110px;border-radius:50%;background:var(--hero)}
+.hero>*{position:relative;z-index:1}
+
+/* ---------- 버튼 ---------- */
+.btn{border:0;border-radius:var(--r-btn);padding:8px 14px;font-weight:600;font-size:var(--fs-small);min-height:36px}
+.btn-primary{background:var(--accent);color:var(--on-accent)}   /* 저장, 추가 */
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink)} /* 가져옴, 취소 */
+.btn-text{background:none;color:var(--accent);padding-inline:4px} /* 더 보기 */
+
+/* ---------- 알약 표시 ---------- */
+.pill{display:inline-block;font-size:11px;font-weight:600;background:var(--accent);color:var(--on-accent);border-radius:var(--r-pill);padding:1px 8px}
+
+/* ---------- 진행 막대 ---------- */
+.meter{height:6px;border-radius:var(--r-pill);background:var(--accent-soft);overflow:hidden}
+.meter>i{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width var(--t-bar) var(--ease)}
+
+/* ---------- 체크 칩 ---------- */
+.chk{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-btn);padding:8px 12px;font-size:var(--fs-small);min-height:var(--touch)}
+.chk .box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--faint);display:grid;place-items:center;transition:background var(--t-fast),border-color var(--t-fast)}
+.chk[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent}
+.chk[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
+
+/* ---------- 하단 탭 ---------- */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+.tabs nav{max-width:440px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:var(--fs-tab);color:var(--faint)}
+.tab[aria-current="page"]{color:var(--accent);font-weight:600}

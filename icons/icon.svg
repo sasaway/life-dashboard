@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 색: tokens.css --hero(#2A3A57), --moon(#E9EEF5) -->
+  <rect width="512" height="512" fill="#2A3A57"/>
+  <circle cx="256" cy="256" r="150" fill="#E9EEF5"/>
+  <circle cx="330" cy="200" r="150" fill="#2A3A57"/>
+</svg>
