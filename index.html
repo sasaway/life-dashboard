@@ -33,9 +33,16 @@
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
     </header>
+    <section class="hero" aria-label="지금 하는 일">
+      <p class="eyebrow">지금</p>
+      <p class="now-title" id="nowTitle"></p>
+      <p class="now-meta" id="nowMeta"></p>
+      <div class="now-bar"><i id="nowBar"></i></div>
+      <div class="now-foot"><span id="nowLeft"></span><span class="mono" id="nowPct"></span></div>
+    </section>
     <section class="card" aria-label="오늘 일정">
-      <div class="card-h"><h2>오늘 일정</h2><small class="mono" id="clock">--:--</small></div>
-      <p class="empty">일과표는 다음 단계에서 채워져.</p>
+      <div class="card-h"><h2>오늘 일정<span class="tag" id="shiftTag"></span></h2><small class="mono" id="clock">--:--</small></div>
+      <ol class="sched" id="sched"></ol>
     </section>
   </section>
 
@@ -81,9 +88,30 @@
       <h2 id="settingsTitle">설정</h2>
       <button class="btn btn-ghost" id="closeSettings">닫기</button>
     </div>
-    <section class="card" aria-label="일과표 규칙">
-      <div class="card-h"><h2>일과표 규칙</h2></div>
-      <p class="empty">취침·알바·운동·가사·리뷰 시간을 여기서 고칠 수 있게 돼.</p>
+    <section class="card" aria-label="이번 주 알바">
+      <div class="card-h"><h2>이번 주 알바</h2><small>한 주씩 번갈아 가</small></div>
+      <div class="seg" id="shiftPick">
+        <button data-shift="open" aria-pressed="false">오픈반 <span class="mono">08:30</span></button>
+        <button data-shift="close" aria-pressed="false">마감반 <span class="mono">15:00</span></button>
+      </div>
+    </section>
+    <section class="card" aria-label="알바 하는 요일">
+      <div class="card-h"><h2>알바 하는 요일</h2><small>끄면 그날은 쉬는 날</small></div>
+      <div class="days" id="workdays"></div>
+    </section>
+    <section class="card" aria-label="일과표 고치기">
+      <div class="card-h"><h2>일과표 고치기</h2></div>
+      <div class="seg" id="editPick">
+        <button data-shift="open" aria-pressed="false">오픈반 주</button>
+        <button data-shift="close" aria-pressed="false">마감반 주</button>
+      </div>
+      <ol class="edit-rows" id="editRows"></ol>
+      <p class="msg" id="editMsg" role="status"></p>
+      <div class="btns">
+        <button class="btn btn-primary" id="saveRows">저장</button>
+        <button class="btn btn-ghost" id="addRow">칸 추가</button>
+        <button class="btn btn-text" id="resetRows">기본값으로</button>
+      </div>
     </section>
   </div>
 </div>

@@ -1,5 +1,6 @@
 import { greeting, dateLabel } from "./time.js";
 import { askToKeepData } from "./store.js";
+import { startSchedule, renderToday, openScheduleSettings } from "./schedule-view.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -10,6 +11,7 @@ function renderClock() {
   $("today").textContent = dateLabel(d);
   $("greet").textContent = greeting(d.getHours());
   $("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  renderToday();
 }
 
 // 다음 분이 시작될 때 맞춰 다시 그린다
@@ -47,7 +49,7 @@ function startTabs() {
 // ---------- 설정 창 ----------
 function startSettings() {
   const sheet = $("settings");
-  const open = () => { sheet.hidden = false; $("closeSettings").focus(); };
+  const open = () => { openScheduleSettings(); sheet.hidden = false; $("closeSettings").focus(); };
   const close = () => { sheet.hidden = true; $("openSettings").focus(); };
   $("openSettings").addEventListener("click", open);
   $("closeSettings").addEventListener("click", close);
@@ -64,6 +66,7 @@ function registerServiceWorker() {
   }
 }
 
+startSchedule();
 startClock();
 startTabs();
 startSettings();

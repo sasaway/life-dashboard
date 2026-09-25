@@ -36,3 +36,48 @@
 .grab{width:40px;height:4px;border-radius:9px;background:var(--line);margin:4px auto 0}
 .sheet-h{display:flex;justify-content:space-between;align-items:center}
 .sheet-h h2{font-size:var(--fs-hero);font-weight:700;margin:0}
+
+/* ---------- '지금' 카드 속 (시안 .now) ---------- */
+.eyebrow{font-size:var(--fs-tiny);letter-spacing:.08em;color:var(--hero-accent);font-weight:600;margin:0}
+.now-title{font-size:var(--fs-hero);font-weight:700;margin:6px 0 2px;letter-spacing:-.01em}
+.now-meta{color:var(--hero-sub);font-size:var(--fs-small);margin:0}
+.now-bar{height:6px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--hero-ink) 14%,transparent);overflow:hidden;margin-top:14px}
+.now-bar>i{display:block;height:100%;width:0;background:var(--hero-accent);border-radius:inherit;transition:width var(--t-bar) var(--ease)}
+.now-foot{display:flex;justify-content:space-between;margin-top:8px;font-size:var(--fs-tiny);color:var(--hero-sub)}
+
+/* ---------- 카드 제목 옆 작은 표시 (시안 .example) ---------- */
+.tag{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:1px 7px;margin-left:6px;font-weight:500;vertical-align:1px}
+.tag:empty{display:none}
+.pill{margin-left:6px;vertical-align:2px}
+
+/* ---------- 오늘 일정 (시안 .sched) ---------- */
+.sched{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.sched li{display:grid;grid-template-columns:52px 12px 1fr;gap:10px;align-items:start;padding:9px 10px;border-radius:10px;border:1px solid transparent}
+.sched .t{font-size:var(--fs-small);color:var(--sub);padding-top:1px}
+.sched .dot{width:7px;height:7px;border-radius:50%;background:var(--line);margin-top:8px;justify-self:center}
+.sched .n{font-weight:500}
+.sched .p{display:block;font-size:var(--fs-tiny);color:var(--faint)}
+.sched li.past .n,.sched li.past .t{color:var(--faint)}
+.sched li.cur{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.sched li.cur .dot{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.sched li.cur .n{font-weight:700}
+.sched li.cur .t{color:var(--ink);font-weight:600}
+
+/* ---------- 둘 중 하나 고르기 (시안 .seg) · 선택된 칸은 연한 포인트 ---------- */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-card);padding:4px;gap:4px}
+.seg button{border:0;background:none;border-radius:9px;min-height:var(--touch);font-weight:600;font-size:var(--fs-label);color:var(--sub)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+
+/* ---------- 요일 켜고 끄기 ---------- */
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{min-height:var(--touch);border-radius:var(--r-btn);border:1px solid var(--line);background:var(--surface);color:var(--faint);font-weight:600;font-size:var(--fs-small)}
+.day[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;color:var(--ink)}
+
+/* ---------- 입력칸 · 16px 이상이어야 아이폰이 화면을 확대하지 않는다 ---------- */
+.field{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-btn);min-height:var(--touch);padding:6px 10px;width:100%;min-width:0}
+.field:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.edit-rows{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.edit-row{display:grid;grid-template-columns:128px 1fr var(--touch);gap:8px;align-items:center}
+.edit-row .del{border-color:transparent;background:none}
+.msg{font-size:var(--fs-small);color:var(--sub);margin:10px 0 0;min-height:1.4em}
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
