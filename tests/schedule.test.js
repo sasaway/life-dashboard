@@ -103,17 +103,34 @@ test("오픈반 주 쉬는 날: 알바·출근 준비 대신 휴식, 12:00 점�
 });
 
 test("마감반 주 쉬는 날: 18:00 저녁이 생긴다", () => {
-  const s = { ...DEFAULT_SETTINGS, workdays: [false, true, true, true, true, true, true] };
-  const plan = dayPlan(new Date(2026, 8, 27), s); // 마감반 주 일요일
+  const s = { ...DEFAULT_SETTINGS, workdays: [true, true, true, true, true, true, false] };
+  const plan = dayPlan(new Date(2026, 8, 26), s); // 마감반 주 토요일
   const names = plan.blocks.map((x) => `${x.start} ${x.name}`);
   assert.ok(names.includes("18:00 저녁"));
   assert.ok(names.includes("19:00 휴식"));
   assert.equal(find(plan.blocks, "meal").every((x) => x.len === 60), true);
 });
 
-test("일하는 날은 일과표를 그대로 쓴다", () => {
+test("일하는 평일은 일과표를 그대로 쓴다", () => {
   const plan = dayPlan(new Date(2026, 8, 25), DEFAULT_SETTINGS);
   assert.equal(plan.blocks, DEFAULT_TEMPLATES.close);
+});
+
+test("일요일은 운동·샤워 칸이 휴식이 되고, 이어진 휴식은 하나로 합친다", () => {
+  const sun = dayPlan(new Date(2026, 8, 27), DEFAULT_SETTINGS); // 마감반 주 일요일
+  assert.equal(sun.blocks.some((x) => x.kind === "exercise" || x.kind === "shower"), false);
+  assert.deepEqual(sun.blocks.slice(0, 5).map((x) => `${x.start} ${x.name}`),
+    ["06:00 가사", "06:30 휴식", "08:00 취미", "10:00 휴식", "12:30 점심"]);
+  const openSun = dayPlan(new Date(2026, 9, 4), DEFAULT_SETTINGS); // 오픈반 주 일요일
+  assert.deepEqual(openSun.blocks.slice(3, 6).map((x) => `${x.start} ${x.name}`),
+    ["15:30 휴식", "18:30 저녁", "19:30 가사"]);
+});
+
+test("쉬는 일요일: 쉬는 날 규칙과 운동 없음이 같이 적용된다", () => {
+  const s = { ...DEFAULT_SETTINGS, workdays: [false, true, true, true, true, true, true] };
+  const names = dayPlan(new Date(2026, 8, 27), s).blocks.map((x) => `${x.start} ${x.name}`);
+  assert.ok(names.includes("18:00 저녁"));
+  assert.ok(!names.some((n) => n.includes("운동")));
 });
 
 // ---------- 지금 ----------

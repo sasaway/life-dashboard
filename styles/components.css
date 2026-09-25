@@ -158,3 +158,8 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 
 /* 한글이 섞인 금액 줄: 글꼴은 그대로, 숫자 폭만 맞춘다 */
 .num{font-variant-numeric:tabular-nums}
+
+/* ---------- 예산 '고정' 켜고 끄기 · 켜면 선택된 칸(연한 포인트) ---------- */
+.pin{flex:none;min-height:var(--touch);padding:0 10px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--surface);color:var(--faint);font-size:var(--fs-small);font-weight:600}
+.pin[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;color:var(--ink)}
+.money-rows .field.won{width:112px}

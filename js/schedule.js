@@ -111,12 +111,20 @@ function toDayOff(blocks, shift) {
   return [...rested.slice(0, i), ...parts, ...rested.slice(i + 1)];
 }
 
+// 일요일은 운동을 쉰다 (Notion '운동': 일요일 제외 6일) → 운동·샤워 칸이 휴식이 된다
+function noExercise(blocks) {
+  return mergeRest(blocks.map((x) =>
+    x.kind === "exercise" || x.kind === "shower" ? b(x.start, "rest", "휴식") : x));
+}
+
 // 그 날의 일과표
 export function dayPlan(date, settings) {
   const shift = shiftFor(date, settings);
-  const blocks = settings.templates[shift];
   const working = settings.workdays[date.getDay()];
-  return { shift, working, blocks: working ? blocks : toDayOff(blocks, shift) };
+  let blocks = settings.templates[shift];
+  if (!working) blocks = toDayOff(blocks, shift);
+  if (date.getDay() === 0) blocks = noExercise(blocks);
+  return { shift, working, blocks };
 }
 
 // 지금 몇 번째 칸인가. 첫 칸보다 이르면(새벽) 전날부터 이어진 마지막 칸(취침)이다.

@@ -3,35 +3,54 @@ import { store } from "./store.js";
 import {
   CATEGORIES, parseWon, formatWon, addBudgetItem, setBudgetAmount, removeBudgetItem, sumBy,
   monthKey, shiftMonth, monthLabel, settlementRows, setActual, settlementStats,
+  toggleFixed, resolveMonth, withMonth, migrate,
 } from "./budget.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const num = (n) => n.toLocaleString("ko-KR");
 
-let items = store.load("budget", []);           // [{ id, cat, name, amount }]
-let settlements = store.load("settlements", {}); // { "2026-08": { snapshot, actual } }
-
-const lastMonth = () => shiftMonth(monthKey(new Date()), -1);
+const thisMonth = () => monthKey(new Date());
+const lastMonth = () => shiftMonth(thisMonth(), -1);
 let month = lastMonth();
 
+// budgets: { "2026-09": [{ id, cat, name, amount, fixed }] } · settlements: { "2026-08": { actual } }
+let { budgets, settlements } = migrate({
+  budget: store.load("budget", null),
+  settlements: store.load("settlements", {}),
+  budgets: store.load("budgets", null),
+}, thisMonth());
+
 function saveAll(msgId) {
-  const ok = store.save("budget", items) && store.save("settlements", settlements);
+  const ok = store.save("budgets", budgets) && store.save("settlements", settlements);
   if (!ok) $(msgId).textContent = "저장이 안 됐어. 저장 공간을 확인해 줘.";
 }
+saveAll("budgetMsg"); // 옛 형식에서 옮긴 결과를 남긴다
+
+// 이번 달 예산. 새 달이 시작되면 이전 달의 고정 항목으로 한 번 만들어 둔다.
+function items() {
+  if (!budgets[thisMonth()]) {
+    budgets = withMonth(budgets, thisMonth(), resolveMonth(budgets, thisMonth()));
+    saveAll("budgetMsg");
+  }
+  return budgets[thisMonth()];
+}
+const setItems = (next) => { budgets = withMonth(budgets, thisMonth(), next); };
 
 const amountInput = (id, value, label, attr) =>
   `<input class="field mono won" inputmode="numeric" ${attr}="${esc(id)}" value="${value ? num(value) : ""}" placeholder="0" aria-label="${esc(label)}">`;
 
 // ---------- 예산 ----------
 function renderBudget() {
+  $("budgetTitle").textContent = `${monthLabel(thisMonth())} 예산`;
   $("budgetCats").innerHTML = CATEGORIES.map((c) => {
-    const rows = items.filter((x) => x.cat === c.key);
+    const rows = items().filter((x) => x.cat === c.key);
     return `<section class="card" aria-label="${c.label}">
       <div class="card-h"><h2>${c.label}</h2><small class="num" data-cat-total="${c.key}">${formatWon(sumBy(rows, "amount"))}</small></div>
       <ul class="money-rows">${rows.map((x) => `
         <li><span class="name">${esc(x.name)}</span>
           ${amountInput(x.id, x.amount, `${x.name} 예산`, "data-budget")}
+          <button class="pin" data-fixed="${esc(x.id)}" aria-pressed="${Boolean(x.fixed)}" aria-label="${esc(x.name)} 고정 (다음 달에도)">고정</button>
           <button class="icon-btn del" data-remove="${esc(x.id)}" aria-label="${esc(x.name)} 지우기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         </li>`).join("")}</ul>
       ${rows.length ? "" : `<p class="empty">아직 항목이 없어.</p>`}
@@ -46,10 +65,10 @@ function renderBudget() {
 }
 
 function updateBudgetTotals() {
-  $("budgetTotal").textContent = num(sumBy(items, "amount"));
+  $("budgetTotal").textContent = num(sumBy(items(), "amount"));
   for (const c of CATEGORIES) {
     const el = document.querySelector(`[data-cat-total="${c.key}"]`);
-    if (el) el.textContent = formatWon(sumBy(items.filter((x) => x.cat === c.key), "amount"));
+    if (el) el.textContent = formatWon(sumBy(items().filter((x) => x.cat === c.key), "amount"));
   }
 }
 
@@ -57,7 +76,7 @@ function updateBudgetTotals() {
 function renderSettle() {
   $("monthLabel").textContent = monthLabel(month);
   $("nextMonth").disabled = month >= lastMonth();
-  const rows = settlementRows(items, settlements[month]);
+  const rows = settlementRows(resolveMonth(budgets, month), settlements[month]);
   $("settleEmpty").hidden = rows.length > 0;
   $("settleCats").innerHTML = CATEGORIES.map((c) => {
     const catRows = rows.filter((x) => x.cat === c.key);
@@ -78,7 +97,7 @@ const meter = (pct, status) =>
 const chip = (status) => (status.label ? `<span class="st-chip st-${status.key}">${status.label}</span>` : "");
 
 function renderStats() {
-  const rows = settlementRows(items, settlements[month]);
+  const rows = settlementRows(resolveMonth(budgets, month), settlements[month]);
   const { total, byCat } = settlementStats(rows);
   $("statTotal").innerHTML = `
     <div class="card-h"><h2>한 달 합계</h2>${chip(total.status)}</div>
@@ -111,10 +130,10 @@ export function startBudget() {
     e.preventDefault();
     const form = e.target;
     const f = form.elements;
-    const r = addBudgetItem(items, form.dataset.add, f.namedItem("itemName").value, f.namedItem("itemAmount").value);
+    const r = addBudgetItem(items(), form.dataset.add, f.namedItem("itemName").value, f.namedItem("itemAmount").value);
     $("budgetMsg").textContent = r.error;
     if (r.error) return;
-    items = r.items;
+    setItems(r.items);
     saveAll("budgetMsg");
     renderBudget();
     document.querySelector(`[data-add="${form.dataset.add}"] [name="itemName"]`).focus();
@@ -123,18 +142,27 @@ export function startBudget() {
   $("budgetCats").addEventListener("input", (e) => {
     const id = e.target.dataset.budget;
     if (!id) return;
-    const r = setBudgetAmount(items, id, e.target.value);
+    const r = setBudgetAmount(items(), id, e.target.value);
     $("budgetMsg").textContent = r.error;
     if (r.error) return;
-    items = r.items;
+    setItems(r.items);
     saveAll("budgetMsg");
     updateBudgetTotals();
   });
-  // 예산: 지우기
+  // 예산: 고정 켜고 끄기 · 지우기
   $("budgetCats").addEventListener("click", (e) => {
+    const pin = e.target.closest("button[data-fixed]");
+    if (pin) {
+      const id = pin.dataset.fixed;
+      setItems(toggleFixed(items(), id));
+      saveAll("budgetMsg");
+      renderBudget();
+      $("budgetCats").querySelector(`[data-fixed="${CSS.escape(id)}"]`)?.focus();
+      return;
+    }
     const b = e.target.closest("button[data-remove]");
     if (!b) return;
-    items = removeBudgetItem(items, b.dataset.remove);
+    setItems(removeBudgetItem(items(), b.dataset.remove));
     saveAll("budgetMsg");
     renderBudget();
   });
@@ -143,9 +171,11 @@ export function startBudget() {
   $("settleCats").addEventListener("input", (e) => {
     const id = e.target.dataset.actual;
     if (!id) return;
-    const r = setActual(settlements, month, items, id, e.target.value);
+    const r = setActual(settlements, month, id, e.target.value);
     $("settleMsg").textContent = r.error;
     if (r.error) return;
+    // 처음 적는 달이면 지금 보이는 예산을 그 달 예산으로 남긴다
+    if (!budgets[month]) budgets = withMonth(budgets, month, resolveMonth(budgets, month));
     settlements = r.settlements;
     saveAll("settleMsg");
     renderStats();
