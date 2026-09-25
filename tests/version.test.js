@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
+import vm from "node:vm";
 
 const sw = readFileSync(new URL("../sw.js", import.meta.url), "utf8");
 const versionJs = readFileSync(new URL("../js/version.js", import.meta.url), "utf8");
@@ -17,4 +18,8 @@ test("오프라인 사본 목록의 파일이 모두 있고, js 파일이 빠짐
   assert.deepEqual(files.filter((f) => !existsSync(new URL(f, root))), []);
   const js = readdirSync(new URL("../js/", import.meta.url)).map((f) => `js/${f}`);
   assert.deepEqual(js.filter((f) => !files.includes(f)), [], "js 폴더 파일이 사본 목록에 빠졌다");
+});
+
+test("서비스 워커 파일에 문법 오류가 없다 (오류가 있으면 폰이 새 버전을 영영 못 받는다)", () => {
+  assert.doesNotThrow(() => new vm.Script(sw, { filename: "sw.js" }));
 });

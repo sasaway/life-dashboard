@@ -1,10 +1,10 @@
 // 서비스 워커: 앱 파일 사본을 폰에 두어 인터넷이 없어도 열리게 한다.
-// 인터넷이 되면 늘 새 파일을 먼저 받고, 안 될 때만 사본을 쓴다.
+// 앱 파일은 '한 버전 사본' 에서만 꺼낸다 → 새 화면과 옛 코드가 섞이지 않는다.
+// 새 버전은 파일을 전부 새로 받아 온 뒤에만 자리를 잡고, 그때 화면이 한 번 새로 그려진다 (app.js).
 // 파일을 고치면 VERSION 을 올린다 (js/version.js 도 같이). 그래야 폰이 새 버전을 알아챈다.
-const VERSION = "v14";
-const ICONS = "encore-icons"; // 명조 캐릭터 얼굴 (버전이 바뀌어도 남긴다)
+const VERSION = "v15";
 const CACHE = `life-dashboard-${VERSION}`;
-const NETWORK_WAIT_MS = 4000; // 인터넷이 느리면 이만큼 기다리고 사본을 쓴다
+const ICONS = "encore-icons"; // 명조 캐릭터 얼굴 (버전이 바뀌어도 남긴다)
 
 const FILES = [
   "./",
@@ -59,12 +59,15 @@ const FILES = [
 ];
 
 self.addEventListener("install", (e) => {
-  // cache: "reload" — 폰이 잠깐 들고 있던 옛 파일 말고 서버의 새 파일을 받는다
-  e.waitUntil(
-    caches.open(CACHE)
-      .then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: "reload" }))))
-      .then(() => self.skipWaiting()),
-  );
+  e.waitUntil((async () => {
+    // 올리는 중간(파일 일부만 새것)에 받으면 섞이니, 버전 표시가 맞는지 먼저 본다. 안 맞으면 다음에 다시.
+    const v = await fetch(new Request("js/version.js", { cache: "reload" })).then((r) => r.text());
+    if (!v.includes(`"${VERSION} `)) throw new Error(`version.js 가 아직 ${VERSION} 가 아니다`);
+    // cache: "reload" — 폰이 잠깐 들고 있던 옛 파일 말고 서버의 새 파일을 받는다
+    const cache = await caches.open(CACHE);
+    await cache.addAll(FILES.map((f) => new Request(f, { cache: "reload" })));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", (e) => {
@@ -75,7 +78,7 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// 새 파일을 먼저 받는다. 인터넷이 없거나 느리면 사본을 보여 준다.
+// 앱 파일: 이 버전 사본에서 꺼낸다 (없으면 받아서 넣어 둔다). 인터넷이 없어도 열린다.
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   const url = new URL(req.url);
@@ -88,23 +91,16 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET" || url.origin !== location.origin) return;
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
-      // no-cache: 서버에 '바뀌었어?' 를 꼭 물어본다 (안 바뀌었으면 짧은 대답만 온다)
-      const network = fetch(req, { cache: "no-cache" }).then((res) => {
+      const cached = await cache.match(req, { ignoreSearch: true });
+      if (cached) return cached;
+      try {
+        const res = await fetch(req);
         if (res.ok) cache.put(req, res.clone());
         return res;
-      });
-      network.catch(() => {}); // 사본을 보여 준 뒤 실패해도 조용히 넘어간다
-      const slow = new Promise((resolve) => setTimeout(resolve, NETWORK_WAIT_MS));
-      let res;
-      try {
-        res = await Promise.race([network, slow]);
-        if (res?.ok) return res;
       } catch {
-        // 인터넷 없음 → 아래에서 사본
+        // 인터넷이 없고 사본도 없으면: 화면 요청이면 첫 화면이라도
+        return (req.mode === "navigate" && (await cache.match("./"))) || Response.error();
       }
-      // 인터넷이 없거나, 느리거나, 서버가 오류를 돌려주면 사본
-      const cached = await cache.match(req, { ignoreSearch: true });
-      return cached || res || network;
     }),
   );
 });
