@@ -69,18 +69,15 @@
   <!-- 식단 -->
   <section class="screen" id="screen-meal" aria-label="식단" hidden>
     <header class="top"><h1>식단</h1></header>
-    <section class="card" aria-label="오늘 식단">
-      <div class="card-h"><h2>오늘</h2><small id="mealTodayDate"></small></div>
-      <ul class="meal-list" id="mealToday"></ul>
-    </section>
     <section class="card" aria-label="이번 주 식단">
-      <div class="card-h"><h2>이번 주</h2><small>칸을 누르면 바꿀 수 있어</small></div>
-      <ul class="week-meals" id="mealWeek"></ul>
+      <div class="card-h"><h2>이번 주 식단</h2><small class="num" id="mealWeekRange"></small></div>
+      <p class="mini week-hint">메뉴를 누르면 바꿀 수 있어.</p>
+      <ol class="week-meals" id="mealWeek"></ol>
     </section>
-    <section class="card" aria-label="산 재료로 해 볼 만한 것">
-      <div class="card-h"><h2>산 재료로 해 볼 만한 것</h2><small>최근 2주</small></div>
-      <ul class="tips" id="mealTips"></ul>
-      <p class="empty" id="mealTipsEmpty">최근 2주에 가져온 재료 중 추천할 게 없어. 돈 탭 '사야 할 것' 에서 '가져옴' 을 누르면 여기 떠.</p>
+    <section class="card" aria-label="산 재료로 새로 해 볼 요리">
+      <div class="card-h"><h2>산 재료로 새로 해 볼 요리</h2><small>최근 2주</small></div>
+      <ul class="ideas" id="mealTips"></ul>
+      <p class="empty" id="mealTipsEmpty">최근 2주에 가져온 재료로 추천할 요리가 없어. 돈 탭 '사야 할 것' 에서 '가져옴' 을 누르면 여기 떠.</p>
     </section>
   </section>
 

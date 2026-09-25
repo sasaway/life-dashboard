@@ -4,7 +4,7 @@ import { openSheet, closeSheet } from "./sheet.js";
 import { getScheduleSettings } from "./schedule-view.js";
 import { ymd } from "./schedule.js";
 import { planWeek, mondayOf, withOverride, pickable } from "./meals.js";
-import { tipsFor } from "./meal-tips.js";
+import { ideasFor } from "./meal-tips.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -27,27 +27,32 @@ export function renderMealMain() {
 }
 
 // ---------- 식단 탭 ----------
+// 이번 주 식단표가 이 탭의 주인공이다. 오늘 줄은 일정표의 '진행 중' 칸처럼 강조하고, 지난 날은 흐리게.
 function renderMealTab() {
   const w = week();
-  const t = todayOf(w);
-  $("mealTodayDate").textContent = shortDay(t.date);
-  $("mealToday").innerHTML = t.meals.map((m) => `<li>${mealLine(m)}</li>`).join("") + (t.work ? workLine(t.work) : "");
+  const today = ymd(new Date());
+  const [first, last] = [w[0].date, w[6].date];
+  $("mealWeekRange").textContent = `${first.getMonth() + 1}/${first.getDate()} – ${last.getMonth() + 1}/${last.getDate()}`;
 
-  $("mealWeek").innerHTML = w.map((d) => `
-    <li class="${d.day === t.day ? "is-today" : ""}">
-      <span class="wd">${esc(shortDay(d.date))}${d.day === t.day ? '<span class="tag">오늘</span>' : ""}</span>
+  $("mealWeek").innerHTML = w.map((d) => {
+    const cls = d.day === today ? "cur" : d.day < today ? "past" : "";
+    return `<li class="${cls}"${d.day === today ? ' aria-current="date"' : ""}>
+      <span class="wd"><b>${DAYS[d.date.getDay()]}</b><span class="num">${d.date.getMonth() + 1}/${d.date.getDate()}</span></span>
       <span class="slots">
+        ${d.day === today ? '<span class="pill">오늘</span>' : ""}
         ${d.meals.map((m) => `<button class="meal-chip" data-slot="${esc(m.key)}" aria-label="${esc(shortDay(d.date))} ${esc(m.label)}: ${esc(m.dish.short)}. 바꾸기">
-          <span class="lbl">${esc(m.label)}</span>${esc(m.dish.short)}${m.auto ? "" : '<span class="mark">직접</span>'}</button>`).join("")}
-        ${d.work ? `<span class="meal-chip work"><span class="lbl">${esc(d.work)}</span>알바 식대</span>` : ""}
+          <span class="lbl">${esc(m.label)}</span><span class="dish">${esc(m.dish.short)}</span>${m.auto ? "" : '<span class="mark">직접</span>'}</button>`).join("")}
+        ${d.work ? `<span class="work-note">${esc(d.work)}은 알바 식대</span>` : ""}
       </span>
-    </li>`).join("");
+    </li>`;
+  }).join("");
 
-  const tips = tipsFor(store.load("bought", []), new Date());
-  $("mealTips").innerHTML = tips.map((x) => `
-    <li><b>${esc(x.name)}</b><span class="sub num">${esc(x.day.slice(5).split("-").map(Number).join("/"))} 가져옴</span>
-      <ul>${x.tips.map((tip) => `<li>${esc(tip)}</li>`).join("")}</ul></li>`).join("");
-  $("mealTipsEmpty").hidden = tips.length > 0;
+  const ideas = ideasFor(store.load("bought", []), new Date());
+  $("mealTips").innerHTML = ideas.map((x) => `
+    <li><div class="row-h"><b>${esc(x.name)}</b><span class="sub">${esc(x.from.join(", "))}</span></div>
+      <span class="why">${esc(x.why)}</span>
+      <ol>${x.steps.map((step) => `<li>${esc(step)}</li>`).join("")}</ol></li>`).join("");
+  $("mealTipsEmpty").hidden = ideas.length > 0;
 }
 
 // ---------- 요리 고르기 ----------

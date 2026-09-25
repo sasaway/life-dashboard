@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   DISHES, LEFTOVER, homeMeals, workMeal, planMeals, planWeek, mondayOf, withOverride,
 } from "../js/meals.js";
-import { tipsFor } from "../js/meal-tips.js";
+import { IDEAS, ideasFor } from "../js/meal-tips.js";
 import { DEFAULT_SETTINGS } from "../js/schedule.js";
 
 const slots = (n) => Array.from({ length: n }, (_, i) => ({ key: `s${i}` }));
@@ -66,25 +66,45 @@ test("주간 식단표: 월요일부터 7일, 끼니가 주 전체로 이어서 
   assert.ok(week.every((d) => d.work === "저녁"));
 });
 
-// ---------- 산 재료 추천 ----------
+// ---------- 산 재료로 새 요리 추천 ----------
 const today = new Date(2026, 8, 25);
+const ideaNames = (r) => r.map((x) => x.name);
 
-test("최근 2주(오늘 포함 14일, 9/12~9/25) 안에 가져온 재료만, 같은 재료는 가장 최근 것 하나", () => {
-  const bought = [
-    { name: "계란 30구", day: "2026-09-25" },
-    { name: "계란 30구", day: "2026-09-20" },
-    { name: "두부", day: "2026-09-11" }, // 15일째 → 빠짐
-    { name: "휴지", day: "2026-09-24" },  // 추천 없음 → 빠짐
-  ];
-  const r = tipsFor(bought, today);
-  assert.deepEqual(r.map((x) => [x.name, x.day]), [["계란 30구", "2026-09-25"]]);
-  assert.ok(r[0].tips.some((t) => t.includes("라면에 계란")));
-  assert.equal(tipsFor([{ name: "두부", day: "2026-09-11" }], today).length, 0);
-  assert.equal(tipsFor([{ name: "두부", day: "2026-09-12" }], today).length, 1);
+test("추천은 메인 요리 4가지가 아닌 새 요리이고, 요리마다 이유와 방법이 있다", () => {
+  const mains = DISHES.map((d) => d.name);
+  for (const idea of IDEAS) {
+    assert.ok(!mains.includes(idea.name), idea.name);
+    assert.ok(idea.why && idea.steps.length >= 2, idea.name);
+  }
 });
 
-test("한 글자 낱말은 이름이 똑같을 때만: '파' 는 '양파' 에 안 걸린다", () => {
-  const onion = tipsFor([{ name: "양파", day: "2026-09-25" }], today)[0].tips;
-  assert.deepEqual(onion, ["짜글이에 양파 반 개"]);
-  assert.ok(tipsFor([{ name: "파", day: "2026-09-25" }], today)[0].tips.includes("라면에 파 송송"));
+test("최근 2주(오늘 포함 14일, 9/12~9/25) 안에 가져온 재료만 본다", () => {
+  assert.equal(ideasFor([{ name: "두부", day: "2026-09-11" }], today).length, 0);
+  assert.deepEqual(ideaNames(ideasFor([{ name: "두부", day: "2026-09-12" }], today)), ["두부조림", "두부 계란국"]);
+  assert.equal(ideasFor([{ name: "휴지", day: "2026-09-24" }], today).length, 0);
+});
+
+test("같은 요리는 한 번만, 어떤 재료 때문인지와 최근 날짜를 붙인다", () => {
+  const r = ideasFor([
+    { name: "계란 30구", day: "2026-09-20" },
+    { name: "달걀", day: "2026-09-24" },
+  ], today);
+  const jjim = r.find((x) => x.name === "전자레인지 계란찜");
+  assert.deepEqual(jjim.from, ["계란 30구", "달걀"]);
+  assert.equal(jjim.day, "2026-09-24");
+  assert.equal(r.filter((x) => x.name === "전자레인지 계란찜").length, 1);
+});
+
+test("최근에 가져온 재료의 요리가 먼저 나온다", () => {
+  const r = ideasFor([
+    { name: "감자", day: "2026-09-20" },
+    { name: "김치", day: "2026-09-25" },
+  ], today);
+  assert.deepEqual(ideaNames(r), ["김치찌개", "감자채볶음"]);
+});
+
+test("한 글자 낱말은 이름이 똑같을 때만: '햄' 은 '햄버거 번' 에 안 걸리게 두 글자 이상만 포함 검사", () => {
+  assert.deepEqual(ideaNames(ideasFor([{ name: "양파", day: "2026-09-25" }], today)), ["양파 계란덮밥"]);
+  assert.ok(ideaNames(ideasFor([{ name: "햄", day: "2026-09-25" }], today)).includes("스팸마요 덮밥"));
+  assert.equal(ideasFor([{ name: "햄버거 번", day: "2026-09-25" }], today).length, 0);
 });

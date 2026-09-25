@@ -170,22 +170,32 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .meal-list .t{font-size:var(--fs-small);color:var(--sub)}
 .meal-list b{font-weight:600}
 .meal-list li.work .n{color:var(--faint);font-size:var(--fs-small)}
-.week-meals{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.week-meals>li{display:grid;grid-template-columns:72px 1fr;gap:8px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
-.week-meals>li:first-child{border-top:0;padding-top:0}
-.week-meals .wd{font-size:var(--fs-small);color:var(--sub);padding-top:10px;font-variant-numeric:tabular-nums}
-.week-meals .is-today .wd{color:var(--ink);font-weight:600}
-.week-meals .wd .tag{display:inline-block;margin:4px 0 0}
-.slots{display:flex;flex-direction:column;gap:6px}
-.meal-chip{display:flex;align-items:center;gap:8px;min-height:var(--touch);padding:6px 12px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--surface);text-align:left;font-size:var(--fs-body)}
-.meal-chip .lbl{font-size:var(--fs-tiny);color:var(--faint);min-width:26px}
+/* 이번 주 식단표: 오늘 줄은 일정표의 진행 중 칸과 같은 모양 (시안 .sched li.cur) */
+.week-hint{margin:-6px 0 8px}
+.week-meals{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.week-meals>li{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:start;padding:10px;border-radius:10px;border:1px solid transparent}
+.week-meals .wd{display:flex;flex-direction:column;line-height:1.25;padding-top:4px}
+.week-meals .wd b{font-size:var(--fs-body);font-weight:700}
+.week-meals .wd .num{font-size:var(--fs-tiny);color:var(--faint)}
+.week-meals li.cur{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.week-meals li.past .wd b,.week-meals li.past .dish{color:var(--faint)}
+.week-meals li.past .meal-chip{background:none}
+.slots{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.slots .pill{margin:0}
+.meal-chip{align-self:stretch;display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--surface);text-align:left}
+.meal-chip .lbl{font-size:var(--fs-tiny);color:var(--faint);flex:none}
+.meal-chip .dish{font-size:var(--fs-body);font-weight:600;color:var(--ink)}
 .meal-chip .mark{margin-left:auto;font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 6px}
-.meal-chip.work{color:var(--faint);background:none;border-style:dashed;font-size:var(--fs-small)}
-.tips{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
-.tips>li{display:flex;flex-direction:column;gap:2px}
-.tips>li>b{font-weight:600}
-.tips ul{margin:4px 0 0;padding-left:18px;font-size:var(--fs-small);color:var(--sub)}
-.tips .sub{font-size:var(--fs-tiny);color:var(--faint)}
+.work-note{font-size:var(--fs-tiny);color:var(--faint);padding-left:2px}
+
+/* 산 재료로 새로 해 볼 요리 */
+.ideas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ideas>li{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-top:1px solid var(--line)}
+.ideas>li:first-child{border-top:0;padding-top:0}
+.ideas b{font-weight:600}
+.ideas .sub{font-size:var(--fs-tiny);color:var(--faint);text-align:right}
+.ideas .why{font-size:var(--fs-small);color:var(--sub)}
+.ideas ol{margin:6px 0 0;padding-left:18px;font-size:var(--fs-small);color:var(--ink)}
 .picks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .pick{width:100%;text-align:left;min-height:48px;padding:10px 14px;border-radius:var(--r-card);border:1px solid var(--line);background:var(--surface);font-size:var(--fs-body);font-weight:500}
 .pick[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;font-weight:700}
