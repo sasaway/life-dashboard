@@ -25,7 +25,8 @@ function setButtons(id, day) {
   const ex = EXERCISES[id];
   const done = doneSets(log, day, id);
   if (ex.maxSets === 1) {
-    return `<button class="set single" data-set="${id}" data-n="1" aria-pressed="${done >= 1}">${done >= 1 ? "했어" : "하면 눌러"}</button>`;
+    // 글자는 늘 '완료', 했는지는 색으로만 (사용자 요청). 화면 읽기 프로그램은 aria-pressed 로 안다
+    return `<button class="set single" data-set="${id}" data-n="1" aria-pressed="${done >= 1}" aria-label="${esc(ex.name)} 완료">완료</button>`;
   }
   return Array.from({ length: ex.maxSets }, (_, k) => {
     const n = k + 1;
