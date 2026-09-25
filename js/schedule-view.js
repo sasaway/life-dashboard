@@ -16,10 +16,12 @@ function loadSettings() {
   return saved ? { ...DEFAULT_SETTINGS, ...saved } : DEFAULT_SETTINGS;
 }
 let settings = loadSettings();
+export const getScheduleSettings = () => settings;
 function saveSettings(next) {
   settings = next;
   store.save(KEY, settings);
   renderToday();
+  document.dispatchEvent(new CustomEvent("schedule-change")); // 식단이 끼니 칸을 다시 계산한다
 }
 
 // ---------- 메인: 지금 카드 + 오늘 일정 ----------

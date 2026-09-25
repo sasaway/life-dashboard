@@ -55,6 +55,10 @@
         <button class="btn btn-text" id="openPast">지난 회고</button>
       </div>
     </section>
+    <section class="card" aria-label="오늘 식단">
+      <div class="card-h"><h2>식단</h2><small>오늘</small></div>
+      <ul class="meal-list" id="mealMain"></ul>
+    </section>
     <section class="card" aria-label="사야 할 것">
       <div class="card-h"><h2>사야 할 것</h2><small>별표만 보기</small></div>
       <ul class="buy" id="buyMain"></ul>
@@ -65,7 +69,19 @@
   <!-- 식단 -->
   <section class="screen" id="screen-meal" aria-label="식단" hidden>
     <header class="top"><h1>식단</h1></header>
-    <section class="card"><p class="empty">주간 식단과 레시피가 여기 들어와.</p></section>
+    <section class="card" aria-label="오늘 식단">
+      <div class="card-h"><h2>오늘</h2><small id="mealTodayDate"></small></div>
+      <ul class="meal-list" id="mealToday"></ul>
+    </section>
+    <section class="card" aria-label="이번 주 식단">
+      <div class="card-h"><h2>이번 주</h2><small>칸을 누르면 바꿀 수 있어</small></div>
+      <ul class="week-meals" id="mealWeek"></ul>
+    </section>
+    <section class="card" aria-label="산 재료로 해 볼 만한 것">
+      <div class="card-h"><h2>산 재료로 해 볼 만한 것</h2><small>최근 2주</small></div>
+      <ul class="tips" id="mealTips"></ul>
+      <p class="empty" id="mealTipsEmpty">최근 2주에 가져온 재료 중 추천할 게 없어. 돈 탭 '사야 할 것' 에서 '가져옴' 을 누르면 여기 떠.</p>
+    </section>
   </section>
 
   <!-- 운동 -->
@@ -210,6 +226,18 @@
       </label>
     </section>
     <p class="msg" id="weekSaved" role="status"></p>
+  </div>
+</div>
+
+<!-- 요리 고르기 -->
+<div class="sheet-wrap" id="mealSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <div><h2 id="pickTitle">바꾸기</h2><p class="date" id="pickDate"></p></div>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <ul class="picks" id="pickList"></ul>
   </div>
 </div>
 

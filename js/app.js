@@ -5,6 +5,7 @@ import { startReview, renderReviewCard } from "./review-view.js";
 import { openSheet, startSheets } from "./sheet.js";
 import { startShopping } from "./shopping-view.js";
 import { startBudget } from "./budget-view.js";
+import { startMeals, renderAll as renderMeals } from "./meals-view.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -17,6 +18,7 @@ function renderClock() {
   $("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   renderToday();
   renderReviewCard(); // 06:00 에 오늘 회고로 넘어간다
+  renderMeals();      // 자정에 오늘 식단으로 넘어간다
 }
 
 // 다음 분이 시작될 때 맞춰 다시 그린다
@@ -87,6 +89,7 @@ startSchedule();
 startReview();
 startShopping();
 startBudget();
+startMeals();
 startClock();
 startTabs();
 startSettings();

@@ -44,6 +44,7 @@ function bringItem(btn) {
     ({ list, bought } = bring(list, bought, btn.dataset.bring, ymd(new Date())));
     save();
     render();
+    document.dispatchEvent(new CustomEvent("bought-change")); // 식단 추천이 새 재료를 본다
   }, 260);
 }
 

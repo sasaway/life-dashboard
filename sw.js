@@ -1,7 +1,7 @@
 // 서비스 워커: 앱 파일 사본을 폰에 두어 인터넷이 없어도 열리게 한다.
 // 인터넷이 되면 늘 새 파일을 먼저 받고, 안 될 때만 사본을 쓴다.
 // 파일을 고치면 VERSION 을 올린다 (js/version.js 도 같이). 그래야 폰이 새 버전을 알아챈다.
-const VERSION = "v7";
+const VERSION = "v8";
 const CACHE = `life-dashboard-${VERSION}`;
 const NETWORK_WAIT_MS = 4000; // 인터넷이 느리면 이만큼 기다리고 사본을 쓴다
 
@@ -25,6 +25,9 @@ const FILES = [
   "js/shopping-view.js",
   "js/budget.js",
   "js/budget-view.js",
+  "js/meals.js",
+  "js/meal-tips.js",
+  "js/meals-view.js",
   "fonts/Pretendard-Regular.subset.woff2",
   "fonts/Pretendard-Medium.subset.woff2",
   "fonts/Pretendard-SemiBold.subset.woff2",
