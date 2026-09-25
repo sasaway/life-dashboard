@@ -3,6 +3,7 @@ import { askToKeepData } from "./store.js";
 import { startSchedule, renderToday, openScheduleSettings } from "./schedule-view.js";
 import { startReview, renderReviewCard } from "./review-view.js";
 import { openSheet, startSheets } from "./sheet.js";
+import { startShopping } from "./shopping-view.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -69,6 +70,7 @@ function registerServiceWorker() {
 startSheets();
 startSchedule();
 startReview();
+startShopping();
 startClock();
 startTabs();
 startSettings();

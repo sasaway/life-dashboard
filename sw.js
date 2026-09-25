@@ -1,6 +1,6 @@
 // 서비스 워커: 앱 파일 사본을 폰에 두어 인터넷이 없어도 열리게 한다.
 // 파일을 고치면 VERSION 을 올린다. 그래야 폰이 새 사본을 받는다.
-const VERSION = "v3";
+const VERSION = "v4";
 const CACHE = `life-dashboard-${VERSION}`;
 
 const FILES = [
@@ -18,6 +18,8 @@ const FILES = [
   "js/sheet.js",
   "js/review.js",
   "js/review-view.js",
+  "js/shopping.js",
+  "js/shopping-view.js",
   "fonts/Pretendard-Regular.subset.woff2",
   "fonts/Pretendard-Medium.subset.woff2",
   "fonts/Pretendard-SemiBold.subset.woff2",

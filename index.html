@@ -54,6 +54,11 @@
         <button class="btn btn-text" id="openPast">지난 회고</button>
       </div>
     </section>
+    <section class="card" aria-label="사야 할 것">
+      <div class="card-h"><h2>사야 할 것</h2><small>별표만 보기</small></div>
+      <ul class="buy" id="buyMain"></ul>
+      <p class="empty" id="buyMainEmpty" hidden></p>
+    </section>
   </section>
 
   <!-- 식단 -->
@@ -71,7 +76,16 @@
   <!-- 돈 -->
   <section class="screen" id="screen-money" aria-label="돈" hidden>
     <header class="top"><h1>돈</h1></header>
-    <section class="card"><p class="empty">사야 할 것과 예산이 여기 들어와.</p></section>
+    <section class="card" aria-label="사야 할 것">
+      <div class="card-h"><h2>사야 할 것</h2><small id="buyCount"></small></div>
+      <form class="add-row" id="buyForm" autocomplete="off">
+        <input class="field" id="buyInput" maxlength="40" placeholder="예: 계란 30구" aria-label="사야 할 것">
+        <button class="btn btn-primary" type="submit">추가</button>
+      </form>
+      <p class="msg" id="buyMsg" role="status"></p>
+      <ul class="buy" id="buyAll"></ul>
+      <p class="empty" id="buyAllEmpty">다 샀어. 목록이 비었어.</p>
+    </section>
   </section>
 
   <!-- 취미 -->
