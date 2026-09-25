@@ -27,10 +27,10 @@ export const BUILD = [
 export const PARTY_SIZE = 3;
 
 // ---------- 초기화 ----------
-// 05:00 전이면 아직 '어제' 게임 날이다
-export function gameDay(now) {
+// 초기화 시각(명조 05:00) 전이면 아직 '어제' 게임 날이다. 워프레임도 시각만 바꿔 쓴다
+export function gameDay(now, hour = RESET_HOUR) {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (now.getHours() < RESET_HOUR) d.setDate(d.getDate() - 1);
+  if (now.getHours() < hour) d.setDate(d.getDate() - 1);
   return d;
 }
 export const dailyKey = (now) => ymd(gameDay(now));

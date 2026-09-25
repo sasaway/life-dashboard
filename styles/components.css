@@ -303,3 +303,59 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .party-h .btn{flex:none;white-space:nowrap}
 .card>.msg:empty{display:none}
 .slot-empty{width:100%}
+
+/* ---------- 취미: 게임 카드 → 각 게임 쪽 ---------- */
+.divider{height:1px;background:var(--line);margin:2px 0} /* 시안 그대로 */
+.hobby-page{display:flex;flex-direction:column;gap:var(--gap)}
+.hub{width:100%;text-align:left;display:flex;flex-direction:column;gap:8px;min-height:var(--touch)}
+.hub-h{display:flex;justify-content:space-between;align-items:center}
+.hub-h b{font-size:var(--fs-body);font-weight:700}
+.hub .go{width:18px;height:18px;stroke:var(--faint);fill:none;stroke-width:1.8}
+.hub-sub{font-size:var(--fs-small);color:var(--sub)}
+.hub .meter{display:block}
+.sub-top{justify-content:flex-start;align-items:center}
+.sub-top h1{margin:0}
+.icon-btn.del{border-color:transparent;background:none}
+.icon-btn.del svg{width:16px;height:16px;stroke:var(--faint)}
+
+/* 워프레임: 오늘 할 일 */
+.todos{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.todos:empty{display:none}
+.todos li{display:flex;gap:4px;align-items:center}
+.todos .chk{flex:1;min-width:0;text-align:left}
+.todos .lbl{overflow-wrap:anywhere}
+
+/* 워프레임: 실시간 현황 */
+.live{display:flex;flex-direction:column;gap:16px}
+.live:empty{display:none}
+.live h3{margin:0 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:var(--fs-small);font-weight:600;color:var(--sub)}
+.live h3 .mono{font-size:var(--fs-tiny);font-weight:500;color:var(--faint);flex:none}
+.live ol,.live ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.live li{display:flex;flex-direction:column;padding:8px 0;border-top:1px solid var(--line)}
+.live li:first-child{border-top:0;padding-top:0}
+.live li b{font-weight:600}
+.live .sub{font-size:var(--fs-tiny);color:var(--faint);overflow-wrap:anywhere}
+#wfLiveMsg{margin:-4px 0 10px;min-height:0}
+.credit{font-size:var(--fs-tiny)}
+
+/* 워프레임: 장비 목록 */
+.gear-hint{margin:-6px 0 8px}
+.gear{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.gear-row{width:100%;text-align:left;display:flex;flex-direction:column;gap:6px;padding:10px 12px;min-height:var(--touch);border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
+.gear-row.wish{border-style:dashed}
+.gear-top{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 8px}
+.gear-top .style{flex-basis:100%;font-size:var(--fs-tiny);font-weight:600;color:var(--faint)}
+.gear-top b{font-size:var(--fs-body);font-weight:700}
+.gear-top .tag{margin-left:0}
+.gear-slots{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:var(--fs-small)}
+.gear-slots .k{color:var(--faint)}
+.gear-row .empty{font-size:var(--fs-small)}
+.gear-sub{margin:16px 0 8px;font-size:var(--fs-small);font-weight:600;color:var(--sub)}
+.others{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.others li{display:flex;align-items:center;padding-left:12px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface);font-size:var(--fs-small)}
+.others button{position:relative;width:32px;height:32px;border:0;background:none;display:grid;place-items:center}
+.others button::after{content:"";position:absolute;inset:-4px}
+.others svg{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:1.8}
+.gear-form{display:flex;flex-direction:column;gap:8px}
+.gear-form label{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:center;font-size:var(--fs-small);color:var(--sub)}
+#gearRemove{align-self:flex-start;min-height:var(--touch)}

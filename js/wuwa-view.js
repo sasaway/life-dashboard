@@ -22,7 +22,8 @@ const saveParties = () => store.save("wuwaParties", parties) && store.save("wuwa
 const charById = (id) => chars.list.find((c) => c.id === id);
 
 const CHECK_SVG = '<svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg>';
-const chip = (attr, label, on, small = false) =>
+// 체크 칩 (시안 .chk) — 워프레임 화면도 같이 쓴다
+export const chip = (attr, label, on, small = false) =>
   `<button class="chk${small ? " small" : ""}" ${attr} aria-pressed="${Boolean(on)}"><span class="box">${CHECK_SVG}</span><span class="lbl">${esc(label)}</span></button>`;
 const bossBoxes = (n) => [1, 2, 3].map((i) =>
   `<button data-weekly="boss" data-n="${i}" aria-pressed="${n >= i}" aria-label="주간보스 ${i}회"></button>`).join("");
@@ -42,6 +43,10 @@ function renderChecks() {
     $(list).innerHTML = dailyHtml;
   }
   $("wwMainBoss").innerHTML = `주간보스 ${bossBoxes(wd.boss ?? 0)}`;
+
+  // 취미 탭 첫 화면의 명조 카드
+  $("hubWwSub").textContent = `오늘 ${dc.done} / ${dc.total} · 이번 주 ${wc.done} / ${wc.total}`;
+  $("hubWwBar").style.width = `${(dc.done / dc.total) * 100}%`;
 
   $("wwWeeklyCount").textContent = `${wc.done} / ${wc.total}`;
   $("wwWeeklyBar").style.width = `${(wc.done / wc.total) * 100}%`;

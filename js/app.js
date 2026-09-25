@@ -9,6 +9,7 @@ import { startMeals, renderAll as renderMeals } from "./meals-view.js";
 import { startRecipes } from "./recipe-view.js";
 import { startWorkout, renderWorkout } from "./workout-view.js";
 import { startWuwa, renderWuwa } from "./wuwa-view.js";
+import { startWarframe, renderWarframe } from "./warframe-view.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -24,6 +25,7 @@ function renderClock() {
   renderMeals();      // 자정에 오늘 식단으로 넘어간다
   renderWorkout();    // 자정에 오늘 운동으로 넘어간다
   renderWuwa();       // 새벽 5시에 명조 체크가 비워진다
+  renderWarframe();   // 새벽 1시에 워프레임 체크가 비워지고, 출격 남은 시간을 맞춘다
 }
 
 // 다음 분이 시작될 때 맞춰 다시 그린다
@@ -49,12 +51,26 @@ function showScreen(name) {
     if (t.dataset.screen === name) t.setAttribute("aria-current", "page");
     else t.removeAttribute("aria-current");
   });
+  if (name === "hobby") showHobby("hub"); // 취미 탭을 누르면 늘 게임 카드 두 장부터
   window.scrollTo(0, 0);
+}
+
+// 취미: 게임 카드(허브) → 명조 쪽 / 워프레임 쪽
+function showHobby(page) {
+  document.querySelectorAll(".hobby-page").forEach((p) => {
+    p.hidden = p.id !== `hobby-${page}`;
+  });
+  window.scrollTo(0, 0);
+  document.dispatchEvent(new CustomEvent("hobby-open", { detail: page }));
 }
 
 function startTabs() {
   document.querySelectorAll(".tab").forEach((t) => {
     t.addEventListener("click", () => showScreen(t.dataset.screen));
+  });
+  $("screen-hobby").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-hobby]");
+    if (b) showHobby(b.dataset.hobby);
   });
 }
 
@@ -98,6 +114,7 @@ startMeals();
 startRecipes();
 startWorkout();
 startWuwa();
+startWarframe();
 startClock();
 startTabs();
 startSettings();

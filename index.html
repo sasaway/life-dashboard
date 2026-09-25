@@ -70,12 +70,15 @@
       <ul class="buy" id="buyMain"></ul>
       <p class="empty" id="buyMainEmpty" hidden></p>
     </section>
-    <!-- 취미 (시안 그대로: 명조 오늘 + 주간보스) -->
+    <!-- 취미 (시안 그대로: 명조 오늘 + 주간보스, 구분선, 워프레임 오늘) -->
     <section class="card game" id="wwMainCard" aria-label="취미">
       <div class="game-h"><b>명조 · 오늘</b><span class="mono" id="wwMainCount">0 / 4</span></div>
       <div class="meter"><i id="wwMainBar"></i></div>
       <div class="checks" id="wwMainDaily"></div>
       <div class="boss" id="wwMainBoss"></div>
+      <div class="divider"></div>
+      <div class="game-h"><b>워프레임 · 오늘</b><span class="mono" id="wfMainCount">0 / 2</span></div>
+      <div class="checks" id="wfMainDaily"></div>
     </section>
   </section>
 
@@ -174,27 +177,79 @@
     </div>
   </section>
 
-  <!-- 취미 -->
+  <!-- 취미: 게임 카드 두 장 → 눌러서 각 게임 쪽으로 (사용자 결정) -->
   <section class="screen" id="screen-hobby" aria-label="취미" hidden>
-    <header class="top"><h1>취미</h1></header>
-    <section class="card game" id="wwTodayCard" aria-label="명조 오늘">
-      <div class="game-h"><b>명조 · 오늘</b><span class="mono" id="wwDailyCount"></span></div>
-      <div class="meter"><i id="wwDailyBar"></i></div>
-      <div class="checks" id="wwDaily"></div>
-      <p class="mini">매일 새벽 5시에 비워져.</p>
-    </section>
-    <section class="card game" id="wwWeekCard" aria-label="명조 이번 주">
-      <div class="game-h"><b>명조 · 이번 주</b><span class="mono" id="wwWeeklyCount"></span></div>
-      <div class="meter"><i id="wwWeeklyBar"></i></div>
-      <div class="weekly-list" id="wwWeekly"></div>
-      <p class="mini">월요일 새벽 5시에 비워져.</p>
-    </section>
-    <section class="card" aria-label="목표 육성 파티">
-      <div class="card-h"><h2>목표 육성 파티</h2><button class="btn btn-text" id="wwAddParty">파티 추가</button></div>
-      <p class="msg" id="wwCharsMsg" role="status"></p>
-      <div class="parties" id="wwParties"></div>
-      <p class="empty" id="wwPartiesEmpty">'파티 추가' 를 눌러 키울 캐릭터를 넣어 봐.</p>
-    </section>
+    <div class="hobby-page" id="hobby-hub">
+      <header class="top"><h1>취미</h1></header>
+      <button class="card hub" data-hobby="ww">
+        <span class="hub-h"><b>명조</b><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+        <span class="hub-sub" id="hubWwSub"></span>
+        <span class="meter"><i id="hubWwBar"></i></span>
+      </button>
+      <button class="card hub" data-hobby="wf">
+        <span class="hub-h"><b>워프레임</b><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+        <span class="hub-sub" id="hubWfSub"></span>
+        <span class="meter"><i id="hubWfBar"></i></span>
+      </button>
+    </div>
+
+    <div class="hobby-page" id="hobby-ww" hidden>
+      <header class="top sub-top"><button class="icon-btn" data-hobby="hub" aria-label="취미로 돌아가기"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><h1>명조</h1></header>
+      <section class="card game" id="wwTodayCard" aria-label="명조 오늘">
+        <div class="game-h"><b>명조 · 오늘</b><span class="mono" id="wwDailyCount"></span></div>
+        <div class="meter"><i id="wwDailyBar"></i></div>
+        <div class="checks" id="wwDaily"></div>
+        <p class="mini">매일 새벽 5시에 비워져.</p>
+      </section>
+      <section class="card game" id="wwWeekCard" aria-label="명조 이번 주">
+        <div class="game-h"><b>명조 · 이번 주</b><span class="mono" id="wwWeeklyCount"></span></div>
+        <div class="meter"><i id="wwWeeklyBar"></i></div>
+        <div class="weekly-list" id="wwWeekly"></div>
+        <p class="mini">월요일 새벽 5시에 비워져.</p>
+      </section>
+      <section class="card" aria-label="목표 육성 파티">
+        <div class="card-h"><h2>목표 육성 파티</h2><button class="btn btn-text" id="wwAddParty">파티 추가</button></div>
+        <p class="msg" id="wwCharsMsg" role="status"></p>
+        <div class="parties" id="wwParties"></div>
+        <p class="empty" id="wwPartiesEmpty">'파티 추가' 를 눌러 키울 캐릭터를 넣어 봐.</p>
+      </section>
+    </div>
+
+    <div class="hobby-page" id="hobby-wf" hidden>
+      <header class="top sub-top"><button class="icon-btn" data-hobby="hub" aria-label="취미로 돌아가기"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><h1>워프레임</h1></header>
+      <section class="card game" id="wfTodayCard" aria-label="워프레임 오늘">
+        <div class="game-h"><b>워프레임 · 오늘</b><span class="mono" id="wfDailyCount"></span></div>
+        <div class="meter"><i id="wfDailyBar"></i></div>
+        <div class="checks" id="wfDaily"></div>
+        <p class="mini">매일 새벽 1시(출격이 바뀌는 시각)에 비워져.</p>
+      </section>
+      <section class="card" aria-label="오늘 할 일">
+        <div class="card-h"><h2>오늘 할 일</h2><small class="num" id="wfTodoLeft"></small></div>
+        <form class="add-row" id="wfTodoForm" autocomplete="off">
+          <input class="field" id="wfTodoInput" maxlength="60" placeholder="예: 렐릭 정제하기" aria-label="할 일">
+          <button class="btn btn-primary">추가</button>
+        </form>
+        <ul class="todos" id="wfTodos"></ul>
+        <p class="mini">체크한 건 새벽 1시에 사라지고, 못 한 건 다음 날로 넘어가.</p>
+      </section>
+      <section class="card" aria-label="실시간 현황">
+        <div class="card-h"><h2>실시간 현황</h2><button class="btn btn-text" id="wfRefresh">새로 받기</button></div>
+        <p class="msg" id="wfLiveMsg" role="status"></p>
+        <div class="live" id="wfLive"></div>
+        <p class="mini credit">정보: warframestat.us · 지역 이름과 조건은 영어 원문</p>
+      </section>
+      <section class="card" aria-label="장비 목록">
+        <div class="card-h"><h2>장비 목록</h2><button class="btn btn-text" id="wfAddRow">줄 추가</button></div>
+        <p class="mini gear-hint">줄을 누르면 고칠 수 있어.</p>
+        <ul class="gear" id="wfGear"></ul>
+        <h3 class="gear-sub">그 외 육성 무기</h3>
+        <ul class="others" id="wfOthers"></ul>
+        <form class="add-row" id="wfOtherForm" autocomplete="off">
+          <input class="field" id="wfOtherInput" maxlength="30" placeholder="무기 이름" aria-label="그 외 육성 무기">
+          <button class="btn btn-ghost">추가</button>
+        </form>
+      </section>
+    </div>
   </section>
 </main>
 
@@ -291,6 +346,20 @@
     </div>
     <button class="btn btn-ghost pick-recipe" id="pickRecipe">이 요리 레시피 보기</button>
     <ul class="picks" id="pickList"></ul>
+  </div>
+</div>
+
+<!-- 워프레임 장비 줄 고치기 -->
+<div class="sheet-wrap" id="gearSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="gearTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="gearTitle">장비 고치기</h2>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <form class="gear-form" id="gearForm" autocomplete="off"></form>
+    <p class="msg">쓰는 대로 저장돼.</p>
+    <button class="btn btn-ghost" id="gearRemove">이 줄 지우기</button>
   </div>
 </div>
 
