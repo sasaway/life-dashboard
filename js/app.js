@@ -8,6 +8,7 @@ import { startBudget } from "./budget-view.js";
 import { startMeals, renderAll as renderMeals } from "./meals-view.js";
 import { startRecipes } from "./recipe-view.js";
 import { startWorkout, renderWorkout } from "./workout-view.js";
+import { startWuwa, renderWuwa } from "./wuwa-view.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -22,6 +23,7 @@ function renderClock() {
   renderReviewCard(); // 06:00 에 오늘 회고로 넘어간다
   renderMeals();      // 자정에 오늘 식단으로 넘어간다
   renderWorkout();    // 자정에 오늘 운동으로 넘어간다
+  renderWuwa();       // 새벽 5시에 명조 체크가 비워진다
 }
 
 // 다음 분이 시작될 때 맞춰 다시 그린다
@@ -95,6 +97,7 @@ startBudget();
 startMeals();
 startRecipes();
 startWorkout();
+startWuwa();
 startClock();
 startTabs();
 startSettings();

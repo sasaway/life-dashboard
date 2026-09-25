@@ -70,6 +70,13 @@
       <ul class="buy" id="buyMain"></ul>
       <p class="empty" id="buyMainEmpty" hidden></p>
     </section>
+    <!-- 취미 (시안 그대로: 명조 오늘 + 주간보스) -->
+    <section class="card game" id="wwMainCard" aria-label="취미">
+      <div class="game-h"><b>명조 · 오늘</b><span class="mono" id="wwMainCount">0 / 4</span></div>
+      <div class="meter"><i id="wwMainBar"></i></div>
+      <div class="checks" id="wwMainDaily"></div>
+      <div class="boss" id="wwMainBoss"></div>
+    </section>
   </section>
 
   <!-- 식단 -->
@@ -170,7 +177,24 @@
   <!-- 취미 -->
   <section class="screen" id="screen-hobby" aria-label="취미" hidden>
     <header class="top"><h1>취미</h1></header>
-    <section class="card"><p class="empty">명조와 워프레임 체크리스트가 여기 들어와.</p></section>
+    <section class="card game" id="wwTodayCard" aria-label="명조 오늘">
+      <div class="game-h"><b>명조 · 오늘</b><span class="mono" id="wwDailyCount"></span></div>
+      <div class="meter"><i id="wwDailyBar"></i></div>
+      <div class="checks" id="wwDaily"></div>
+      <p class="mini">매일 새벽 5시에 비워져.</p>
+    </section>
+    <section class="card game" id="wwWeekCard" aria-label="명조 이번 주">
+      <div class="game-h"><b>명조 · 이번 주</b><span class="mono" id="wwWeeklyCount"></span></div>
+      <div class="meter"><i id="wwWeeklyBar"></i></div>
+      <div class="weekly-list" id="wwWeekly"></div>
+      <p class="mini">월요일 새벽 5시에 비워져.</p>
+    </section>
+    <section class="card" aria-label="목표 육성 파티">
+      <div class="card-h"><h2>목표 육성 파티</h2><button class="btn btn-text" id="wwAddParty">파티 추가</button></div>
+      <p class="msg" id="wwCharsMsg" role="status"></p>
+      <div class="parties" id="wwParties"></div>
+      <p class="empty" id="wwPartiesEmpty">'파티 추가' 를 눌러 키울 캐릭터를 넣어 봐.</p>
+    </section>
   </section>
 </main>
 
@@ -267,6 +291,22 @@
     </div>
     <button class="btn btn-ghost pick-recipe" id="pickRecipe">이 요리 레시피 보기</button>
     <ul class="picks" id="pickList"></ul>
+  </div>
+</div>
+
+<!-- 캐릭터 고르기 -->
+<div class="sheet-wrap" id="charSheet" hidden>
+  <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="charTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <div><h2>캐릭터 고르기</h2><p class="date" id="charTitle"></p></div>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <input class="field" id="charSearch" type="search" placeholder="이름이나 속성 (예: 금희, 회절)" aria-label="캐릭터 찾기">
+    <button class="btn btn-ghost" id="charClear">이 칸 비우기</button>
+    <ul class="char-grid" id="charGrid"></ul>
+    <p class="empty" id="charEmpty" hidden>찾는 캐릭터가 없어.</p>
+    <p class="msg">캐릭터 정보: encore.moe</p>
   </div>
 </div>
 

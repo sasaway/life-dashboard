@@ -1,7 +1,8 @@
 // 서비스 워커: 앱 파일 사본을 폰에 두어 인터넷이 없어도 열리게 한다.
 // 인터넷이 되면 늘 새 파일을 먼저 받고, 안 될 때만 사본을 쓴다.
 // 파일을 고치면 VERSION 을 올린다 (js/version.js 도 같이). 그래야 폰이 새 버전을 알아챈다.
-const VERSION = "v13";
+const VERSION = "v14";
+const ICONS = "encore-icons"; // 명조 캐릭터 얼굴 (버전이 바뀌어도 남긴다)
 const CACHE = `life-dashboard-${VERSION}`;
 const NETWORK_WAIT_MS = 4000; // 인터넷이 느리면 이만큼 기다리고 사본을 쓴다
 
@@ -33,6 +34,8 @@ const FILES = [
   "js/recipe-view.js",
   "js/workout.js",
   "js/workout-view.js",
+  "js/wuwa.js",
+  "js/wuwa-view.js",
   "fonts/Pretendard-Regular.subset.woff2",
   "fonts/Pretendard-Medium.subset.woff2",
   "fonts/Pretendard-SemiBold.subset.woff2",
@@ -67,7 +70,7 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== ICONS).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -75,7 +78,14 @@ self.addEventListener("activate", (e) => {
 // 새 파일을 먼저 받는다. 인터넷이 없거나 느리면 사본을 보여 준다.
 self.addEventListener("fetch", (e) => {
   const req = e.request;
-  if (req.method !== "GET" || new URL(req.url).origin !== location.origin) return;
+  const url = new URL(req.url);
+  // 명조 캐릭터 얼굴: 한 번 받으면 사본을 쓴다 (인터넷 없이도 보이게)
+  if (req.method === "GET" && url.hostname === "api.encore.moe" && url.pathname.includes("/resource/")) {
+    e.respondWith(caches.open(ICONS).then(async (cache) =>
+      (await cache.match(req)) || fetch(req).then((res) => { if (res.ok || res.type === "opaque") cache.put(req, res.clone()); return res; })));
+    return;
+  }
+  if (req.method !== "GET" || url.origin !== location.origin) return;
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
       // no-cache: 서버에 '바뀌었어?' 를 꼭 물어본다 (안 바뀌었으면 짧은 대답만 온다)
