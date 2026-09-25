@@ -125,3 +125,36 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 /* ---------- 입력 + 추가 버튼 한 줄 ---------- */
 .add-row{display:flex;gap:8px}
 .add-row .btn{min-height:var(--touch);flex:none}
+
+/* ---------- 돈 탭 ---------- */
+.seg.three{grid-template-columns:repeat(3,1fr)}
+.money-page{display:flex;flex-direction:column;gap:var(--gap)}
+.money-page>.msg:empty{display:none}
+.stat{font-size:var(--fs-hero);font-weight:600;letter-spacing:-.02em}
+.stat span{font-size:var(--fs-small);color:var(--faint);font-weight:500}
+.stat #budgetTotal{font-size:inherit;color:inherit;font-weight:inherit}
+.money-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.money-rows li{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.money-rows li:first-child{border-top:0;padding-top:0}
+.money-rows .name{flex:1;min-width:0;overflow-wrap:anywhere;display:flex;flex-direction:column}
+.money-rows .sub,.cat-stats .sub{font-size:var(--fs-tiny);color:var(--faint)}
+.field.won{width:132px;flex:none;text-align:right}
+.money-rows .del{border-color:transparent;background:none;flex:none}
+.add-money{display:grid;grid-template-columns:1fr 112px auto;gap:8px;margin-top:10px}
+.add-money .field.won{width:100%}
+.add-money .btn{min-height:var(--touch)}
+
+/* ---------- 결산 통계 · 상태색은 돈 화면에만 (DESIGN.md 8번) ---------- */
+.cat-stats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.cat-stats b{font-size:var(--fs-body);font-weight:500}
+.cat-stats .meter{margin-top:6px}
+.meter.st-good>i{background:var(--good)}
+.meter.st-warn>i{background:var(--warn)}
+.meter.st-danger>i{background:var(--danger)}
+.st-chip{display:inline-block;font-size:11px;font-weight:600;border:1px solid currentColor;border-radius:var(--r-pill);padding:0 7px}
+.st-chip.st-good{color:var(--good)}
+.st-chip.st-warn{color:var(--warn)}
+.st-chip.st-danger{color:var(--danger)}
+
+/* 한글이 섞인 금액 줄: 글꼴은 그대로, 숫자 폭만 맞춘다 */
+.num{font-variant-numeric:tabular-nums}

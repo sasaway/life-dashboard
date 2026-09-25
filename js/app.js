@@ -4,6 +4,7 @@ import { startSchedule, renderToday, openScheduleSettings } from "./schedule-vie
 import { startReview, renderReviewCard } from "./review-view.js";
 import { openSheet, startSheets } from "./sheet.js";
 import { startShopping } from "./shopping-view.js";
+import { startBudget } from "./budget-view.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -85,6 +86,7 @@ startSheets();
 startSchedule();
 startReview();
 startShopping();
+startBudget();
 startClock();
 startTabs();
 startSettings();

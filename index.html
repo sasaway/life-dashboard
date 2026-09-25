@@ -77,6 +77,38 @@
   <!-- 돈 -->
   <section class="screen" id="screen-money" aria-label="돈" hidden>
     <header class="top"><h1>돈</h1></header>
+    <div class="seg three" id="moneyPick">
+      <button data-page="budget" aria-pressed="true">예산</button>
+      <button data-page="settle" aria-pressed="false">지난달 결산</button>
+      <button data-page="buy" aria-pressed="false">사야 할 것</button>
+    </div>
+
+    <div class="money-page" id="page-budget">
+      <section class="card" aria-label="한 달 예산">
+        <div class="card-h"><h2>한 달 예산</h2><small>매달 그대로 써</small></div>
+        <div class="stat mono"><span id="budgetTotal">0</span><span>원</span></div>
+      </section>
+      <p class="msg" id="budgetMsg" role="status"></p>
+      <div class="money-page" id="budgetCats"></div>
+    </div>
+
+    <div class="money-page" id="page-settle" hidden>
+      <div class="week-nav">
+        <button class="icon-btn" id="prevMonth" aria-label="이전 달"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <span id="monthLabel"></span>
+        <button class="icon-btn" id="nextMonth" aria-label="다음 달"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+      <section class="card" id="statTotal" aria-label="한 달 합계"></section>
+      <section class="card" aria-label="분류별 사용률">
+        <div class="card-h"><h2>분류별</h2></div>
+        <ul class="cat-stats" id="statCats"></ul>
+      </section>
+      <p class="empty" id="settleEmpty" hidden>예산 항목이 없어. 예산부터 적어 줘.</p>
+      <p class="msg" id="settleMsg" role="status"></p>
+      <div class="money-page" id="settleCats"></div>
+    </div>
+
+    <div class="money-page" id="page-buy" hidden>
     <section class="card" aria-label="사야 할 것">
       <div class="card-h"><h2>사야 할 것</h2><small id="buyCount"></small></div>
       <form class="add-row" id="buyForm" autocomplete="off">
@@ -87,6 +119,7 @@
       <ul class="buy" id="buyAll"></ul>
       <p class="empty" id="buyAllEmpty">다 샀어. 목록이 비었어.</p>
     </section>
+    </div>
   </section>
 
   <!-- 취미 -->
