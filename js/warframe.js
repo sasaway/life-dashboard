@@ -40,38 +40,66 @@ export const removeTodo = (todos, id) => todos.filter((t) => t.id !== id);
 export const pruneTodos = (todos, now) => todos.filter((t) => !t.done || t.done === dayKey(now));
 export const leftTodos = (todos) => todos.filter((t) => !t.done).length;
 
-// ---------- 장비 목록 ----------
-// 기본값: Notion '워프레임 계정 수칙' 의 '현재 계획중인 Loadout' 표 (2026-09-25 11:59)
+// ---------- 장비 목록 (워프레임 기준) ----------
+// 워프레임 위키의 플레이스타일 다섯 가지 (Notion 로드아웃 표의 줄 순서)
+export const PLAYSTYLES = ["Invisibility", "Damage", "Support", "Survival", "Crowd Control"];
+// Sortie 무기 분류: 지금 표에 있는 네 가지. 주무기에 붙는다
+export const SORTIE_TYPES = ["Shotgun", "Rifle", "Precision Rifle", "(Cross) Bow"];
+// 글자로 적는 칸 (Sortie 분류는 주무기 바로 아래에서 고른다)
 export const GEAR_FIELDS = [
-  ["frame", "워프레임"],
-  ["sortie", "Sortie 분류"],
   ["primary", "주무기"],
   ["secondary", "보조무기"],
   ["melee", "근접무기"],
   ["companion", "동반자"],
 ];
-const row = (id, style, frame = "", sortie = "", primary = "", secondary = "", melee = "", companion = "") =>
-  ({ id, style, frame, sortie, primary, secondary, melee, companion });
+
+// { id, frame, styles: [플레이스타일], wish: 위시리스트, sortie, primary, secondary, melee, companion }
+const frame = (id, name = "", styles = [], wish = false, sortie = "", primary = "", secondary = "", melee = "", companion = "") =>
+  ({ id, frame: name, styles, wish, sortie, primary, secondary, melee, companion });
+
+// 기본값: Notion '워프레임 계정 수칙' 의 '현재 계획중인 Loadout' 표 (2026-09-25 11:59)
+// 표에서 병합된 칸(아래 줄이 통째로 빈 칸)은 그 워프레임이 두 플레이스타일을 다 가진 것 (사용자 확인)
 export const DEFAULT_GEAR = {
-  rows: [
-    row("inv", "Invisibility", "오락시아", "Shotgun", "쿠바 소백", "사이오티드", "스피너랙스", "스미타 카밧"),
-    row("dmg", "Damage"),
-    row("sup", "Support", "트리니티", "Rifle", "브래튼", "라토", "조리스", "팬저 불파파일라"),
-    row("srv", "Survival"),
-    row("cc", "Crowd Control", "벤쉬", "Precision Rifle", "벡티스", "퓨리스", "보", "하운드"),
-    row("wish", "Wish List", "나린", "(Cross) Bow", "눈차사", "아크손돌", "데스트레자"),
+  frames: [
+    frame("inv", "오락시아", ["Invisibility", "Damage"], false, "Shotgun", "쿠바 소백", "사이오티드", "스피너랙스", "스미타 카밧"),
+    frame("sup", "트리니티", ["Support", "Survival"], false, "Rifle", "브래튼", "라토", "조리스", "팬저 불파파일라"),
+    frame("cc", "벤쉬", ["Crowd Control"], false, "Precision Rifle", "벡티스", "퓨리스", "보", "하운드"),
+    frame("wish", "나린", [], true, "(Cross) Bow", "눈차사", "아크손돌", "데스트레자"),
   ],
   // '그 외의 육성 무기들' — 표의 칸 순서대로
   others: ["쏜바크", "볼터", "나타루크", "패리스", "워 프라임", "스키아자티", "브로큰워", "럼블잭"],
 };
 
-export const isWish = (r) => /wish/i.test(r.style);
-export const addRow = (gear, id = newId()) => ({ ...gear, rows: [...gear.rows, row(id, "")] });
-export function updateRow(gear, id, patch) {
-  const clean = Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, String(v).trim()]));
-  return { ...gear, rows: gear.rows.map((r) => (r.id === id ? { ...r, ...clean } : r)) };
+// v16 형식 { rows: [{ style, frame, ... }] } → 워프레임 기준. 통째로 빈 줄은 바로 위 워프레임의 병합 칸으로 본다
+export function migrateGear(gear) {
+  if (!gear.rows) return gear;
+  const frames = [];
+  for (const r of gear.rows) {
+    const empty = !["frame", "sortie", "primary", "secondary", "melee", "companion"].some((k) => r[k]);
+    const style = PLAYSTYLES.includes(r.style) ? [r.style] : [];
+    if (empty) {
+      const prev = frames.at(-1);
+      if (prev && !prev.wish) prev.styles = sortStyles([...prev.styles, ...style]);
+      continue;
+    }
+    const wish = /wish/i.test(r.style);
+    frames.push(frame(r.id, r.frame, wish ? [] : style, wish, SORTIE_TYPES.includes(r.sortie) ? r.sortie : "",
+      r.primary, r.secondary, r.melee, r.companion));
+  }
+  return { frames, others: gear.others ?? [] };
 }
-export const removeRow = (gear, id) => ({ ...gear, rows: gear.rows.filter((r) => r.id !== id) });
+
+const sortStyles = (list) => PLAYSTYLES.filter((p) => list.includes(p));
+const patchFrame = (gear, id, fn) => ({ ...gear, frames: gear.frames.map((f) => (f.id === id ? { ...f, ...fn(f) } : f)) });
+
+export const addFrame = (gear, id = newId()) => ({ ...gear, frames: [...gear.frames, frame(id)] });
+export const updateFrame = (gear, id, patch) =>
+  patchFrame(gear, id, () => Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, String(v).trim()])));
+export const toggleStyle = (gear, id, style) =>
+  patchFrame(gear, id, (f) => ({ styles: f.styles.includes(style) ? f.styles.filter((s) => s !== style) : sortStyles([...f.styles, style]) }));
+export const setSortie = (gear, id, type) => patchFrame(gear, id, (f) => ({ sortie: f.sortie === type ? "" : type }));
+export const toggleWish = (gear, id) => patchFrame(gear, id, (f) => ({ wish: !f.wish }));
+export const removeFrame = (gear, id) => ({ ...gear, frames: gear.frames.filter((f) => f.id !== id) });
 export function addOther(gear, name) {
   const n = name.trim();
   return n ? { ...gear, others: [...gear.others, n] } : gear;

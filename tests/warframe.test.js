@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   DAILY, dayKey, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo, removeTodo, pruneTodos, leftTodos,
-  DEFAULT_GEAR, isWish, addRow, updateRow, removeRow, addOther, removeOther,
+  PLAYSTYLES, SORTIE_TYPES, DEFAULT_GEAR, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish,
+  removeFrame, addOther, removeOther,
   sortieView, rewardHits, invasionView, alertView, timeLeft, missionKo, factionKo,
 } from "../js/warframe.js";
 
@@ -39,26 +40,63 @@ test("오늘 할 일: 빈 줄은 안 들어가고, 체크한 것만 새벽 1시�
   assert.deepEqual(removeTodo(t, "a").map((x) => x.id), ["b"]);
 });
 
-test("장비 목록 기본값은 Notion 로드아웃 표 (플레이스타일 6줄 + 그 외 육성 무기 8개)", () => {
-  assert.deepEqual(DEFAULT_GEAR.rows.map((r) => r.style), ["Invisibility", "Damage", "Support", "Survival", "Crowd Control", "Wish List"]);
-  const inv = DEFAULT_GEAR.rows[0];
-  assert.deepEqual([inv.frame, inv.sortie, inv.primary, inv.secondary, inv.melee, inv.companion],
-    ["오락시아", "Shotgun", "쿠바 소백", "사이오티드", "스피너랙스", "스미타 카밧"]);
-  assert.equal(DEFAULT_GEAR.rows[1].frame, "");
+test("장비 목록은 워프레임 기준: Notion 표의 병합 칸은 두 플레이스타일을 다 가진다", () => {
+  assert.deepEqual(PLAYSTYLES, ["Invisibility", "Damage", "Support", "Survival", "Crowd Control"]);
+  assert.deepEqual(SORTIE_TYPES, ["Shotgun", "Rifle", "Precision Rifle", "(Cross) Bow"]);
+  assert.deepEqual(DEFAULT_GEAR.frames.map((f) => [f.frame, f.styles, f.wish]), [
+    ["오락시아", ["Invisibility", "Damage"], false],
+    ["트리니티", ["Support", "Survival"], false],
+    ["벤쉬", ["Crowd Control"], false],
+    ["나린", [], true],
+  ]);
+  const ora = DEFAULT_GEAR.frames[0];
+  assert.deepEqual([ora.primary, ora.sortie, ora.secondary, ora.melee, ora.companion],
+    ["쿠바 소백", "Shotgun", "사이오티드", "스피너랙스", "스미타 카밧"]);
+  assert.equal(DEFAULT_GEAR.frames[2].sortie, "Precision Rifle");
   assert.equal(DEFAULT_GEAR.others.length, 8);
-  assert.equal(isWish(DEFAULT_GEAR.rows[5]), true);
-  assert.equal(isWish(inv), false);
 });
 
-test("장비 줄 추가·고치기·지우기, 그 외 무기 추가·지우기", () => {
-  let g = addRow(DEFAULT_GEAR, "n1");
-  assert.equal(g.rows.at(-1).id, "n1");
-  assert.equal(DEFAULT_GEAR.rows.length, 6); // 기본값은 그대로
-  g = updateRow(g, "n1", { style: " Damage ", frame: " 세반 " });
-  assert.deepEqual([g.rows.at(-1).style, g.rows.at(-1).frame], ["Damage", "세반"]);
-  g = removeRow(g, "n1");
-  assert.equal(g.rows.length, 6);
-  g = addOther(g, " 브라톤 ");
+test("옛 형식(플레이스타일 줄)은 워프레임 기준으로 옮긴다: 빈 줄은 바로 위 워프레임에 합친다", () => {
+  const old = {
+    rows: [
+      { id: "inv", style: "Invisibility", frame: "오락시아", sortie: "Shotgun", primary: "쿠바 소백", secondary: "", melee: "", companion: "" },
+      { id: "dmg", style: "Damage", frame: "", sortie: "", primary: "", secondary: "", melee: "", companion: "" },
+      { id: "sup", style: "Support", frame: "세반", sortie: "Pistol", primary: "", secondary: "", melee: "", companion: "" },
+      { id: "wish", style: "Wish List", frame: "나린", sortie: "(Cross) Bow", primary: "", secondary: "", melee: "", companion: "" },
+    ],
+    others: ["볼터"],
+  };
+  const g = migrateGear(old);
+  assert.deepEqual(g.frames.map((f) => [f.id, f.frame, f.styles, f.wish, f.sortie]), [
+    ["inv", "오락시아", ["Invisibility", "Damage"], false, "Shotgun"],
+    ["sup", "세반", ["Support"], false, ""], // 네 가지에 없는 분류는 비운다
+    ["wish", "나린", [], true, "(Cross) Bow"],
+  ]);
+  assert.deepEqual(g.others, ["볼터"]);
+  assert.equal(migrateGear(DEFAULT_GEAR), DEFAULT_GEAR); // 새 형식은 그대로
+});
+
+test("워프레임 추가·고치기: 플레이스타일은 여러 개 체크, Sortie 분류는 넷 중 하나", () => {
+  let g = addFrame(DEFAULT_GEAR, "n1");
+  assert.deepEqual(g.frames.at(-1), { id: "n1", frame: "", styles: [], wish: false, sortie: "", primary: "", secondary: "", melee: "", companion: "" });
+  assert.equal(DEFAULT_GEAR.frames.length, 4); // 기본값은 그대로
+  g = updateFrame(g, "n1", { frame: " 세반 " });
+  g = toggleStyle(g, "n1", "Survival");
+  g = toggleStyle(g, "n1", "Damage");
+  assert.deepEqual(g.frames.at(-1).styles, ["Damage", "Survival"]); // 표 순서대로
+  g = toggleStyle(g, "n1", "Survival");
+  assert.deepEqual(g.frames.at(-1).styles, ["Damage"]);
+  g = setSortie(g, "n1", "Rifle");
+  assert.equal(g.frames.at(-1).sortie, "Rifle");
+  g = setSortie(g, "n1", "Rifle"); // 같은 걸 다시 누르면 비운다
+  assert.equal(g.frames.at(-1).sortie, "");
+  g = toggleWish(g, "n1");
+  assert.deepEqual([g.frames.at(-1).frame, g.frames.at(-1).wish], ["세반", true]);
+  assert.equal(removeFrame(g, "n1").frames.length, 4);
+});
+
+test("그 외 육성 무기 추가·지우기", () => {
+  let g = addOther(DEFAULT_GEAR, " 브라톤 ");
   g = addOther(g, "  ");
   assert.equal(g.others.at(-1), "브라톤");
   assert.equal(g.others.length, 9);

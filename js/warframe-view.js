@@ -3,8 +3,9 @@ import { store } from "./store.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import { chip } from "./wuwa-view.js";
 import {
-  DAILY, GEAR_FIELDS, DEFAULT_GEAR, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo, removeTodo, pruneTodos,
-  leftTodos, isWish, addRow, updateRow, removeRow, addOther, removeOther, sortieView, invasionView, alertView, timeLeft,
+  DAILY, PLAYSTYLES, SORTIE_TYPES, GEAR_FIELDS, DEFAULT_GEAR, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo,
+  removeTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame,
+  addOther, removeOther, sortieView, invasionView, alertView, timeLeft,
 } from "./warframe.js";
 
 const $ = (id) => document.getElementById(id);
@@ -15,11 +16,13 @@ const X_SVG = '<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>';
 
 let checks = store.load("wfChecks", {});
 let todos = store.load("wfTodos", []);
-let gear = store.load("wfGear", DEFAULT_GEAR);
+const savedGear = store.load("wfGear", DEFAULT_GEAR);
+let gear = migrateGear(savedGear); // v16 의 플레이스타일 줄 형식이면 워프레임 기준으로 옮긴다
+if (gear !== savedGear) store.save("wfGear", gear); // 옮긴 건 한 번 저장해 둔다
 let live = store.load("wfLive", { at: 0, sortie: null, invasions: [], alerts: [] });
 let loading = false;
 let liveFailed = false;
-let editing = null; // 고치고 있는 장비 줄 id
+let editing = null; // 고치고 있는 워프레임 id
 
 const pct = (c) => `${(c.done / c.total) * 100}%`;
 const wfOpen = () => !$("screen-hobby").hidden && !$("hobby-wf").hidden;
@@ -119,16 +122,23 @@ async function loadLive(force = false) {
   }
 }
 
-// ---------- 장비 목록 ----------
-const SLOTS = GEAR_FIELDS.slice(2); // 주무기 · 보조무기 · 근접무기 · 동반자
+// ---------- 장비 목록 (워프레임 기준) ----------
+// 주무기 바로 아래에 Sortie 분류를 둔다
+const slotsOf = (f) => [
+  ["주무기", f.primary], ["Sortie 분류", f.sortie],
+  ...GEAR_FIELDS.slice(1).map(([k, label]) => [label, f[k]]),
+].filter(([, v]) => v);
 
 function renderGear() {
-  $("wfGear").innerHTML = gear.rows.map((r) => {
-    const filled = GEAR_FIELDS.some(([k]) => r[k]);
-    const slots = SLOTS.filter(([k]) => r[k]).map(([k, label]) => `<span class="k">${label}</span><span>${esc(r[k])}</span>`).join("");
-    return `<li><button class="gear-row${isWish(r) ? " wish" : ""}" data-gear="${esc(r.id)}">
-      <span class="gear-top"><span class="style">${esc(r.style || "이름 없는 줄")}</span>${r.frame ? `<b>${esc(r.frame)}</b>` : ""}${r.sortie ? `<span class="tag">${esc(r.sortie)}</span>` : ""}</span>
-      ${filled ? (slots ? `<span class="gear-slots">${slots}</span>` : "") : '<span class="empty">비어 있어. 눌러서 채워 봐.</span>'}
+  // 위시리스트는 맨 아래로
+  const list = [...gear.frames.filter((f) => !f.wish), ...gear.frames.filter((f) => f.wish)];
+  $("wfGear").innerHTML = list.map((f) => {
+    const slots = slotsOf(f).map(([label, v]) => `<span class="k">${label}</span><span>${esc(v)}</span>`).join("");
+    const styles = f.styles.map((st) => `<span class="tag">${esc(st)}</span>`).join("");
+    return `<li><button class="gear-row${f.wish ? " wish" : ""}" data-gear="${esc(f.id)}">
+      <span class="gear-top"><b>${esc(f.frame || "이름 없는 워프레임")}</b>${f.wish ? '<span class="sub">위시리스트</span>' : ""}</span>
+      ${styles ? `<span class="gear-styles">${styles}</span>` : ""}
+      ${slots ? `<span class="gear-slots">${slots}</span>` : '<span class="empty">비어 있어. 눌러서 채워 봐.</span>'}
     </button></li>`;
   }).join("");
   $("wfOthers").innerHTML = gear.others.map((n, i) =>
@@ -136,14 +146,31 @@ function renderGear() {
 }
 
 const saveGear = () => store.save("wfGear", gear);
+const editingFrame = () => gear.frames.find((x) => x.id === editing);
+const field = (k, label, f) =>
+  `<label><span>${label}</span><input class="field" name="${k}" value="${esc(f[k])}" maxlength="30"></label>`;
+
+// 고르는 칸(체크 칩)만 다시 그린다 — 글자 칸은 그대로 두어 쓰던 자리가 안 튄다
+function renderGearChips() {
+  const f = editingFrame();
+  $("gearStyles").innerHTML = PLAYSTYLES.map((st) => chip(`type="button" data-style="${st}"`, st, f.styles.includes(st), true)).join("");
+  $("gearSortie").innerHTML = SORTIE_TYPES.map((t) => chip(`type="button" data-sortie="${t}"`, t, f.sortie === t, true)).join("");
+  $("gearWish").innerHTML = chip('type="button" data-wish', "위시리스트 (아직 안 키움)", f.wish, true);
+}
 
 function openGear(id) {
-  const r = gear.rows.find((x) => x.id === id);
-  if (!r) return;
+  const f = gear.frames.find((x) => x.id === id);
+  if (!f) return;
   editing = id;
-  $("gearTitle").textContent = r.style || "새 줄";
-  $("gearForm").innerHTML = [["style", "플레이스타일"], ...GEAR_FIELDS].map(([k, label]) =>
-    `<label><span>${label}</span><input class="field" name="${k}" value="${esc(r[k])}" maxlength="30"></label>`).join("");
+  $("gearTitle").textContent = f.frame || "새 워프레임";
+  $("gearForm").innerHTML = `
+    ${field("frame", "워프레임", f)}
+    <div class="gear-pick"><span>플레이스타일 <small>여러 개 가능</small></span><div class="checks" id="gearStyles"></div></div>
+    ${field("primary", "주무기", f)}
+    <div class="gear-pick"><span>Sortie 분류 <small>하나만</small></span><div class="checks" id="gearSortie"></div></div>
+    ${GEAR_FIELDS.slice(1).map(([k, label]) => field(k, label, f)).join("")}
+    <div class="checks" id="gearWish"></div>`;
+  renderGearChips();
   openSheet("gearSheet");
 }
 
@@ -194,22 +221,33 @@ export function startWarframe() {
     if (b) openGear(b.dataset.gear);
   });
   $("wfAddRow").addEventListener("click", () => {
-    gear = addRow(gear);
+    gear = addFrame(gear);
     saveGear();
     renderGear();
-    openGear(gear.rows.at(-1).id);
+    openGear(gear.frames.at(-1).id);
   });
   $("gearForm").addEventListener("input", (e) => {
-    gear = updateRow(gear, editing, { [e.target.name]: e.target.value });
+    gear = updateFrame(gear, editing, { [e.target.name]: e.target.value });
     saveGear();
     renderGear();
-    if (e.target.name === "style") $("gearTitle").textContent = e.target.value.trim() || "새 줄";
+    if (e.target.name === "frame") $("gearTitle").textContent = e.target.value.trim() || "새 워프레임";
+  });
+  $("gearForm").addEventListener("click", (e) => {
+    const st = e.target.closest("[data-style]");
+    const so = e.target.closest("[data-sortie]");
+    if (st) gear = toggleStyle(gear, editing, st.dataset.style);
+    else if (so) gear = setSortie(gear, editing, so.dataset.sortie);
+    else if (e.target.closest("[data-wish]")) gear = toggleWish(gear, editing);
+    else return;
+    saveGear();
+    renderGear();
+    renderGearChips();
   });
   $("gearForm").addEventListener("submit", (e) => e.preventDefault());
   $("gearRemove").addEventListener("click", () => {
-    const r = gear.rows.find((x) => x.id === editing);
-    if (!r || !confirm(`'${r.style || "이 줄"}' 줄을 지울까?`)) return;
-    gear = removeRow(gear, editing);
+    const f = editingFrame();
+    if (!f || !confirm(`'${f.frame || "이 워프레임"}' 을(를) 목록에서 지울까?`)) return;
+    gear = removeFrame(gear, editing);
     saveGear();
     closeSheet();
     renderGear();

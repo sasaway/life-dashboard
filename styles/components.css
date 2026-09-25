@@ -344,9 +344,10 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gear-row{width:100%;text-align:left;display:flex;flex-direction:column;gap:6px;padding:10px 12px;min-height:var(--touch);border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
 .gear-row.wish{border-style:dashed}
 .gear-top{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 8px}
-.gear-top .style{flex-basis:100%;font-size:var(--fs-tiny);font-weight:600;color:var(--faint)}
+.gear-top .sub{font-size:var(--fs-tiny);color:var(--faint)}
+.gear-styles{display:flex;flex-wrap:wrap;gap:4px}
+.gear-styles .tag{margin:0}
 .gear-top b{font-size:var(--fs-body);font-weight:700}
-.gear-top .tag{margin-left:0}
 .gear-slots{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:var(--fs-small)}
 .gear-slots .k{color:var(--faint)}
 .gear-row .empty{font-size:var(--fs-small)}
@@ -358,4 +359,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .others svg{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:1.8}
 .gear-form{display:flex;flex-direction:column;gap:8px}
 .gear-form label{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:center;font-size:var(--fs-small);color:var(--sub)}
+.gear-pick{display:flex;flex-direction:column;gap:6px;font-size:var(--fs-small);color:var(--sub);padding:2px 0}
+.gear-pick small{font-size:var(--fs-tiny);color:var(--faint)}
+.gear-pick .checks,#gearWish{gap:6px}
 #gearRemove{align-self:flex-start;min-height:var(--touch)}
