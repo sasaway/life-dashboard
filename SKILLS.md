@@ -9,6 +9,11 @@
 | frontend-design | anthropics/skills `skills/frontend-design` @ 3337550 | **APPROVE** — 13/100. HIGH 1건은 오탐("에러 문구는 사과하지 않는다"는 앱 문구 작성 요령) | 설치됨 (2026-09-25) | 화면 디자인 방향·글꼴·색 정하기 |
 | webapp-testing | anthropics/skills `skills/webapp-testing` @ 3337550 | **CAUTION** — 64/100. 로컬 서버 실행용 `shell=True`, "소스 읽지 말라"는 지시, Playwright+Chromium 설치 필요 | **설치 안 함** (2026-09-25 사용자 결정 — node --test + 폰 직접 확인으로 대체) | 브라우저 자동 테스트 |
 | reborn-ytlearn (yt-transcript · yt-frames · ytlearn-ko-guide) | npm `reborn-ytlearn@1.0.0` (개인 게시자, 2026-09-19 첫 공개, 공개 저장소 없음) | **CAUTION** — 12/100, 검사 범위 63.6%. 코드는 깨끗하나 출처 불분명 · 안내 스킬에 유료 스킬팩 광고 · `npx --yes` 는 매번 최신판을 바로 실행 | **설치 안 함** (2026-09-25 사용자 결정 — 공식 yt-dlp·ffmpeg 를 직접 쓰기로) | 유튜브 자막·장면 읽기 |
+| ponytail-audit | DietrichGebert/ponytail `skills/ponytail-audit` @ e3ba2aa (개인 GitHub, MIT — 공식 마켓 아님, 사용자 승인) | **APPROVE** — 7/100. MEDIUM 1건은 오탐(발동 문구 "what can I delete" 가 내장 명령 이름 `delete` 와 겹친다는 것). 실행 파일 없음, 글 지시만 | 설치됨 (2026-09-25) | 저장소 전체에서 과하게 만든 곳 목록 (고치지는 않음) |
+| ponytail-review | 같은 저장소 `skills/ponytail-review` @ e3ba2aa | **APPROVE** — 0/100, 문제 0건 | 설치됨 (2026-09-25) | 바뀐 코드에서 과하게 만든 곳 목록 |
+| ponytail (본체) · ponytail-gain · ponytail-help | 같은 저장소 @ e3ba2aa | SAFE — 0/100. 다만 본체는 '매 답변마다 켜짐 · 설명은 코드 뒤 세 줄까지' 라서 쉬운 한국어 설명 규칙과 부딪힌다 | **설치 안 함** (2026-09-25 사용자 결정 — 이번 일에 필요한 두 개만) | 게으른 해법 모드 · 점수판 · 도움말 |
+| ponytail-debt | 같은 저장소 @ e3ba2aa | **CAUTION** — 0/100 이나 검사 불완전(스킬이 가리키는 PONYTAIL-DEBT.md 가 저장소에 없음) | **설치 안 함** | `ponytail:` 주석 모아 보기 |
+| (ponytail 훅·MCP 서버) | 같은 저장소 `hooks/` `ponytail-mcp/` | 검사 안 함 — 스킬만 설치해서 쓰지 않음 | 설치 안 함 | 매 세션 자동 켜기 |
 
 ## 도구 (스킬 아님)
 

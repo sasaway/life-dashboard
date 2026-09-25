@@ -1,5 +1,6 @@
 // 회고: 저녁 4가지 질문, 하루·주간 회고. 규칙은 Notion '루틴화'.
-import { ymd } from "./schedule.js";
+import { ymd, mondayOf, parseDate, weekDates } from "./schedule.js";
+import { DAYS } from "./time.js";
 
 export const QUESTIONS = [
   "오늘 잘 되었던 일은?",
@@ -15,11 +16,6 @@ export function reviewDay(now) {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   if (now.getHours() < DAY_START_HOUR) d.setDate(d.getDate() - 1);
   return ymd(d);
-}
-
-export function parseYmd(s) {
-  const [y, m, d] = s.split("-").map(Number);
-  return new Date(y, m - 1, d);
 }
 
 export function answeredCount(entry) {
@@ -42,36 +38,24 @@ export function pastDays(reviews) {
 }
 
 // 그 날이 속한 주의 월요일
-export function mondayKey(day) {
-  const d = parseYmd(day);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return ymd(d);
-}
+export const mondayKey = (day) => ymd(mondayOf(parseDate(day)));
 
-export function weekDays(monday) {
-  const d = parseYmd(monday);
-  return Array.from({ length: 7 }, (_, i) => {
-    const x = new Date(d);
-    x.setDate(d.getDate() + i);
-    return ymd(x);
-  });
-}
+export const weekDays = (monday) => weekDates(parseDate(monday)).map(ymd);
 
 export function shiftWeek(monday, n) {
-  const d = parseYmd(monday);
+  const d = parseDate(monday);
   d.setDate(d.getDate() + n * 7);
   return ymd(d);
 }
 
-const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 // "9월 25일 (금)"
 export function dayLabel(day) {
-  const d = parseYmd(day);
+  const d = parseDate(day);
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DAYS[d.getDay()]})`;
 }
 // "9월 21일 – 27일"
 export function weekLabel(monday) {
-  const [a, b] = [weekDays(monday)[0], weekDays(monday)[6]].map(parseYmd);
+  const [a, b] = [weekDays(monday)[0], weekDays(monday)[6]].map(parseDate);
   const end = a.getMonth() === b.getMonth() ? `${b.getDate()}일` : `${b.getMonth() + 1}월 ${b.getDate()}일`;
   return `${a.getMonth() + 1}월 ${a.getDate()}일 – ${end}`;
 }

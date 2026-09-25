@@ -4,10 +4,9 @@ import {
   DEFAULT_SETTINGS, SHIFTS, dayPlan, nowInfo, leftLabel, setThisWeek,
   shiftFor, checkTemplate, sortBlocks, toMin,
 } from "./schedule.js";
+import { $, esc } from "./dom.js";
 
 const KEY = "schedule";
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]; // 월요일부터 보여 준다
 

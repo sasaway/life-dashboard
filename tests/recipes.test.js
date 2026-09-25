@@ -4,7 +4,7 @@ import {
   RECIPES, HEATS, DISH_RECIPES, recipesForDish, hasTimer, totalMinutes, mmss,
 } from "../js/recipes.js";
 import { DISHES, LEFTOVER } from "../js/meals.js";
-import { newTimer, start, pause, reset, remaining, isRunning, isDone, progress } from "../js/timer.js";
+import { newTimer, start, pause, reset, remaining, isRunning, progress } from "../js/timer.js";
 
 test("식단의 모든 요리(남은 짜글이 포함)에 레시피가 있다", () => {
   for (const d of [...DISHES, LEFTOVER]) {
@@ -74,8 +74,7 @@ test("타이머: 시작·일시정지·다시 시작·끝", () => {
   t = pause(t, 30_000);
   assert.equal(remaining(t, 999_999), 60); // 멈춘 동안은 줄지 않는다
   t = start(t, 100_000);
-  assert.equal(remaining(t, 160_000), 0);
-  assert.equal(isDone(t, 160_000), true);
+  assert.equal(remaining(t, 160_000), 0); // 끝나면 0 (앱은 이걸로 끝났는지 본다)
   assert.equal(remaining(t, 200_000), 0); // 음수로 안 간다
 });
 

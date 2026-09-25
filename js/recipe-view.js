@@ -2,9 +2,7 @@
 import { openSheet } from "./sheet.js";
 import { RECIPES, HEATS, recipeById, recipesForDish, hasTimer, totalMinutes, mmss } from "./recipes.js";
 import { newTimer, start, pause, reset, remaining, isRunning, progress } from "./timer.js";
-
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+import { $, esc } from "./dom.js";
 
 let recipe = null;     // 지금 연 레시피
 let variants = [];     // 같은 요리의 다른 레시피 (라면: 안성탕면 / 짜파게티)

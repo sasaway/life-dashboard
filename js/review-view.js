@@ -5,9 +5,7 @@ import {
   QUESTIONS, reviewDay, answeredCount, statusLabel, pastDays, mondayKey,
   weekDays, shiftWeek, dayLabel, weekLabel, withAnswer,
 } from "./review.js";
-
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+import { $, esc } from "./dom.js";
 
 let reviews = store.load("reviews", {}); // { "2026-09-25": { answers: [4개] } }
 let weekly = store.load("weekly", {});   // { "2026-09-21": "이번 주 메모" }

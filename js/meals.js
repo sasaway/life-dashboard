@@ -1,6 +1,6 @@
 // 식단: 주간 식단표와 오늘의 식단. 규칙은 Notion '식단'.
 // 집에서 먹는 끼니는 일과표의 식사 칸에서 가져온다 (알바 중 끼니는 식대라 빼고).
-import { dayPlan, ymd } from "./schedule.js";
+import { dayPlan, ymd, weekDates } from "./schedule.js";
 
 // 메인 요리. 새 요리는 여기에 한 줄 더하면 돌림에 들어간다.
 export const DISHES = [
@@ -29,15 +29,6 @@ export function workMeal(date, settings) {
   const plan = dayPlan(date, settings);
   if (!plan.working) return null;
   return plan.shift === "open" ? "점심" : "저녁";
-}
-
-// 월요일부터 7일
-export function weekDates(monday) {
-  return Array.from({ length: 7 }, (_, i) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
-}
-
-export function mondayOf(date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - ((date.getDay() + 6) % 7));
 }
 
 // 끼니마다 요리를 정한다.

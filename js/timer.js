@@ -3,7 +3,6 @@ export const newTimer = (sec) => ({ total: sec, left: sec, endsAt: null });
 
 export const remaining = (t, now) => (t.endsAt ? Math.max(0, (t.endsAt - now) / 1000) : t.left);
 export const isRunning = (t) => t.endsAt !== null;
-export const isDone = (t, now) => remaining(t, now) <= 0;
 
 export function start(t, now) {
   if (isRunning(t) || t.left <= 0) return t;

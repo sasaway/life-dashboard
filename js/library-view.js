@@ -2,13 +2,12 @@
 import { store } from "./store.js";
 import { openSheet } from "./sheet.js";
 import { newId } from "./shopping.js";
+import { pad } from "./schedule.js";
 import { chip } from "./wuwa-view.js";
 import { CATS, FIELD_KO, catOf, blankEntry, entryProblem, saveEntry, removeEntry, entriesOf, countsBy } from "./library.js";
 import { putPhoto, getPhoto, deletePhotos, shrink } from "./photos.js";
+import { $, esc, X_SVG } from "./dom.js";
 
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-const X_SVG = '<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>';
 const SOURCE_HINT = { index: "책 이름, 영상 주소 등", profile: "교육 기관 · 발급처" };
 
 let list = store.load("library", []);
@@ -147,7 +146,6 @@ function save() {
 
 // ---------- 메모 (한 장, 쓰는 대로 저장) ----------
 let memo = store.load("memo", { text: "", at: null });
-const pad = (n) => String(n).padStart(2, "0");
 function memoSavedLabel() {
   if (!memo.at) return "";
   const d = new Date(memo.at);

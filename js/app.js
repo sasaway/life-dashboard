@@ -1,4 +1,5 @@
 import { greeting, dateLabel } from "./time.js";
+import { pad } from "./schedule.js";
 import { askToKeepData } from "./store.js";
 import { startSchedule, renderToday, openScheduleSettings } from "./schedule-view.js";
 import { startReview, renderReviewCard } from "./review-view.js";
@@ -12,9 +13,8 @@ import { startWuwa, renderWuwa } from "./wuwa-view.js";
 import { startWarframe, renderWarframe } from "./warframe-view.js";
 import { startWfTools } from "./wf-tools-view.js";
 import { startLibrary } from "./library-view.js";
+import { $ } from "./dom.js";
 
-const $ = (id) => document.getElementById(id);
-const pad = (n) => String(n).padStart(2, "0");
 
 // ---------- 머리말: 날짜 · 인사 · 시계 ----------
 function renderClock() {

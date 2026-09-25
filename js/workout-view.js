@@ -2,13 +2,12 @@
 import { store } from "./store.js";
 import { getScheduleSettings } from "./schedule-view.js";
 import { dayPlan, ymd, toMin, toHHMM } from "./schedule.js";
+import { DAYS } from "./time.js";
 import {
   EXERCISES, ROUTINES, WEEK, VIDEO_URL, REST_BETWEEN_SETS, planFor, doneSets, tapSet, progressOf, pruneLog, searchUrl,
 } from "./workout.js";
+import { $, esc } from "./dom.js";
 
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 let log = pruneLog(store.load("workoutLog", {}), new Date());
 

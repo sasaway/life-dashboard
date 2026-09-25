@@ -59,17 +59,22 @@ export const toMin = (hhmm) => {
   const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
 };
-const pad = (n) => String(n).padStart(2, "0");
+export const pad = (n) => String(n).padStart(2, "0");
 export const toHHMM = (min) => `${pad(Math.floor(min / 60) % 24)}:${pad(min % 60)}`;
 export const isHHMM = (s) => /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
 
-// ---------- 날짜 ----------
-function mondayOf(d) {
+// ---------- 날짜 (다른 파일도 여기 것을 쓴다) ----------
+// 그 날이 속한 주의 월요일
+export function mondayOf(d) {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
   return x;
 }
-function parseDate(ymd) {
+// 월요일부터 7일
+export const weekDates = (monday) =>
+  Array.from({ length: 7 }, (_, i) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
+// "2026-09-25" → 날짜
+export function parseDate(ymd) {
   const [y, m, d] = ymd.split("-").map(Number);
   return new Date(y, m - 1, d);
 }

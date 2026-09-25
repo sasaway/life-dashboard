@@ -2,9 +2,7 @@
 import { store } from "./store.js";
 import { addItem, toggleStar, bring, starred, mainEmptyText } from "./shopping.js";
 import { ymd } from "./schedule.js";
-
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+import { $, esc } from "./dom.js";
 
 let list = store.load("shopping", []);  // [{ id, name, star }]
 let bought = store.load("bought", []);  // [{ name, day }] 식단 추천용

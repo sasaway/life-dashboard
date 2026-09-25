@@ -2,14 +2,13 @@
 import { store } from "./store.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import { getScheduleSettings } from "./schedule-view.js";
-import { ymd } from "./schedule.js";
-import { planWeek, mondayOf, withOverride, pickable } from "./meals.js";
+import { ymd, mondayOf } from "./schedule.js";
+import { DAYS } from "./time.js";
+import { planWeek, withOverride, pickable } from "./meals.js";
 import { ideasFor } from "./meal-tips.js";
 import { openRecipeForDish } from "./recipe-view.js";
+import { $, esc } from "./dom.js";
 
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const shortDay = (d) => `${DAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
 
 let overrides = store.load("mealOverrides", {}); // { "2026-09-25 점심": "ramen" }

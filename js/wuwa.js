@@ -1,5 +1,5 @@
 // 명조: 일일·주간 체크리스트와 목표 육성 파티표. 규칙은 Notion '취미 — 명조'.
-import { ymd } from "./schedule.js";
+import { ymd, mondayOf } from "./schedule.js";
 import { newId } from "./shopping.js";
 
 // 아시아 서버 초기화: 매일 05:00 (한국 시간), 주간은 월요일 05:00 (사용자 확인)
@@ -34,11 +34,7 @@ export function gameDay(now, hour = RESET_HOUR) {
   return d;
 }
 export const dailyKey = (now) => ymd(gameDay(now));
-export function weeklyKey(now) {
-  const d = gameDay(now);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return ymd(d);
-}
+export const weeklyKey = (now) => ymd(mondayOf(gameDay(now)));
 
 // 체크 상태: { daily: { key, done: { id: 1 } }, weekly: { key, done: { id: n } } }
 // 저장된 key 가 지금과 다르면 초기화된 것으로 본다

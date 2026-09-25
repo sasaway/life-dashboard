@@ -1,6 +1,7 @@
 // 예산과 지난달 결산. 규칙은 Notion '돈' (09:41 수정본).
 // 예산은 달마다 따로 있다. '고정' 을 켠 항목만 다음 달 예산으로 넘어간다.
 import { newId } from "./shopping.js";
+import { pad } from "./schedule.js";
 
 export const CATEGORIES = [
   { key: "fixed", label: "고정지출" },
@@ -47,7 +48,6 @@ export const toggleFixed = (items, id) => items.map((x) => (x.id === id ? { ...x
 export const sumBy = (rows, field) => rows.reduce((s, x) => s + (x[field] || 0), 0);
 
 // ---------- 달 ----------
-const pad = (n) => String(n).padStart(2, "0");
 export const monthKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 export function shiftMonth(key, n) {
   const [y, m] = key.split("-").map(Number);

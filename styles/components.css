@@ -283,7 +283,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .party-name{font-weight:600}
 .party-slots{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .slot{border:1px solid var(--line);border-radius:var(--r-card);padding:10px;display:flex;flex-direction:column;gap:8px}
-.slot-empty{min-height:48px;border:1.5px dashed var(--line);border-radius:var(--r-btn);background:none;color:var(--faint);font-weight:600}
+.slot-empty{width:100%;min-height:48px;border:1.5px dashed var(--line);border-radius:var(--r-btn);background:none;color:var(--faint);font-weight:600}
 .slot:has(.slot-empty){border:0;padding:0}
 .slot-char{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;background:none;border:0;padding:0;text-align:left;min-height:var(--touch)}
 .slot-char img,.slot-char .noimg,.char img,.char .noimg{border-radius:50%;background:var(--bg);object-fit:cover}
@@ -302,7 +302,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 #charClear{align-self:flex-start;min-height:var(--touch)}
 .party-h .btn{flex:none;white-space:nowrap}
 .card>.msg:empty{display:none}
-.slot-empty{width:100%}
 
 /* ---------- 취미: 게임 카드 → 각 게임 쪽 ---------- */
 .divider{height:1px;background:var(--line);margin:2px 0} /* 시안 그대로 */

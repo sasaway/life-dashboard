@@ -8,12 +8,10 @@ import {
   removeTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame,
   addOther, removeOther, sortieView, invasionView, alertView, timeLeft,
 } from "./warframe.js";
+import { $, esc, X_SVG } from "./dom.js";
 
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const LIVE_URL = "https://api.warframestat.us/pc/"; // 공식 worldState 는 브라우저에서 못 읽어서(CORS) 이걸 쓴다
 const LIVE_MAX_AGE = 10 * 60e3; // 워프레임 쪽을 보고 있으면 10분마다 새로 받는다
-const X_SVG = '<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>';
 
 let checks = store.load("wfChecks", {});
 let todos = store.load("wfTodos", []);

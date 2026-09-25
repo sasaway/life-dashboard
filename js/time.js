@@ -1,6 +1,6 @@
 // 날짜·시간 글자 만들기. 화면과 테스트가 같이 쓴다.
 
-const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
+export const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // DESIGN.md 5번: 사용자 이름 대신 시간대 인사말
 export function greeting(hour) {

@@ -7,9 +7,7 @@ import {
   KINDS, SLOT_KO, POLARITIES, polSym, BUILD_NAMES, modCost, capacity, formaCount, setPol, placeMod, clearMod, setRank,
   toggleBoost, rebase, modsFor, canPlace, addEquip, removeEquip, buildOf, setBuild,
 } from "./modding.js";
-
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+import { $, esc } from "./dom.js";
 
 // ---------- 게임 자료 (warframestat.us, 무료) ----------
 // 영어 목록(극성·모드 비용 포함)과 한국어 이름을 받아 줄인 뒤 폰의 사본 창고(Cache)에 둔다. 일주일마다 새로.

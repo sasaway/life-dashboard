@@ -26,27 +26,11 @@ export function normalize(text) {
   return out;
 }
 
-function distance(a, b) {
-  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
-  for (let i = 1; i <= a.length; i++) {
-    const cur = [i];
-    for (let j = 1; j <= b.length; j++) {
-      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-    }
-    prev = cur;
-  }
-  return prev[b.length];
-}
-
-// 딱 맞음 → 앞부분이 맞음 → 어딘가 들어 있음 → 자모 몇 개 틀림(6개에 1개꼴까지) 순으로 점수.
-// 짧은 이름(두 글자 등)은 틀린 글자를 봐주지 않는다 — '나린' 이 '느린 …' 에 걸리지 않게
+// 딱 맞음 → 앞부분이 맞음 → 어딘가 들어 있음 순으로 점수
 function score(q, key) {
-  if (!key) return null;
   if (key === q) return 0;
   if (key.startsWith(q)) return 1;
   if (key.includes(q)) return 2;
-  const allow = Math.floor(q.length / 6);
-  if (allow && Math.min(distance(q, key), distance(q, key.slice(0, q.length))) <= allow) return 3;
   return null;
 }
 

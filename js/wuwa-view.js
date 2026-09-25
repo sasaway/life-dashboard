@@ -6,9 +6,8 @@ import {
   cleanCharacters, searchCharacters, addParty, renameParty, removeParty, placeCharacter, clearSlot, whereIs,
   toggleBuild, buildCount,
 } from "./wuwa.js";
+import { $, esc } from "./dom.js";
 
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const CHARS_URL = "https://api.encore.moe/ko/character";
 const CHARS_MAX_AGE = 7 * 864e5; // 일주일마다 새 캐릭터를 확인한다
 

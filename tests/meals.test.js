@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  DISHES, LEFTOVER, homeMeals, workMeal, planMeals, planWeek, mondayOf, withOverride,
+  DISHES, LEFTOVER, homeMeals, workMeal, planMeals, planWeek, withOverride,
 } from "../js/meals.js";
+import { mondayOf } from "../js/schedule.js";
 import { IDEAS, ideasFor, MAX_IDEAS } from "../js/meal-tips.js";
 import { DEFAULT_SETTINGS } from "../js/schedule.js";
 

@@ -47,12 +47,13 @@ test("장비 찾기: 게임 표기와 조금 달라도(벤쉬·쿠바 소백) �
   assert.deepEqual(searchItems(data.items, "쿠바 소백").map((i) => i.en), ["Kuva Sobek"]);
   assert.deepEqual(searchItems(data.items, "sobek").map((i) => i.ko), ["쿠바 소벡"]);
   assert.deepEqual(searchItems(data.items, " "), []);
-  assert.deepEqual(searchItems(data.items, "보어"), []); // 짧은 이름은 틀린 글자를 봐주지 않는다
+  assert.deepEqual(searchItems(data.items, "보어"), []);
   assert.equal(searchItems(data.items, "보")[0].en, "Bo"); // 딱 맞는 이름이 먼저
 });
 
-test("모드 찾기: 긴 이름은 한 글자 틀려도 찾는다", () => {
-  assert.deepEqual(searchMods(data.mods, "서레이숀").map((m) => m.en), ["Serration"]);
+test("모드 찾기: 한국어·영어 어느 쪽으로도, 띄어쓰기 무시", () => {
+  assert.deepEqual(searchMods(data.mods, "서 레이션").map((m) => m.en), ["Serration"]);
+  assert.deepEqual(searchMods(data.mods, "serra").map((m) => m.ko), ["서레이션"]);
 });
 
 test("모딩 장비: 워프레임·주·보조·근접·동반자만, 원래 극성과 함께", () => {

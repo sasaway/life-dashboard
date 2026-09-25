@@ -5,9 +5,8 @@ import {
   monthKey, shiftMonth, monthLabel, settlementRows, setActual, settlementStats,
   toggleFixed, resolveMonth, withMonth, migrate,
 } from "./budget.js";
+import { $, esc } from "./dom.js";
 
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const num = (n) => n.toLocaleString("ko-KR");
 
 const thisMonth = () => monthKey(new Date());
