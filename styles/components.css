@@ -395,3 +395,31 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .mod-pick .mono{flex:none;font-size:var(--fs-small);color:var(--sub)}
 
 .wf-data-msg:empty{display:none}
+
+/* ---------- 라이브러리 · 메모 (메인 맨 아래) ---------- */
+.lib-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lib-tile{display:flex;flex-direction:column;gap:2px;text-align:left;min-height:64px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface)}
+.lib-tile-h{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.lib-tile-h b{font-size:var(--fs-label);font-weight:600}
+.lib-tile-h .mono{font-size:var(--fs-small);color:var(--sub)}
+.lib-tile .sub{font-size:var(--fs-tiny);color:var(--faint);line-height:1.35}
+.memo{min-height:96px;line-height:1.55}
+.seg.four{grid-template-columns:repeat(4,1fr)}
+.seg.four button{font-size:var(--fs-small);padding:0 2px}
+.lib-what{margin:-4px 2px 0}
+.lib-add{align-self:flex-start;min-height:var(--touch)}
+.lib-entry .qa-line{font-size:var(--fs-tiny);color:var(--faint)}
+.lib-thumbs{display:flex;gap:6px;align-items:center;margin-top:4px}
+.lib-thumbs img{width:56px;height:56px;object-fit:cover;border-radius:8px;background:var(--line)}
+.lib-thumbs .mono{font-size:var(--fs-tiny);color:var(--faint)}
+.lib-form{display:flex;flex-direction:column;gap:14px}
+.lib-form .qa+.qa{margin-top:0}
+.lib-photos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lib-photos:empty{display:none}
+.lib-photos li{position:relative}
+.lib-photos img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-btn);background:var(--line)}
+.lib-photos .del{position:absolute;top:4px;right:4px;background:var(--surface);border-color:var(--line)}
+.photo-add{position:relative;align-self:flex-start;min-height:var(--touch);display:inline-flex;align-items:center;overflow:hidden}
+.photo-add input{position:absolute;inset:0;opacity:0;cursor:pointer}
+#libDelete{min-height:var(--touch)}
+#libSave{min-height:var(--touch)}

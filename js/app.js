@@ -11,6 +11,7 @@ import { startWorkout, renderWorkout } from "./workout-view.js";
 import { startWuwa, renderWuwa } from "./wuwa-view.js";
 import { startWarframe, renderWarframe } from "./warframe-view.js";
 import { startWfTools } from "./wf-tools-view.js";
+import { startLibrary } from "./library-view.js";
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, "0");
@@ -117,6 +118,7 @@ startWorkout();
 startWuwa();
 startWarframe();
 startWfTools();
+startLibrary();
 startClock();
 startTabs();
 startSettings();

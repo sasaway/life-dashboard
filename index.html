@@ -80,6 +80,15 @@
       <div class="game-h"><b>워프레임 · 오늘</b><span class="mono" id="wfMainCount">0 / 2</span></div>
       <div class="checks" id="wfMainDaily"></div>
     </section>
+    <!-- 라이브러리 · 메모 (메인 맨 아래, 사용자 결정) -->
+    <section class="card" aria-label="라이브러리">
+      <div class="card-h"><h2>라이브러리</h2><small class="num" id="libTotal"></small></div>
+      <div class="lib-grid" id="libMain"></div>
+    </section>
+    <section class="card" aria-label="메모">
+      <div class="card-h"><h2>메모</h2><small id="memoSaved"></small></div>
+      <textarea class="field memo" id="memo" rows="4" placeholder="생각나는 걸 적어 둬. 쓰는 대로 저장돼." aria-label="메모"></textarea>
+    </section>
   </section>
 
   <!-- 식단 -->
@@ -432,6 +441,44 @@
     <input class="field" id="modSearch" type="search" placeholder="모드 이름 (예: 서레이션, 인텐시파이)" aria-label="모드 찾기" autocomplete="off">
     <ul class="mod-hits" id="modHits"></ul>
     <p class="empty" id="modHitsEmpty" hidden>이 칸에 넣을 수 있는 모드 중에 없어.</p>
+  </div>
+</div>
+
+<!-- 라이브러리 목록 -->
+<div class="sheet-wrap" id="libSheet" hidden>
+  <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="libTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="libTitle">라이브러리</h2>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <div class="seg four" id="libPick">
+      <button data-cat="index" aria-pressed="true">인덱스</button>
+      <button data-cat="portfolio" aria-pressed="false">포트폴리오</button>
+      <button data-cat="profile" aria-pressed="false">프로필</button>
+      <button data-cat="curator" aria-pressed="false">큐레이터</button>
+    </div>
+    <p class="mini lib-what" id="libWhat"></p>
+    <button class="btn btn-primary lib-add" id="libAdd">기록 추가</button>
+    <ul class="entries" id="libList"></ul>
+    <p class="empty" id="libEmpty"></p>
+  </div>
+</div>
+
+<!-- 라이브러리 기록 쓰기 -->
+<div class="sheet-wrap" id="libEntrySheet" hidden>
+  <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="libEntryTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <div><h2 id="libEntryTitle">새 기록</h2><p class="date" id="libEntryCat"></p></div>
+      <button class="btn btn-ghost" id="libBack">목록으로</button>
+    </div>
+    <form class="card lib-form" id="libForm" autocomplete="off"></form>
+    <p class="msg" id="libMsg" role="status"></p>
+    <div class="btns">
+      <button class="btn btn-primary" id="libSave">저장</button>
+      <button class="btn btn-ghost" id="libDelete">지우기</button>
+    </div>
   </div>
 </div>
 
