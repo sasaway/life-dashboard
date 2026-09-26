@@ -78,7 +78,37 @@ export function cleanCharacters(roleList) {
       id: String(r.Id), name: r.Name, stars: r.QualityId, element: r.Element?.Name ?? "",
       weapon: r.WeaponType?.Name ?? "", icon: r.RoleHeadIcon ?? "",
     }))
-    .sort((a, b) => b.stars - a.stars || a.name.localeCompare(b.name, "ko"));
+    .sort(byStarsThenName);
+}
+const byStarsThenName = (a, b) => b.stars - a.stars || a.name.localeCompare(b.name, "ko");
+
+// 3.7 공명자 (2026-09-30 출시): encore.moe 에 아직 없어서 임시 번호·빈 얼굴로 미리 넣는다 (사용자 요청).
+// 출처: 공식 한국 X '공명자 아카이브 미리보기' (속성·무기), 둘 다 5성.
+// encore.moe 에 같은 이름이 올라오면 그쪽(진짜 번호·얼굴 아이콘)을 쓰고, 파티·육성 기록은 adoptRealIds 로 옮긴다
+export const UPCOMING = [
+  { id: "pre-hsin", name: "여우의 별자리", stars: 5, element: "전도", weapon: "증폭기", icon: "" },
+  { id: "pre-suoming", name: "쇄명", stars: 5, element: "전도", weapon: "직검", icon: "" },
+];
+export const isPlaceholder = (c) => c.id.startsWith("pre-");
+const findByName = (list, name) => list.find((c) => squash(c.name) === squash(name));
+
+// encore.moe 목록에 아직 없는 3.7 공명자만 더한다
+export const withUpcoming = (list) =>
+  [...list, ...UPCOMING.filter((u) => !findByName(list, u.name))].sort(byStarsThenName);
+
+// 진짜가 올라왔으면 파티 칸과 육성 체크를 임시 번호에서 진짜 번호로 옮긴다. 옮길 게 없으면 null
+export function adoptRealIds(parties, builds, list) {
+  const to = {};
+  for (const u of UPCOMING) {
+    const real = findByName(list, u.name);
+    if (real && !isPlaceholder(real) && (u.id in builds || parties.some((p) => p.slots.includes(u.id)))) to[u.id] = real.id;
+  }
+  if (!Object.keys(to).length) return null;
+  const nextBuilds = { ...builds };
+  for (const [from, real] of Object.entries(to)) {
+    if (from in nextBuilds) { nextBuilds[real] ??= nextBuilds[from]; delete nextBuilds[from]; }
+  }
+  return { parties: parties.map((p) => ({ ...p, slots: p.slots.map((s) => to[s] ?? s) })), builds: nextBuilds };
 }
 
 // 이름 일부만 쳐도 찾는다 (카르 → 카르티시아). 띄어쓰기와 가운뎃점은 무시한다. 속성·무기 이름으로도 찾는다

@@ -4,7 +4,7 @@ import { store } from "./store.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import {
   DAILY, WEEKLY, BUILD, PARTY_SIZE, dailyDone, weeklyDone, toggleDaily, tapWeekly, dailyCount, weeklyCount,
-  cleanCharacters, ELEMENTS, WEAPONS, elementKey, filterCharacters, needsRefresh, addParty, renameParty, removeParty,
+  cleanCharacters, withUpcoming, isPlaceholder, adoptRealIds, ELEMENTS, WEAPONS, elementKey, filterCharacters, needsRefresh, addParty, renameParty, removeParty,
   placeCharacter, clearSlot, whereIs, partyMembers, filledCount, toggleBuild, buildCount,
 } from "./wuwa.js";
 import { $, esc } from "./dom.js";
@@ -12,15 +12,25 @@ import { ICON } from "./icons.js";
 
 const CHARS_URL = "https://api.encore.moe/ko/character";
 const CHARS_MAX_AGE = 7 * 864e5; // 일주일마다 새 캐릭터를 확인한다
+const CHARS_MAX_AGE_PRE = 864e5; // 얼굴 없는 3.7 공명자가 남아 있으면 하루마다
 
 let checks = store.load("wuwaChecks", {});
 let parties = store.load("wuwaParties", []);
 let builds = store.load("wuwaBuilds", {});
-let chars = store.load("wuwaChars", { at: 0, list: [] });
+let chars = store.load("wuwaChars", { at: 0, list: [] }); // encore.moe 에서 받은 그대로
+let allChars = withUpcoming(chars.list); // + 아직 encore.moe 에 없는 3.7 공명자
 
 const saveChecks = () => store.save("wuwaChecks", checks);
 const saveParties = () => store.save("wuwaParties", parties) && store.save("wuwaBuilds", builds);
-const charById = (id) => chars.list.find((c) => c.id === id);
+const charById = (id) => allChars.find((c) => c.id === id);
+
+// 3.7 공명자의 진짜가 encore.moe 에 올라왔으면 파티 칸·육성 체크를 진짜 번호로 옮긴다
+function adoptReal() {
+  const moved = adoptRealIds(parties, builds, chars.list);
+  if (!moved) return;
+  ({ parties, builds } = moved);
+  saveParties();
+}
 
 const CHECK_SVG = '<svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg>';
 // 체크 칩 (시안 .chk) — 워프레임 화면도 같이 쓴다
@@ -158,7 +168,7 @@ function renderFilters() {
 }
 
 function renderPicker() {
-  const list = filterCharacters(chars.list, $("charSearch").value, elFilter, wpFilter);
+  const list = filterCharacters(allChars, $("charSearch").value, elFilter, wpFilter);
   $("charCount").textContent = chars.list.length ? `${list.length}명` : "공명자 목록을 받는 중이야.";
   $("charGrid").innerHTML = list.map((c) => {
     const at = whereIs(parties, c.id);
@@ -207,14 +217,17 @@ function showWwPage(page) {
   if (page !== "today") loadCharacters();
 }
 
-// 캐릭터 목록: 저장된 게 일주일 넘었거나, 없거나, 무기 칸이 없는 옛 사본이면 encore.moe 에서 새로 받는다
+// 캐릭터 목록: 저장된 게 일주일(얼굴 없는 3.7 공명자가 있으면 하루) 넘었거나, 없거나, 무기 칸이 없는 옛 사본이면 encore.moe 에서 새로 받는다
 async function loadCharacters() {
-  if (!needsRefresh(chars.list) && Date.now() - chars.at < CHARS_MAX_AGE) return;
+  const maxAge = allChars.some(isPlaceholder) ? CHARS_MAX_AGE_PRE : CHARS_MAX_AGE;
+  if (!needsRefresh(chars.list) && Date.now() - chars.at < maxAge) return;
   try {
     const res = await fetch(CHARS_URL);
     if (!res.ok) throw new Error(res.status);
     chars = { at: Date.now(), list: cleanCharacters((await res.json()).roleList ?? []) };
     store.save("wuwaChars", chars);
+    allChars = withUpcoming(chars.list);
+    adoptReal();
     $("wwCharsMsg").textContent = "";
     renderParties();
     if (!$("charSheet").hidden && target) { renderFilters(); renderPicker(); }
@@ -231,6 +244,7 @@ export function renderWuwa() {
 }
 
 export function startWuwa() {
+  adoptReal();
   renderChecks();
   renderParties();
   loadCharacters();
