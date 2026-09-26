@@ -148,6 +148,14 @@ export function dayPlan(date, settings) {
   return { shift, working, blocks };
 }
 
+// 그 날 어떤 칸(운동·취미·알바 등)의 "시작–끝" (없으면 null). 마지막 칸이면 minutes 만큼으로 본다.
+export function blockRange(blocks, kind, minutes = 120) {
+  const i = blocks.findIndex((b) => b.kind === kind);
+  if (i < 0) return null;
+  const end = blocks[i + 1] ? blocks[i + 1].start : toHHMM(toMin(blocks[i].start) + minutes);
+  return `${blocks[i].start}–${end}`;
+}
+
 // 지금 몇 번째 칸인가. 첫 칸보다 이르면(새벽) 전날부터 이어진 마지막 칸(취침)이다.
 export function currentIndex(blocks, nowMin) {
   if (nowMin < toMin(blocks[0].start)) return blocks.length - 1;

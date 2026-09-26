@@ -41,6 +41,15 @@
       <div class="now-bar"><i id="nowBar"></i></div>
       <div class="now-foot"><span id="nowLeft"></span><span class="mono" id="nowPct"></span></div>
     </section>
+    <!-- 아침 브리핑 (Notion '루틴화') · 05~12시에만 보인다 -->
+    <section class="card brief" id="briefCard" aria-label="아침 브리핑" hidden>
+      <div class="card-h"><h2>아침 브리핑</h2><small id="briefStatus"></small><button class="btn btn-text" id="briefUnfold" hidden>다 봤어 · 펼치기</button></div>
+      <div id="briefBody">
+        <ul class="brief-list" id="briefList"></ul>
+        <div class="checks" id="briefLinks"></div>
+        <div class="btns"><button class="btn btn-primary" id="briefDone">다 봤어</button></div>
+      </div>
+    </section>
     <section class="card" aria-label="오늘 일정">
       <div class="card-h"><h2>오늘 일정<span class="tag" id="shiftTag"></span></h2><small class="mono" id="clock">--:--</small></div>
       <ol class="sched" id="sched"></ol>

@@ -13,6 +13,7 @@ import { startWuwa, renderWuwa } from "./wuwa-view.js";
 import { startWarframe, renderWarframe } from "./warframe-view.js";
 import { startWfTools } from "./wf-tools-view.js";
 import { startLibrary } from "./library-view.js";
+import { startBriefing, renderBriefing } from "./briefing-view.js";
 import { $ } from "./dom.js";
 
 
@@ -23,6 +24,7 @@ function renderClock() {
   $("greet").textContent = greeting(d.getHours());
   $("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   renderToday();
+  renderBriefing();   // 05시에 나타나고 12시에 사라진다
   renderReviewCard(); // 06:00 에 오늘 회고로 넘어간다
   renderMeals();      // 자정에 오늘 식단으로 넘어간다
   renderWorkout();    // 자정에 오늘 운동으로 넘어간다
@@ -128,6 +130,7 @@ startWuwa();
 startWarframe();
 startWfTools();
 startLibrary();
+startBriefing();
 startClock();
 startTabs();
 startSettings();

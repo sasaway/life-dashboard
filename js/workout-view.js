@@ -1,7 +1,7 @@
 // 운동 화면: 오늘 요약·운동 카드(사진·설명·세트 칸·유튜브 검색)·요일별 메뉴, 메인 운동 카드.
 import { store } from "./store.js";
 import { getScheduleSettings } from "./schedule-view.js";
-import { dayPlan, ymd, toMin, toHHMM } from "./schedule.js";
+import { dayPlan, ymd, blockRange } from "./schedule.js";
 import { DAYS } from "./time.js";
 import {
   EXERCISES, ROUTINES, WEEK, VIDEO_URL, REST_BETWEEN_SETS, planFor, doneSets, tapSet, progressOf, pruneLog, searchUrl,
@@ -11,14 +11,8 @@ import { $, esc } from "./dom.js";
 
 let log = pruneLog(store.load("workoutLog", {}), new Date());
 
-// 일과표의 오늘 운동 칸 (없으면 null)
-function exerciseTime(date) {
-  const blocks = dayPlan(date, getScheduleSettings()).blocks;
-  const i = blocks.findIndex((b) => b.kind === "exercise");
-  if (i < 0) return null;
-  const end = blocks[i + 1] ? blocks[i + 1].start : toHHMM(toMin(blocks[i].start) + 120);
-  return `${blocks[i].start}–${end}`;
-}
+// 일과표의 오늘 운동 칸 (없으면 null). 아침 브리핑도 같이 쓴다.
+export const exerciseTime = (date) => blockRange(dayPlan(date, getScheduleSettings()).blocks, "exercise");
 
 function setButtons(id, day) {
   const ex = EXERCISES[id];

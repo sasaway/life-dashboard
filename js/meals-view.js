@@ -15,6 +15,7 @@ let overrides = store.load("mealOverrides", {}); // { "2026-09-25 점심": "rame
 
 const week = () => planWeek(mondayOf(new Date()), getScheduleSettings(), overrides);
 const todayOf = (w) => w.find((d) => d.day === ymd(new Date()));
+export const todayMeals = () => todayOf(week()); // 아침 브리핑도 같이 쓴다
 
 const mealLine = (m) =>
   `<span class="t mono">${esc(m.start)}</span><span class="n"><b>${esc(m.label)}</b> · ${esc(m.dish.short)}</span>`;
