@@ -14,6 +14,7 @@ import { startWarframe, renderWarframe } from "./warframe-view.js";
 import { startWfTools } from "./wf-tools-view.js";
 import { startLibrary } from "./library-view.js";
 import { startBriefing, renderBriefing } from "./briefing-view.js";
+import { startCalendar, openCalendarSettings } from "./calendar-view.js";
 import { $ } from "./dom.js";
 
 
@@ -92,6 +93,7 @@ function startSettings() {
   $("appVersion").textContent = `앱 버전 ${self.APP_VERSION}`;
   $("openSettings").addEventListener("click", () => {
     openScheduleSettings();
+    openCalendarSettings();
     openSheet("settings");
   });
 }
@@ -131,6 +133,7 @@ startWarframe();
 startWfTools();
 startLibrary();
 startBriefing();
+startCalendar();
 startClock();
 startTabs();
 startSettings();

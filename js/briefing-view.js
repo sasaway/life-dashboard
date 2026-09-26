@@ -70,4 +70,5 @@ export function startBriefing() {
   $("briefUnfold").addEventListener("click", () => save(setFolded(state, false)));
   // 메인에서 체크하거나 식단을 바꾸면 브리핑 숫자도 바로 맞춘다
   document.addEventListener("click", () => requestAnimationFrame(renderBriefing));
+  document.addEventListener("schedule-change", renderBriefing); // 캘린더에서 알바를 새로 받으면
 }

@@ -445,3 +445,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .brief .btns{margin-top:12px}
 .brief.folded .card-h{margin-bottom:0}
 #briefUnfold{padding:0;font-size:var(--fs-small)}
+
+/* ---------- 설정: 캘린더 알바 연결 ---------- */
+.cal-hint{margin:0 0 10px}
