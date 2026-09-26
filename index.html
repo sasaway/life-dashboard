@@ -214,6 +214,13 @@
 
     <div class="hobby-page" id="hobby-ww" hidden>
       <header class="top sub-top"><button class="icon-btn" data-hobby="hub" aria-label="취미로 돌아가기"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><h1>명조</h1></header>
+      <div class="seg three" id="wwPick">
+        <button data-page="today" aria-pressed="true">오늘</button>
+        <button data-page="build" aria-pressed="false">육성</button>
+        <button data-page="party" aria-pressed="false">파티</button>
+      </div>
+
+      <div class="stack" id="ww-page-today">
       <section class="card game" id="wwTodayCard" aria-label="명조 오늘">
         <div class="game-h"><b>명조 · 오늘</b><span class="mono" id="wwDailyCount"></span></div>
         <div class="meter"><i id="wwDailyBar"></i></div>
@@ -226,12 +233,22 @@
         <div class="weekly-list" id="wwWeekly"></div>
         <p class="mini">월요일 새벽 5시에 비워져.</p>
       </section>
-      <section class="card" aria-label="목표 육성 파티">
-        <div class="card-h"><h2>목표 육성 파티</h2><button class="btn btn-text" id="wwAddParty">파티 추가</button></div>
+      </div>
+
+      <div class="stack" id="ww-page-build" hidden>
+        <section class="card" aria-label="육성 체크">
+          <div class="card-h"><h2>육성 체크</h2><small class="num" id="wwGrowCount"></small></div>
+          <ul class="grow" id="wwGrow"></ul>
+          <p class="empty" id="wwGrowEmpty">파티에 캐릭터를 넣으면 여기서 육성 체크를 할 수 있어.</p>
+        </section>
+      </div>
+
+      <div class="stack" id="ww-page-party" hidden>
         <p class="msg" id="wwCharsMsg" role="status"></p>
         <div class="parties" id="wwParties"></div>
-        <p class="empty" id="wwPartiesEmpty">'파티 추가' 를 눌러 키울 캐릭터를 넣어 봐.</p>
-      </section>
+        <p class="empty parties-empty" id="wwPartiesEmpty">아직 파티가 없어. 아래 '파티 추가' 로 만들어 봐.</p>
+        <button class="btn btn-ghost add-party" id="wwAddParty"><span class="ic-wrap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>파티 추가</button>
+      </div>
     </div>
 
     <div class="hobby-page" id="hobby-wf" hidden>
@@ -512,11 +529,14 @@
       <div><h2>캐릭터 고르기</h2><p class="date" id="charTitle"></p></div>
       <button class="btn btn-ghost" data-close>닫기</button>
     </div>
-    <input class="field" id="charSearch" type="search" placeholder="이름이나 속성 (예: 금희, 회절)" aria-label="캐릭터 찾기">
-    <button class="btn btn-ghost" id="charClear">이 칸 비우기</button>
+    <div class="char-now" id="charNow" hidden></div>
+    <label class="search-wrap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+      <input class="field" id="charSearch" type="search" placeholder="이름 찾기 (예: 금희)" aria-label="캐릭터 찾기"></label>
+    <div class="el-chips" id="charFilters" role="group" aria-label="속성"></div>
+    <p class="mini char-count" id="charCount" aria-live="polite"></p>
     <ul class="char-grid" id="charGrid"></ul>
-    <p class="empty" id="charEmpty" hidden>찾는 캐릭터가 없어.</p>
-    <p class="msg">캐릭터 정보: encore.moe</p>
+    <p class="empty" id="charEmpty" hidden>조건에 맞는 캐릭터가 없어.</p>
+    <p class="msg">다른 파티에 있는 캐릭터를 누르면 이 칸으로 옮겨 와. · 캐릭터 정보: encore.moe</p>
   </div>
 </div>
 

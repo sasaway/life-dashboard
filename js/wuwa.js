@@ -84,6 +84,21 @@ export function searchCharacters(list, text) {
   return list.filter((c) => c.name.replace(/\s+/g, "").includes(q) || c.element.includes(q));
 }
 
+// 속성: 게임 속 순서. key 는 색 이름(tokens.css 의 --el-*)
+export const ELEMENTS = [
+  { name: "응결", key: "glacio" },
+  { name: "용융", key: "fusion" },
+  { name: "전도", key: "electro" },
+  { name: "기류", key: "aero" },
+  { name: "회절", key: "spectro" },
+  { name: "인멸", key: "havoc" },
+];
+export const elementKey = (name) => ELEMENTS.find((e) => e.name === name)?.key ?? "";
+
+// 고르기 창: 이름·속성 찾기 AND 속성 칩 ("" = 전체)
+export const filterCharacters = (list, text, element = "") =>
+  searchCharacters(list, text).filter((c) => !element || c.element === element);
+
 // ---------- 파티표 ----------
 // parties: [{ id, name, slots: [charId|null ×3] }] · builds: { charId: { lv: 1, ... } }
 export function addParty(parties, id = newId()) {
@@ -117,6 +132,17 @@ export function whereIs(parties, charId) {
   }
   return null;
 }
+
+// 파티에 넣은 캐릭터를 파티 순서·칸 순서대로 (육성 페이지 목록)
+export function partyMembers(parties) {
+  const out = [];
+  for (const p of parties) {
+    p.slots.forEach((id, idx) => { if (id) out.push({ id, pid: p.id, partyName: p.name, idx }); });
+  }
+  return out;
+}
+
+export const filledCount = (party) => party.slots.filter(Boolean).length;
 
 export function toggleBuild(builds, charId, key) {
   const cur = builds[charId] ?? {};

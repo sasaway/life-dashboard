@@ -25,6 +25,13 @@
   --good:#2E7D5B;        /* 상태색: 예산 안 */
   --warn:#B7791F;        /* 상태색: 예산 주의 */
   --danger:#B42318;      /* 상태색: 예산 초과 */
+  /* 명조 속성 색 (2026-09-26 은월 확인) · 명조 화면의 속성 점에만, 글자와 함께 쓴다. 흰 카드 위 3:1 이상 */
+  --el-glacio:#3A8BC6;   /* 응결 */
+  --el-fusion:#D2552C;   /* 용융 */
+  --el-electro:#8757CC;  /* 전도 */
+  --el-aero:#23977A;     /* 기류 */
+  --el-spectro:#AE8913;  /* 회절 */
+  --el-havoc:#A23672;    /* 인멸 */
 
   /* 글꼴 */
   --sans:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
