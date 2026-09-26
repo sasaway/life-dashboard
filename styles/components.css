@@ -317,48 +317,71 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .add-party{width:100%;min-height:48px;border-style:dashed;background:var(--surface);color:var(--accent)}
 .parties-empty{text-align:center;padding:8px 0}
 
-/* ---------- 명조: 육성 페이지 — 한 번에 한 명만 펼친다 ---------- */
-.grow{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+/* ---------- 명조: 파티 카드 안 육성 체크 — 캐릭터마다 한 줄, 한 번에 한 명만 펼친다 ---------- */
+.grow{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
 .grow-item{border:1px solid var(--line);border-radius:var(--r-card);transition:border-color var(--t-fast)}
 .grow-item.open{border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
-.grow-h{width:100%;display:grid;grid-template-columns:40px 1fr auto 20px;gap:10px;align-items:center;padding:8px 10px;
-  background:none;border:0;border-radius:var(--r-card);text-align:left;min-height:56px}
+.grow-h{width:100%;display:grid;grid-template-columns:32px 1fr auto 20px;gap:10px;align-items:center;padding:6px 10px;
+  background:none;border:0;border-radius:var(--r-card);text-align:left;min-height:48px}
 .grow-cnt{font-size:var(--fs-small);color:var(--sub)}
 .grow-cnt.done{color:var(--accent);font-weight:600}
 .chev{display:grid;place-items:center;color:var(--faint);transition:transform var(--t-fast) var(--ease)}
 .grow-item.open .chev{transform:rotate(180deg)}
 .grow-body{padding:2px 10px 12px;display:flex;flex-direction:column;gap:10px}
 
-/* ---------- 캐릭터 고르기 (시안 6랩만할래의 고르기 창을 새벽 달빛으로) ---------- */
+/* ---------- 공명자 고르기 (시안 6랩만할래 '공명자 추가' 를 새벽 달빛으로) ----------
+   찾기칸 · 속성 · 무기는 창 위에 붙어 있고, 얼굴 격자만 움직인다. 한 줄 4명 */
 .char-now{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:10px 12px}
 .char-now .who{flex:1}
 .char-now .who .sub{order:-1}
 .char-now .btn{flex:none;min-height:var(--touch);display:inline-flex;align-items:center}
+.sheet.picker{height:94%} /* 필터로 목록이 줄어도 창 높이가 출렁이지 않게 */
+.pick-tools{position:sticky;top:-10px;z-index:1;display:flex;flex-direction:column;gap:8px;
+  margin:-10px 0 -6px;padding:10px 0 6px;background:var(--bg)}
 .search-wrap{position:relative;display:block}
 .search-wrap>.ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--faint);pointer-events:none}
 .search-wrap .field{padding-left:38px}
-.el-chips{display:flex;flex-wrap:wrap;gap:6px}
-.el-chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-pill);
-  background:var(--surface);font-size:var(--fs-small);font-weight:500;color:var(--ink);position:relative}
-.el-chip::after{content:"";position:absolute;inset:-2px 0}
-.el-chip[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;font-weight:600}
+/* 속성 · 무기: 한 줄에 다 보이는 칸 묶음 (가로로 밀지 않는다). 모양은 .seg 와 같게 */
+.filter-row{display:grid;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:3px}
+.filter-row.seven{grid-template-columns:repeat(7,minmax(0,1fr))}
+.filter-row.six{grid-template-columns:repeat(6,minmax(0,1fr))}
+.fchip{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:36px;padding:0 2px;
+  border:0;border-radius:9px;background:none;font-size:var(--fs-small);font-weight:500;color:var(--sub);white-space:nowrap;
+  transition:background var(--t-fast)}
+.fchip::after{content:"";position:absolute;inset:-2px 0} /* 모양은 36px, 누르는 자리는 40px */
+.fchip[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink);font-weight:600}
+.fchip .el-dot{width:7px;height:7px}
+@media (max-width:370px){.fchip .el-dot{display:none}}
 .char-count{margin:0}
-.char-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
-.char{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:var(--r-card);border:1px solid var(--line);background:var(--surface);min-height:var(--touch)}
-.char .nm{font-size:var(--fs-small);font-weight:600;text-align:center;line-height:1.25}
-.char .sub{justify-content:center;text-align:center}
+.char-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.char{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 7px;
+  border-radius:var(--r-card);border:1px solid var(--line);background:var(--surface);min-height:var(--touch)}
+.char:active{background:var(--bg)}
+.char .nm{font-size:var(--fs-small);font-weight:600;text-align:center;line-height:1.25;word-break:keep-all;overflow-wrap:anywhere}
+.char .sub{justify-content:center;text-align:center;gap:3px;flex-wrap:nowrap;max-width:100%;line-height:1.3}
+.char .el{gap:3px}
+.char .where{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .char[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent}
 .char.away>.face,.char.away .nm{opacity:.55}
-.char-badge{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center}
-.char-badge .ic{width:13px;height:13px;stroke-width:3}
+.char-badge{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center}
+.char-badge .ic{width:12px;height:12px;stroke-width:3}
 .card>.msg:empty{display:none}
 
 /* ---------- 취미: 게임 카드 → 각 게임 쪽 ---------- */
 .divider{height:1px;background:var(--line);margin:2px 0} /* 시안 그대로 */
 .hobby-page{display:flex;flex-direction:column;gap:var(--gap)}
-.hub{width:100%;text-align:left;display:flex;flex-direction:column;gap:8px;min-height:var(--touch)}
-.hub-h{display:flex;justify-content:space-between;align-items:center}
+.hub{display:flex;flex-direction:column;gap:10px}
+.hub-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .hub-h b{font-size:var(--fs-body);font-weight:700}
+.hub-cnt{font-size:var(--fs-small);color:var(--sub)}
+/* 게임마다 화면 버튼 두 개: 누르면 그 게임의 그 페이지로 바로 */
+.hub-pages{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}
+.hub-go{display:flex;flex-direction:column;align-items:stretch;gap:2px;text-align:left;min-height:64px;padding:10px 10px 10px 12px;
+  border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface);transition:background var(--t-fast)}
+.hub-go:active{background:var(--bg)}
+.hub-go-h{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.hub-go-h b{font-size:var(--fs-body);font-weight:600}
+.hub-go-sub{font-size:var(--fs-tiny);color:var(--sub);line-height:1.4;word-break:keep-all}
 .hub .go,.go-end .go,.go-row .go{width:18px;height:18px;stroke:var(--faint);fill:none;stroke-width:1.8}
 /* 메인 카드에서 바로 가기 (취미 탭 게임 카드와 같은 › 표시) */
 .go-card{position:relative}
@@ -369,7 +392,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .go-row>span{display:inline-flex;align-items:center;gap:4px}
 .go-row .go,.go-end .go{width:16px;height:16px}
 .go-end{display:inline-flex;align-items:center;gap:4px;align-self:center}
-.hub-sub{font-size:var(--fs-small);color:var(--sub)}
 .hub .meter{display:block}
 .sub-top{justify-content:flex-start;align-items:center}
 .sub-top h1{margin:0}
@@ -423,36 +445,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gear-pick .checks,#gearWish{gap:6px}
 #gearRemove{align-self:flex-start;min-height:var(--touch)}
 
-/* 워프레임: 모딩 */
-.pick.equip{display:flex;flex-direction:column;gap:0}
-.pick .sub,.mod-pick .sub{font-size:var(--fs-tiny);color:var(--faint);font-weight:400}
-.mod-build{display:flex;flex-direction:column;gap:12px}
-.mod-build .card-h{margin-bottom:0;flex-wrap:wrap}
-.mod-sum .stat{margin:2px 0 6px}
-.mod-sum .mini{margin:0}
-.mod-sum .meter+.mini{margin-top:8px}
-.mod-slots{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.mod-slot{width:100%;min-height:72px;text-align:left;display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface)}
-.mod-slot.empty{border-style:dashed}
-.ms-top{display:flex;align-items:center;gap:6px}
-.pol{flex:none;display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 4px;border:1.5px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:var(--fs-tiny);font-weight:600;color:var(--ink)}
-.ms-kind{font-size:var(--fs-tiny);color:var(--faint);min-width:0}
-.ms-top .cost{margin-left:auto;font-size:var(--fs-small);color:var(--sub)}
-.ms-name{font-size:var(--fs-small);font-weight:600;overflow-wrap:anywhere;line-height:1.35}
-.mod-slot.empty .ms-name{color:var(--faint);font-weight:400}
-.ms-rank{font-size:var(--fs-tiny);color:var(--faint)}
-#modBase{margin:0}
-.stepper{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.stepper .icon-btn{font-size:18px;color:var(--ink)}
-.stepper .mini{margin:0}
-#slotCur .btn{min-height:var(--touch)}
-.mod-hits{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.mod-pick{width:100%;min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface)}
-.mod-pick[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent}
-.mod-pick .nm{display:flex;flex-direction:column;min-width:0;line-height:1.35}
-.mod-pick .mono{flex:none;font-size:var(--fs-small);color:var(--sub)}
-
-.wf-data-msg:empty{display:none}
 
 /* ---------- 라이브러리 · 메모 (메인 맨 아래) ---------- */
 .lib-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}

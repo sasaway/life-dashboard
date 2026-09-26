@@ -1,8 +1,7 @@
-// 워프레임 화면: 오늘 체크(출격·포르마), 오늘 할 일, 실시간 현황, 장비 목록, 메인 취미 카드의 워프레임 줄.
+// 워프레임 화면: 위 [오늘 · 장비] 전환. 오늘 = 오늘 체크(출격·포르마)·할 일·실시간 현황, 장비 = 장비 목록. 메인 취미 카드의 워프레임 줄.
 import { store } from "./store.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import { chip } from "./wuwa-view.js";
-import { openTools } from "./wf-tools-view.js";
 import {
   DAILY, PLAYSTYLES, SORTIE_TYPES, GEAR_FIELDS, DEFAULT_GEAR, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo,
   removeTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame, isBlankFrame,
@@ -19,6 +18,9 @@ const savedGear = store.load("wfGear", DEFAULT_GEAR);
 let gear = migrateGear(savedGear); // v16 의 플레이스타일 줄 형식이면 워프레임 기준으로 옮긴다
 if (gear !== savedGear) store.save("wfGear", gear); // 옮긴 건 한 번 저장해 둔다
 let live = store.load("wfLive", { at: 0, sortie: null, invasions: [], alerts: [] });
+// 모딩 페이지는 v1.4 에서 없앴다. 폰에 남은 모딩 기록은 지운다 (은월 결정, 2026-09-26)
+store.remove("wfMods");
+store.remove("wfModSel");
 let loading = false;
 let liveFailed = false;
 let editing = null; // 고치고 있는 워프레임 id
@@ -41,12 +43,15 @@ function renderChecks() {
   renderHub();
 }
 
-// 취미 탭 첫 화면의 워프레임 카드
+// 취미 탭 첫 화면의 워프레임 카드: 오늘 진행도 + '오늘' · '장비' 버튼
 function renderHub() {
   const c = dailyCount(checks, new Date());
   const left = leftTodos(todos);
-  $("hubWfSub").textContent = `오늘 ${c.done} / ${c.total}${left ? ` · 할 일 ${left}개 남음` : ""}`;
+  $("hubWfCount").textContent = `오늘 ${c.done} / ${c.total}`;
   $("hubWfBar").style.width = pct(c);
+  $("hubWfToday").textContent = left ? `체크 ${c.done}/${c.total} · 할 일 ${left}개` : `체크 ${c.done}/${c.total} · 실시간 현황`;
+  const frames = gear.frames.filter((f) => !f.wish).length;
+  $("hubWfGear").textContent = `워프레임 ${frames} · 그 외 무기 ${gear.others.length}`;
 }
 
 function onCheckClick(e) {
@@ -145,6 +150,7 @@ function renderGear() {
   }).join("");
   $("wfOthers").innerHTML = gear.others.map((n, i) =>
     `<li><span>${esc(n)}</span><button data-del-other="${i}" aria-label="${esc(n)} 지우기">${X_SVG}</button></li>`).join("");
+  renderHub();
 }
 
 const saveGear = () => store.save("wfGear", gear);
@@ -176,15 +182,13 @@ function openGear(id) {
   openSheet("gearSheet");
 }
 
-// 워프레임 쪽 위 [오늘 · 모딩] 전환 (돈 탭처럼)
+// 워프레임 쪽 위 [오늘 · 장비] 전환 (명조 [오늘 · 파티표] 와 같게)
 function showWfPage(page) {
-  for (const p of ["today", "mod"]) $(`wf-page-${p}`).hidden = p !== page;
+  for (const p of ["today", "gear"]) $(`wf-page-${p}`).hidden = p !== page;
   $("wfPick").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.page === page)));
   if (page === "today") {
     renderLive();
     loadLive();
-  } else {
-    openTools();
   }
 }
 

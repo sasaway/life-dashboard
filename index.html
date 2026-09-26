@@ -196,28 +196,33 @@
     </div>
   </section>
 
-  <!-- 취미: 게임 카드 두 장 → 눌러서 각 게임 쪽으로 (사용자 결정) -->
+  <!-- 취미: 게임마다 카드 한 장 (제목 · 진행도) + 그 게임의 화면으로 바로 가는 버튼 (Notion '취미') -->
   <section class="screen" id="screen-hobby" aria-label="취미" hidden>
     <div class="hobby-page" id="hobby-hub">
       <header class="top"><h1>취미</h1></header>
-      <button class="card hub" data-hobby="ww">
-        <span class="hub-h"><b>명조</b><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
-        <span class="hub-sub" id="hubWwSub"></span>
+      <section class="card hub" aria-label="명조">
+        <div class="hub-h"><b>명조</b><span class="mono hub-cnt" id="hubWwCount"></span></div>
         <span class="meter"><i id="hubWwBar"></i></span>
-      </button>
-      <button class="card hub" data-hobby="wf">
-        <span class="hub-h"><b>워프레임</b><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
-        <span class="hub-sub" id="hubWfSub"></span>
+        <div class="hub-pages">
+          <button class="hub-go" data-hobby="ww" data-page="today"><span class="hub-go-h"><b>오늘</b><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span><span class="hub-go-sub" id="hubWwToday"></span></button>
+          <button class="hub-go" data-hobby="ww" data-page="party"><span class="hub-go-h"><b>파티표</b><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span><span class="hub-go-sub" id="hubWwParty"></span></button>
+        </div>
+      </section>
+      <section class="card hub" aria-label="워프레임">
+        <div class="hub-h"><b>워프레임</b><span class="mono hub-cnt" id="hubWfCount"></span></div>
         <span class="meter"><i id="hubWfBar"></i></span>
-      </button>
+        <div class="hub-pages">
+          <button class="hub-go" data-hobby="wf" data-page="today"><span class="hub-go-h"><b>오늘</b><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span><span class="hub-go-sub" id="hubWfToday"></span></button>
+          <button class="hub-go" data-hobby="wf" data-page="gear"><span class="hub-go-h"><b>장비</b><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span><span class="hub-go-sub" id="hubWfGear"></span></button>
+        </div>
+      </section>
     </div>
 
     <div class="hobby-page" id="hobby-ww" hidden>
       <header class="top sub-top"><button class="icon-btn" data-hobby="hub" aria-label="취미로 돌아가기"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><h1>명조</h1></header>
-      <div class="seg three" id="wwPick">
+      <div class="seg" id="wwPick">
         <button data-page="today" aria-pressed="true">오늘</button>
-        <button data-page="build" aria-pressed="false">육성</button>
-        <button data-page="party" aria-pressed="false">파티</button>
+        <button data-page="party" aria-pressed="false">파티표</button>
       </div>
 
       <div class="stack" id="ww-page-today">
@@ -235,14 +240,6 @@
       </section>
       </div>
 
-      <div class="stack" id="ww-page-build" hidden>
-        <section class="card" aria-label="육성 체크">
-          <div class="card-h"><h2>육성 체크</h2><small class="num" id="wwGrowCount"></small></div>
-          <ul class="grow" id="wwGrow"></ul>
-          <p class="empty" id="wwGrowEmpty">파티에 캐릭터를 넣으면 여기서 육성 체크를 할 수 있어.</p>
-        </section>
-      </div>
-
       <div class="stack" id="ww-page-party" hidden>
         <p class="msg" id="wwCharsMsg" role="status"></p>
         <div class="parties" id="wwParties"></div>
@@ -255,7 +252,7 @@
       <header class="top sub-top"><button class="icon-btn" data-hobby="hub" aria-label="취미로 돌아가기"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><h1>워프레임</h1></header>
       <div class="seg" id="wfPick">
         <button data-page="today" aria-pressed="true">오늘</button>
-        <button data-page="mod" aria-pressed="false">모딩</button>
+        <button data-page="gear" aria-pressed="false">장비</button>
       </div>
 
       <div class="stack" id="wf-page-today">
@@ -280,6 +277,9 @@
         <div class="live" id="wfLive"></div>
         <p class="mini credit">정보: warframestat.us · 지역 이름과 조건은 영어 원문</p>
       </section>
+      </div>
+
+      <div class="stack" id="wf-page-gear" hidden>
       <section class="card" aria-label="장비 목록">
         <div class="card-h"><h2>장비 목록</h2><button class="btn btn-text" id="wfAddRow">워프레임 추가</button></div>
         <p class="mini gear-hint">워프레임을 누르면 고칠 수 있어.</p>
@@ -291,37 +291,6 @@
           <button class="btn btn-ghost">추가</button>
         </form>
       </section>
-      </div>
-
-      <div class="stack" id="wf-page-mod" hidden>
-        <section class="card" aria-label="모딩할 장비">
-          <div class="card-h"><h2>모딩할 장비</h2><button class="btn btn-text" id="modAddEquip">장비 추가</button></div>
-          <ul class="picks" id="modEquips"></ul>
-          <p class="empty" id="modEquipsEmpty">'장비 추가' 를 눌러 모딩할 워프레임·무기·동반자를 골라 봐.</p>
-          <p class="msg wf-data-msg" role="status"></p>
-        </section>
-        <section class="card mod-build" id="modBuildCard" aria-label="빌드" hidden>
-          <div class="card-h"><h2 id="modName"></h2><small id="modSub"></small></div>
-          <div class="seg three" id="modPickBuild">
-            <button data-build="A" aria-pressed="true">A</button>
-            <button data-build="B" aria-pressed="false">B</button>
-            <button data-build="C" aria-pressed="false">C</button>
-          </div>
-          <div class="mod-sum">
-            <div class="row-h"><span class="mini">용량</span><span class="mini" id="modLeft"></span></div>
-            <p class="stat mono" id="modCap"></p>
-            <div class="meter"><i id="modBar"></i></div>
-            <p class="mini" id="modForma"></p>
-          </div>
-          <div class="checks" id="modBoost"></div>
-          <ol class="mod-slots" id="modSpecial"></ol>
-          <ol class="mod-slots" id="modSlots"></ol>
-          <p class="mini" id="modBase"></p>
-          <div class="btns">
-            <button class="btn btn-text" id="modRebase">포르마 개수 초기화</button>
-            <button class="btn btn-text" id="modRemove">모딩 제거</button>
-          </div>
-        </section>
       </div>
 
     </div>
@@ -450,39 +419,6 @@
   </div>
 </div>
 
-<!-- 모딩: 장비 추가 -->
-<div class="sheet-wrap" id="equipSheet" hidden>
-  <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="equipTitle">
-    <div class="grab"></div>
-    <div class="sheet-h">
-      <h2 id="equipTitle">장비 추가</h2>
-      <button class="btn btn-ghost" data-close>닫기</button>
-    </div>
-    <input class="field" id="equipSearch" type="search" placeholder="워프레임·무기·동반자 이름 (예: 오락시아)" aria-label="장비 찾기" autocomplete="off">
-    <ul class="picks" id="equipHits"></ul>
-    <p class="empty" id="equipEmpty" hidden>찾는 장비가 없어.</p>
-  </div>
-</div>
-
-<!-- 모딩: 칸 하나 (극성 · 모드 · 랭크) -->
-<div class="sheet-wrap" id="slotSheet" hidden>
-  <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="slotTitle">
-    <div class="grab"></div>
-    <div class="sheet-h">
-      <div><h2 id="slotTitle">칸</h2><p class="date" id="slotBase"></p></div>
-      <button class="btn btn-ghost" data-close>닫기</button>
-    </div>
-    <section class="card">
-      <div class="card-h"><h2>극성</h2><small>바꾸면 포르마 하나</small></div>
-      <div class="checks" id="slotPols"></div>
-    </section>
-    <section class="card" id="slotCur" hidden></section>
-    <input class="field" id="modSearch" type="search" placeholder="모드 이름 (예: 서레이션, 인텐시파이)" aria-label="모드 찾기" autocomplete="off">
-    <ul class="mod-hits" id="modHits"></ul>
-    <p class="empty" id="modHitsEmpty" hidden>이 칸에 넣을 수 있는 모드 중에 없어.</p>
-  </div>
-</div>
-
 <!-- 라이브러리 목록 -->
 <div class="sheet-wrap" id="libSheet" hidden>
   <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="libTitle">
@@ -521,22 +457,25 @@
   </div>
 </div>
 
-<!-- 캐릭터 고르기 -->
+<!-- 공명자 고르기 (시안 6랩만할래 '공명자 추가' 를 새벽 달빛으로): 찾기·필터는 위에 붙어 있고 얼굴 격자만 움직인다 -->
 <div class="sheet-wrap" id="charSheet" hidden>
-  <div class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="charTitle">
+  <div class="sheet tall picker" role="dialog" aria-modal="true" aria-labelledby="charTitle">
     <div class="grab"></div>
     <div class="sheet-h">
-      <div><h2>캐릭터 고르기</h2><p class="date" id="charTitle"></p></div>
+      <div><h2>공명자 고르기</h2><p class="date" id="charTitle"></p></div>
       <button class="btn btn-ghost" data-close>닫기</button>
     </div>
     <div class="char-now" id="charNow" hidden></div>
-    <label class="search-wrap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
-      <input class="field" id="charSearch" type="search" placeholder="이름 찾기 (예: 금희)" aria-label="캐릭터 찾기"></label>
-    <div class="el-chips" id="charFilters" role="group" aria-label="속성"></div>
-    <p class="mini char-count" id="charCount" aria-live="polite"></p>
+    <div class="pick-tools">
+      <label class="search-wrap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        <input class="field" id="charSearch" type="search" placeholder="이름 일부 (예: 카르)" aria-label="공명자 이름 찾기" autocomplete="off"></label>
+      <div class="filter-row seven" id="charFilters" role="group" aria-label="속성"></div>
+      <div class="filter-row six" id="charWeapons" role="group" aria-label="무기"></div>
+      <p class="mini char-count" id="charCount" aria-live="polite"></p>
+    </div>
     <ul class="char-grid" id="charGrid"></ul>
-    <p class="empty" id="charEmpty" hidden>조건에 맞는 캐릭터가 없어.</p>
-    <p class="msg">다른 파티에 있는 캐릭터를 누르면 이 칸으로 옮겨 와. · 캐릭터 정보: encore.moe</p>
+    <p class="empty" id="charEmpty" hidden>조건에 맞는 공명자가 없어.</p>
+    <p class="msg">흐린 공명자는 다른 칸에 있어. 누르면 이 칸으로 옮겨 와. · 공명자 정보: encore.moe</p>
   </div>
 </div>
 

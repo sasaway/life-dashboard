@@ -11,7 +11,6 @@ import { startRecipes } from "./recipe-view.js";
 import { startWorkout, renderWorkout } from "./workout-view.js";
 import { startWuwa, renderWuwa } from "./wuwa-view.js";
 import { startWarframe, renderWarframe } from "./warframe-view.js";
-import { startWfTools } from "./wf-tools-view.js";
 import { startLibrary } from "./library-view.js";
 import { startBriefing, renderBriefing } from "./briefing-view.js";
 import { startCalendar, openCalendarSettings } from "./calendar-view.js";
@@ -56,12 +55,13 @@ function showScreen(name) {
     if (t.dataset.screen === name) t.setAttribute("aria-current", "page");
     else t.removeAttribute("aria-current");
   });
-  if (name === "hobby") showHobby("hub"); // 취미 탭을 누르면 늘 게임 카드 두 장부터
+  if (name === "hobby") showHobby("hub"); // 취미 탭을 누르면 늘 게임 카드부터
   window.scrollTo(0, 0);
 }
 
-// 취미: 게임 카드(허브) → 명조 쪽 / 워프레임 쪽
-function showHobby(page) {
+// 취미: 게임 카드(허브) → 명조 쪽 / 워프레임 쪽. sub 를 주면 그 게임의 그 페이지(오늘 · 파티표 · 장비)를 연다
+function showHobby(page, sub) {
+  if (sub) $(`${page}Pick`)?.querySelector(`[data-page="${sub}"]`)?.click();
   document.querySelectorAll(".hobby-page").forEach((p) => {
     p.hidden = p.id !== `hobby-${page}`;
   });
@@ -84,7 +84,7 @@ function startTabs() {
   });
   $("screen-hobby").addEventListener("click", (e) => {
     const b = e.target.closest("[data-hobby]");
-    if (b) showHobby(b.dataset.hobby);
+    if (b) showHobby(b.dataset.hobby, b.dataset.page);
   });
 }
 
@@ -130,7 +130,6 @@ startRecipes();
 startWorkout();
 startWuwa();
 startWarframe();
-startWfTools();
 startLibrary();
 startBriefing();
 startCalendar();
