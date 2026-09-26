@@ -21,6 +21,14 @@ export function createStore(storage) {
         return false; // 저장 공간이 꽉 찼거나 막혀 있음
       }
     },
+    // 더는 안 쓰는 칸을 서랍에서 뺀다 (없으면 아무 일 없음)
+    remove(key) {
+      try {
+        storage.removeItem?.(PREFIX + key);
+      } catch {
+        // 못 지워도 앱은 그대로 돈다
+      }
+    },
   };
 }
 
@@ -37,6 +45,7 @@ const memory = new Map();
 const fallbackStorage = {
   getItem: (k) => (memory.has(k) ? memory.get(k) : null),
   setItem: (k, v) => memory.set(k, String(v)),
+  removeItem: (k) => memory.delete(k),
 };
 
 export const store = createStore(safeLocalStorage() ?? fallbackStorage);

@@ -7,6 +7,7 @@ function fakeStorage() {
   return {
     getItem: (k) => (m.has(k) ? m.get(k) : null),
     setItem: (k, v) => m.set(k, String(v)),
+    removeItem: (k) => m.delete(k),
     raw: m,
   };
 }
@@ -40,4 +41,15 @@ test("저장이 막혀도 앱이 멈추지 않고 false 를 돌려준다", () =>
     setItem: () => { throw new Error("QuotaExceededError"); },
   });
   assert.equal(s.save("x", 1), false);
+});
+
+test("안 쓰는 칸은 지울 수 있고, 없는 칸을 지워도 괜찮다 (v1.4 모딩 기록 지우기)", () => {
+  const storage = fakeStorage();
+  const s = createStore(storage);
+  s.save("wfMods", [{ id: "a" }]);
+  s.save("wfGear", { frames: [] });
+  s.remove("wfMods");
+  s.remove("wfModSel");
+  assert.equal(storage.raw.has("ld:wfMods"), false);
+  assert.deepEqual(s.load("wfGear", null), { frames: [] }); // 다른 칸은 그대로
 });

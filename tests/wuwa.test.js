@@ -4,7 +4,7 @@ import {
   DAILY, WEEKLY, BUILD, gameDay, dailyKey, weeklyKey, dailyDone, weeklyDone, toggleDaily, tapWeekly,
   dailyCount, weeklyCount, cleanCharacters, searchCharacters, addParty, renameParty, removeParty,
   placeCharacter, clearSlot, whereIs, toggleBuild, buildCount, ELEMENTS, elementKey, filterCharacters,
-  partyMembers, filledCount,
+  partyMembers, filledCount, WEAPONS, needsRefresh,
 } from "../js/wuwa.js";
 
 const at = (d, h, m = 0) => new Date(2026, 8, d, h, m); // 2026-09-21 월
@@ -58,7 +58,7 @@ test("encore.moe 목록 정리: 같은 이름은 하나만, 5성 먼저, 그다�
   ];
   const list = cleanCharacters(raw);
   assert.deepEqual(list.map((c) => c.name), ["금희", "방랑자 · 기류", "양양"]);
-  assert.deepEqual(list[0], { id: "4", name: "금희", stars: 5, element: "회절", icon: "d.webp" });
+  assert.deepEqual(list[0], { id: "4", name: "금희", stars: 5, element: "회절", weapon: "", icon: "d.webp" });
   assert.deepEqual(searchCharacters(list, "방랑 자").map((c) => c.id), ["2"]); // 띄어쓰기 무시
   assert.deepEqual(searchCharacters(list, "기류").map((c) => c.id), ["2", "1"]); // 속성으로도
   assert.equal(searchCharacters(list, " ").length, 3);
@@ -111,6 +111,31 @@ test("고르기 창: 찾는 글자와 속성 칩이 둘 다 맞는 캐릭터만"
   assert.deepEqual(filterCharacters(list, "금", "회절").map((c) => c.id), ["1"]);
   assert.deepEqual(filterCharacters(list, "금", "인멸"), []);
   assert.equal(filterCharacters(list, "", "").length, 3);
+});
+
+test("공명자 고르기 (v1.4): 무기 종류도 받아 오고, 이름 AND 속성 AND 무기로 좁힌다", () => {
+  const raw = [
+    { Id: 1, Name: "카르티시아", QualityId: 5, Element: { Name: "기류" }, WeaponType: { Id: 2, Name: "직검" }, RoleHeadIcon: "a.webp" },
+    { Id: 2, Name: "카멜리아", QualityId: 5, Element: { Name: "인멸" }, WeaponType: { Id: 2, Name: "직검" }, RoleHeadIcon: "b.webp" },
+    { Id: 3, Name: "금희", QualityId: 5, Element: { Name: "회절" }, WeaponType: { Id: 1, Name: "대검" }, RoleHeadIcon: "c.webp" },
+    { Id: 4, Name: "양양", QualityId: 4, Element: { Name: "기류" }, WeaponType: { Id: 2, Name: "직검" }, RoleHeadIcon: "d.webp" },
+  ];
+  const list = cleanCharacters(raw);
+  assert.equal(list.find((c) => c.id === "3").weapon, "대검");
+  assert.deepEqual(WEAPONS, ["대검", "직검", "권총", "권갑", "증폭기"]);
+  assert.deepEqual(searchCharacters(list, "카르").map((c) => c.id), ["1"]); // 이름 일부
+  assert.deepEqual(searchCharacters(list, "카").map((c) => c.id).sort(), ["1", "2"]);
+  assert.deepEqual(searchCharacters(list, "대검").map((c) => c.id), ["3"]); // 무기 이름으로도
+  assert.deepEqual(filterCharacters(list, "", "", "직검").map((c) => c.id).sort(), ["1", "2", "4"]);
+  assert.deepEqual(filterCharacters(list, "", "기류", "직검").map((c) => c.id).sort(), ["1", "4"]);
+  assert.deepEqual(filterCharacters(list, "양", "기류", "직검").map((c) => c.id), ["4"]);
+  assert.deepEqual(filterCharacters(list, "", "기류", "대검"), []);
+});
+
+test("무기 칸이 없는 옛 캐릭터 목록 사본은 새로 받는다 (파티·육성 기록은 그대로)", () => {
+  assert.equal(needsRefresh([]), true);
+  assert.equal(needsRefresh([{ id: "1", name: "금희", element: "회절" }]), true);
+  assert.equal(needsRefresh([{ id: "1", name: "금희", element: "회절", weapon: "대검" }]), false);
 });
 
 test("육성 목록: 파티에 넣은 캐릭터를 파티·칸 순서대로, 빈칸은 빼고", () => {

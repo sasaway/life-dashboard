@@ -1,10 +1,11 @@
-// 명조 화면: 취미 탭 [오늘 · 육성 · 파티] (워프레임 [오늘 · 모딩] 처럼), 메인 취미 카드, 캐릭터 고르기 창.
+// 명조 화면: 취미 탭 [오늘 · 파티표] (워프레임 [오늘 · 장비] 처럼), 메인 취미 카드, 공명자 고르기 창.
+// 파티표 = 파티마다 카드 한 장, 3칸 + 그 아래에 캐릭터마다 육성 체크 5개 (Notion '목표 육성 파티표')
 import { store } from "./store.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import {
   DAILY, WEEKLY, BUILD, PARTY_SIZE, dailyDone, weeklyDone, toggleDaily, tapWeekly, dailyCount, weeklyCount,
-  cleanCharacters, ELEMENTS, elementKey, filterCharacters, addParty, renameParty, removeParty, placeCharacter,
-  clearSlot, whereIs, partyMembers, filledCount, toggleBuild, buildCount,
+  cleanCharacters, ELEMENTS, WEAPONS, elementKey, filterCharacters, needsRefresh, addParty, renameParty, removeParty,
+  placeCharacter, clearSlot, whereIs, partyMembers, filledCount, toggleBuild, buildCount,
 } from "./wuwa.js";
 import { $, esc } from "./dom.js";
 import { ICON } from "./icons.js";
@@ -44,9 +45,10 @@ function renderChecks() {
   }
   $("wwMainBoss").innerHTML = `주간보스 ${bossBoxes(wd.boss ?? 0)}`;
 
-  // 취미 탭 첫 화면의 명조 카드
-  $("hubWwSub").textContent = `오늘 ${dc.done} / ${dc.total} · 이번 주 ${wc.done} / ${wc.total}`;
+  // 취미 탭 첫 화면의 명조 카드: 오늘 진행도 + '오늘' 버튼에 이번 주
+  $("hubWwCount").textContent = `오늘 ${dc.done} / ${dc.total}`;
   $("hubWwBar").style.width = `${(dc.done / dc.total) * 100}%`;
+  $("hubWwToday").textContent = `일일 ${dc.done}/${dc.total} · 주간 ${wc.done}/${wc.total}`;
 
   $("wwWeeklyCount").textContent = `${wc.done} / ${wc.total}`;
   $("wwWeeklyBar").style.width = `${(wc.done / wc.total) * 100}%`;
@@ -90,6 +92,7 @@ function slotHtml(p, i) {
 }
 
 function renderParties() {
+  if (openGrow && !partyMembers(parties).some((m) => m.id === openGrow)) openGrow = null;
   $("wwParties").innerHTML = parties.map((p) => `
     <section class="card party" aria-label="${esc(p.name)}">
       <div class="party-h">
@@ -98,27 +101,26 @@ function renderParties() {
         <button class="icon-btn" data-remove-party="${p.id}" aria-label="${esc(p.name)} 지우기">${ICON.trash}</button>
       </div>
       <ol class="pt-slots">${Array.from({ length: PARTY_SIZE }, (_, i) => slotHtml(p, i)).join("")}</ol>
+      ${growHtml(p)}
     </section>`).join("");
   $("wwPartiesEmpty").hidden = parties.length > 0;
-  renderGrow();
+  renderHubParty();
 }
 
-// ---------- 육성 페이지: 파티에 넣은 캐릭터, 한 번에 한 명만 펼친다 ----------
+// ---------- 육성 체크: 파티 카드 안, 캐릭터마다 한 줄. 한 번에 한 명만 펼친다 ----------
 let openGrow = null; // 펼친 캐릭터 id
 
-function renderGrow() {
-  const members = partyMembers(parties);
-  if (openGrow && !members.some((m) => m.id === openGrow)) openGrow = null;
-  const full = members.filter((m) => buildCount(builds, m.id) === BUILD.length).length;
-  $("wwGrowCount").textContent = members.length ? `다 한 캐릭터 ${full} / ${members.length}` : "";
-  $("wwGrow").innerHTML = members.map((m) => {
+function growHtml(p) {
+  const rows = p.slots.map((id, idx) => ({ id, idx })).filter((m) => m.id);
+  if (!rows.length) return "";
+  return `<ul class="grow" aria-label="${esc(p.name)} 육성 체크">${rows.map((m) => {
     const c = charById(m.id) ?? unknown;
     const n = buildCount(builds, m.id);
     const open = openGrow === m.id;
     return `<li class="grow-item${open ? " open" : ""}">
       <button class="grow-h" data-grow="${esc(m.id)}" aria-expanded="${open}">
-        ${face(c, 40)}
-        <span class="who"><b>${esc(c.name)}</b><span class="sub">${esc(m.partyName)} · ${m.idx + 1}번 ${elTag(c.element)}</span></span>
+        ${face(c, 32)}
+        <span class="who"><b>${esc(c.name)}</b><span class="sub">${m.idx + 1}번 칸</span></span>
         <span class="mono grow-cnt${n === BUILD.length ? " done" : ""}">${n} / ${BUILD.length}</span>
         <span class="chev">${ICON.chevronDown}</span>
       </button>
@@ -127,35 +129,57 @@ function renderGrow() {
         <div class="build">${BUILD.map((b) => chip(`data-build="${esc(m.id)}" data-key="${b.id}"`, b.label, builds[m.id]?.[b.id], true)).join("")}</div>
       </div>` : ""}
     </li>`;
-  }).join("");
-  $("wwGrowEmpty").hidden = members.length > 0;
+  }).join("")}</ul>`;
 }
 
-// ---------- 캐릭터 고르기 ----------
+// 취미 첫 화면의 '파티표' 버튼: 파티 수 · 육성 다 한 캐릭터
+function renderHubParty() {
+  const members = partyMembers(parties);
+  const full = members.filter((m) => buildCount(builds, m.id) === BUILD.length).length;
+  $("hubWwParty").textContent = parties.length
+    ? `파티 ${parties.length}개 · 육성 완료 ${full}/${members.length}`
+    : "아직 파티가 없어";
+}
+
+// ---------- 공명자 고르기 ----------
 let target = null; // { pid, idx }
 let elFilter = ""; // "" = 전체
+let wpFilter = "";
 
 function renderFilters() {
-  const btn = (name, label) =>
-    `<button class="el-chip" data-el-filter="${esc(name)}" aria-pressed="${elFilter === name}">${name ? `<i class="el-dot" data-el="${elementKey(name)}"></i>` : ""}${esc(label)}</button>`;
-  $("charFilters").innerHTML = btn("", "전체") + ELEMENTS.map((e) => btn(e.name, e.name)).join("");
+  const btn = (attr, val, cur, label, dot = "") =>
+    `<button class="fchip" ${attr}="${esc(val)}" aria-pressed="${cur === val}">${dot}<span>${esc(label)}</span></button>`;
+  $("charFilters").innerHTML = btn("data-el-filter", "", elFilter, "전체")
+    + ELEMENTS.map((e) => btn("data-el-filter", e.name, elFilter, e.name, `<i class="el-dot" data-el="${e.key}"></i>`)).join("");
+  $("charWeapons").innerHTML = btn("data-wp-filter", "", wpFilter, "전체")
+    + WEAPONS.map((w) => btn("data-wp-filter", w, wpFilter, w)).join("");
+  // 무기 칸이 없는 옛 목록(인터넷이 없어 아직 못 받음)이면 무기 줄은 숨긴다
+  $("charWeapons").hidden = !chars.list.some((c) => c.weapon);
 }
 
 function renderPicker() {
-  const list = filterCharacters(chars.list, $("charSearch").value, elFilter);
-  $("charCount").textContent = chars.list.length ? `${list.length}명` : "";
+  const list = filterCharacters(chars.list, $("charSearch").value, elFilter, wpFilter);
+  $("charCount").textContent = chars.list.length ? `${list.length}명` : "공명자 목록을 받는 중이야.";
   $("charGrid").innerHTML = list.map((c) => {
     const at = whereIs(parties, c.id);
     const here = at && at.pid === target.pid && at.idx === target.idx;
     const away = at && !here;
-    return `<li><button class="char${away ? " away" : ""}" data-char="${esc(c.id)}" aria-pressed="${Boolean(here)}">
+    const label = `${c.name}${away ? `, 지금 ${at.name} ${at.idx + 1}번 칸에 있음` : ""}`;
+    return `<li><button class="char${away ? " away" : ""}" data-char="${esc(c.id)}" aria-pressed="${Boolean(here)}" aria-label="${esc(label)}">
       ${here ? `<span class="char-badge">${ICON.check}</span>` : ""}
-      ${face(c, 56)}
+      ${face(c, 44)}
       <span class="nm">${esc(c.name)}</span>
-      <span class="sub">${away ? `${esc(at.name)} · ${at.idx + 1}번` : elTag(c.element)}</span>
+      <span class="sub">${away ? `<span class="where">${esc(at.name)}</span><span class="mono">${at.idx + 1}</span>` : elTag(c.element)}</span>
     </button></li>`;
   }).join("");
   $("charEmpty").hidden = list.length > 0 || !chars.list.length;
+}
+
+// 목록을 내려 둔 채 필터를 바꾸면, 새 목록의 맨 앞(찾기칸 바로 아래)으로 돌아간다
+function toGridTop() {
+  const sheet = $("charSheet").querySelector(".sheet");
+  const top = sheet.querySelector(".pick-tools").offsetTop;
+  if (sheet.scrollTop > top) sheet.scrollTop = top;
 }
 
 function openPicker(pid, idx) {
@@ -170,21 +194,22 @@ function openPicker(pid, idx) {
     : "";
   $("charSearch").value = "";
   elFilter = "";
+  wpFilter = "";
   renderFilters();
   renderPicker();
   openSheet("charSheet");
 }
 
-// 명조 쪽 위 [오늘 · 육성 · 파티] 전환 (워프레임 [오늘 · 모딩] 과 같게)
+// 명조 쪽 위 [오늘 · 파티표] 전환 (워프레임 [오늘 · 장비] 와 같게)
 function showWwPage(page) {
-  for (const p of ["today", "build", "party"]) $(`ww-page-${p}`).hidden = p !== page;
+  for (const p of ["today", "party"]) $(`ww-page-${p}`).hidden = p !== page;
   $("wwPick").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.page === page)));
   if (page !== "today") loadCharacters();
 }
 
-// 캐릭터 목록: 저장된 게 일주일 넘었거나 없으면 encore.moe 에서 새로 받는다
+// 캐릭터 목록: 저장된 게 일주일 넘었거나, 없거나, 무기 칸이 없는 옛 사본이면 encore.moe 에서 새로 받는다
 async function loadCharacters() {
-  if (chars.list.length && Date.now() - chars.at < CHARS_MAX_AGE) return;
+  if (!needsRefresh(chars.list) && Date.now() - chars.at < CHARS_MAX_AGE) return;
   try {
     const res = await fetch(CHARS_URL);
     if (!res.ok) throw new Error(res.status);
@@ -192,6 +217,7 @@ async function loadCharacters() {
     store.save("wuwaChars", chars);
     $("wwCharsMsg").textContent = "";
     renderParties();
+    if (!$("charSheet").hidden && target) { renderFilters(); renderPicker(); }
   } catch {
     $("wwCharsMsg").textContent = chars.list.length
       ? ""
@@ -224,7 +250,16 @@ export function startWuwa() {
   $("wwParties").addEventListener("click", (e) => {
     const pick = e.target.closest("[data-pick]");
     const rm = e.target.closest("[data-remove-party]");
-    if (pick) {
+    const g = e.target.closest("[data-grow]");
+    const bld = e.target.closest("[data-build]");
+    if (bld) {
+      builds = toggleBuild(builds, bld.dataset.build, bld.dataset.key);
+      saveParties();
+      renderParties();
+    } else if (g) {
+      openGrow = openGrow === g.dataset.grow ? null : g.dataset.grow;
+      renderParties();
+    } else if (pick) {
       if (!chars.list.length) { loadCharacters(); $("wwCharsMsg").textContent ||= "캐릭터 목록을 받는 중이야."; }
       openPicker(pick.dataset.pick, Number(pick.dataset.idx));
     } else if (rm) {
@@ -243,26 +278,19 @@ export function startWuwa() {
     renderParties();
   });
 
-  $("wwGrow").addEventListener("click", (e) => {
-    const g = e.target.closest("[data-grow]");
-    const bld = e.target.closest("[data-build]");
-    if (bld) {
-      builds = toggleBuild(builds, bld.dataset.build, bld.dataset.key);
-      saveParties();
-    } else if (g) {
-      openGrow = openGrow === g.dataset.grow ? null : g.dataset.grow;
-    } else return;
-    renderGrow();
-  });
-
-  $("charSearch").addEventListener("input", renderPicker);
-  $("charFilters").addEventListener("click", (e) => {
-    const b = e.target.closest("[data-el-filter]");
-    if (!b) return;
-    elFilter = b.dataset.elFilter;
-    renderFilters();
-    renderPicker();
-  });
+  $("charSearch").addEventListener("input", () => { renderPicker(); toGridTop(); });
+  for (const id of ["charFilters", "charWeapons"]) {
+    $(id).addEventListener("click", (e) => {
+      const el = e.target.closest("[data-el-filter]");
+      const wp = e.target.closest("[data-wp-filter]");
+      if (el) elFilter = el.dataset.elFilter;
+      else if (wp) wpFilter = wp.dataset.wpFilter;
+      else return;
+      renderFilters();
+      renderPicker();
+      toGridTop();
+    });
+  }
   $("charGrid").addEventListener("click", (e) => {
     const b = e.target.closest("[data-char]");
     if (!b || !target) return;

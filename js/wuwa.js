@@ -74,14 +74,19 @@ export function cleanCharacters(roleList) {
   const seen = new Set();
   return roleList
     .filter((r) => r.Name && !seen.has(r.Name) && seen.add(r.Name))
-    .map((r) => ({ id: String(r.Id), name: r.Name, stars: r.QualityId, element: r.Element?.Name ?? "", icon: r.RoleHeadIcon ?? "" }))
+    .map((r) => ({
+      id: String(r.Id), name: r.Name, stars: r.QualityId, element: r.Element?.Name ?? "",
+      weapon: r.WeaponType?.Name ?? "", icon: r.RoleHeadIcon ?? "",
+    }))
     .sort((a, b) => b.stars - a.stars || a.name.localeCompare(b.name, "ko"));
 }
 
+// 이름 일부만 쳐도 찾는다 (카르 → 카르티시아). 띄어쓰기와 가운뎃점은 무시한다. 속성·무기 이름으로도 찾는다
+const squash = (t) => (t ?? "").replace(/[\s·.]+/g, "");
 export function searchCharacters(list, text) {
-  const q = text.trim().replace(/\s+/g, "");
+  const q = squash(text);
   if (!q) return list;
-  return list.filter((c) => c.name.replace(/\s+/g, "").includes(q) || c.element.includes(q));
+  return list.filter((c) => squash(c.name).includes(q) || c.element === q || c.weapon === q);
 }
 
 // 속성: 게임 속 순서. key 는 색 이름(tokens.css 의 --el-*)
@@ -95,9 +100,15 @@ export const ELEMENTS = [
 ];
 export const elementKey = (name) => ELEMENTS.find((e) => e.name === name)?.key ?? "";
 
-// 고르기 창: 이름·속성 찾기 AND 속성 칩 ("" = 전체)
-export const filterCharacters = (list, text, element = "") =>
-  searchCharacters(list, text).filter((c) => !element || c.element === element);
+// 무기: 게임 속 순서 (encore.moe WeaponType Id 1~5)
+export const WEAPONS = ["대검", "직검", "권총", "권갑", "증폭기"];
+
+// 고르기 창: 이름 찾기 AND 속성 AND 무기 ("" = 전체)
+export const filterCharacters = (list, text, element = "", weapon = "") =>
+  searchCharacters(list, text).filter((c) => (!element || c.element === element) && (!weapon || c.weapon === weapon));
+
+// 무기 칸이 없는 옛 캐릭터 목록 사본이면 새로 받아야 한다 (v1.4 부터 무기 필터)
+export const needsRefresh = (list) => !list.length || list.some((c) => !("weapon" in c));
 
 // ---------- 파티표 ----------
 // parties: [{ id, name, slots: [charId|null ×3] }] · builds: { charId: { lv: 1, ... } }
@@ -133,7 +144,7 @@ export function whereIs(parties, charId) {
   return null;
 }
 
-// 파티에 넣은 캐릭터를 파티 순서·칸 순서대로 (육성 페이지 목록)
+// 파티에 넣은 캐릭터를 파티 순서·칸 순서대로 (취미 첫 화면의 '육성 완료' 숫자)
 export function partyMembers(parties) {
   const out = [];
   for (const p of parties) {
