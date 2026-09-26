@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import {
   DAILY, WEEKLY, BUILD, gameDay, dailyKey, weeklyKey, dailyDone, weeklyDone, toggleDaily, tapWeekly,
   dailyCount, weeklyCount, cleanCharacters, searchCharacters, addParty, renameParty, removeParty,
-  placeCharacter, clearSlot, whereIs, toggleBuild, buildCount,
+  placeCharacter, clearSlot, whereIs, toggleBuild, buildCount, ELEMENTS, elementKey, filterCharacters,
+  partyMembers, filledCount,
 } from "../js/wuwa.js";
 
 const at = (d, h, m = 0) => new Date(2026, 8, d, h, m); // 2026-09-21 월
@@ -92,4 +93,32 @@ test("육성 체크는 캐릭터마다 따로 5개", () => {
   b = toggleBuild(b, "금희", "lv");
   assert.equal(buildCount(b, "금희"), 1);
   assert.equal(buildCount(b, "없는캐릭"), 0);
+});
+
+test("속성은 게임 순서 6개, 이름으로 색 이름을 찾는다", () => {
+  assert.deepEqual(ELEMENTS.map((e) => e.name), ["응결", "용융", "전도", "기류", "회절", "인멸"]);
+  assert.equal(elementKey("회절"), "spectro");
+  assert.equal(elementKey("모름"), "");
+});
+
+test("고르기 창: 찾는 글자와 속성 칩이 둘 다 맞는 캐릭터만", () => {
+  const list = [
+    { id: "1", name: "금희", element: "회절" },
+    { id: "2", name: "카멜리아", element: "인멸" },
+    { id: "3", name: "파수인", element: "회절" },
+  ];
+  assert.deepEqual(filterCharacters(list, "", "회절").map((c) => c.id), ["1", "3"]);
+  assert.deepEqual(filterCharacters(list, "금", "회절").map((c) => c.id), ["1"]);
+  assert.deepEqual(filterCharacters(list, "금", "인멸"), []);
+  assert.equal(filterCharacters(list, "", "").length, 3);
+});
+
+test("육성 목록: 파티에 넣은 캐릭터를 파티·칸 순서대로, 빈칸은 빼고", () => {
+  const parties = [
+    { id: "a", name: "파티 1", slots: ["x", null, "y"] },
+    { id: "b", name: "파티 2", slots: [null, "z", null] },
+  ];
+  assert.deepEqual(partyMembers(parties).map((m) => `${m.partyName}:${m.idx}:${m.id}`), ["파티 1:0:x", "파티 1:2:y", "파티 2:1:z"]);
+  assert.equal(filledCount(parties[0]), 2);
+  assert.equal(filledCount(parties[1]), 1);
 });
