@@ -4,7 +4,7 @@ import {
   DAILY, WEEKLY, BUILD, gameDay, dailyKey, weeklyKey, dailyDone, weeklyDone, toggleDaily, tapWeekly,
   dailyCount, weeklyCount, cleanCharacters, searchCharacters, addParty, renameParty, removeParty,
   placeCharacter, clearSlot, whereIs, toggleBuild, buildCount, ELEMENTS, elementKey, filterCharacters,
-  partyMembers, filledCount, WEAPONS, needsRefresh,
+  partyMembers, filledCount, WEAPONS, needsRefresh, UPCOMING, withUpcoming, isPlaceholder, adoptRealIds,
 } from "../js/wuwa.js";
 
 const at = (d, h, m = 0) => new Date(2026, 8, d, h, m); // 2026-09-21 월
@@ -146,4 +146,36 @@ test("육성 목록: 파티에 넣은 캐릭터를 파티·칸 순서대로, 빈
   assert.deepEqual(partyMembers(parties).map((m) => `${m.partyName}:${m.idx}:${m.id}`), ["파티 1:0:x", "파티 1:2:y", "파티 2:1:z"]);
   assert.equal(filledCount(parties[0]), 2);
   assert.equal(filledCount(parties[1]), 1);
+});
+
+test("3.7 공명자 미리 넣기: encore.moe 에 없으면 임시 번호·빈 얼굴로 더하고, 올라오면 그쪽을 쓴다", () => {
+  assert.deepEqual(UPCOMING.map((c) => [c.name, c.stars, c.element, c.weapon]), [
+    ["여우의 별자리", 5, "전도", "증폭기"],
+    ["쇄명", 5, "전도", "직검"],
+  ]);
+  const encore = [
+    { id: "1", name: "양양", stars: 4, element: "기류", weapon: "직검", icon: "a.webp" },
+    { id: "4", name: "금희", stars: 5, element: "회절", weapon: "대검", icon: "d.webp" },
+  ];
+  const list = withUpcoming(encore);
+  assert.deepEqual(list.map((c) => c.name), ["금희", "쇄명", "여우의 별자리", "양양"]); // 5성 먼저, 이름순
+  assert.equal(list.filter(isPlaceholder).every((c) => c.icon === ""), true);
+  assert.deepEqual(filterCharacters(list, "", "전도", "직검").map((c) => c.id), ["pre-suoming"]);
+  assert.deepEqual(searchCharacters(list, "여우의별자리").map((c) => c.id), ["pre-hsin"]);
+
+  // encore.moe 에 올라오면 (띄어쓰기가 달라도) 그쪽 하나만
+  const later = [...encore, { id: "1510", name: "여우의별자리", stars: 5, element: "전도", weapon: "증폭기", icon: "h.webp" }];
+  const merged = withUpcoming(later).filter((c) => c.name.replace(/\s/g, "") === "여우의별자리");
+  assert.deepEqual(merged.map((c) => c.id), ["1510"]);
+});
+
+test("3.7 공명자: 진짜가 올라오면 파티 칸·육성 체크를 진짜 번호로 옮긴다 (다른 기록은 그대로)", () => {
+  const parties = [{ id: "p1", name: "전도 파티", slots: ["pre-hsin", "4", null] }];
+  const builds = { "pre-hsin": { lv: 1, skill: 1 }, 4: { lv: 1 } };
+  assert.equal(adoptRealIds(parties, builds, [{ id: "4", name: "금희" }]), null); // 아직 없으면 그대로
+  const moved = adoptRealIds(parties, builds, [{ id: "4", name: "금희" }, { id: "1510", name: "여우의 별자리" }]);
+  assert.deepEqual(moved.parties[0].slots, ["1510", "4", null]);
+  assert.deepEqual(moved.builds, { 1510: { lv: 1, skill: 1 }, 4: { lv: 1 } });
+  assert.deepEqual(parties[0].slots, ["pre-hsin", "4", null]); // 원본은 안 바뀜
+  assert.equal(adoptRealIds(moved.parties, moved.builds, [{ id: "1510", name: "여우의 별자리" }]), null); // 두 번째는 할 일 없음
 });
