@@ -70,6 +70,15 @@ function startTabs() {
   document.querySelectorAll(".tab").forEach((t) => {
     t.addEventListener("click", () => showScreen(t.dataset.screen));
   });
+  // 메인 카드에서 바로 가기: 운동 카드 → 운동 탭, 취미 카드 제목 줄 → 그 게임 화면
+  $("screen-main").addEventListener("click", (e) => {
+    const go = e.target.closest("[data-go]")?.dataset.go;
+    if (go === "gym") showScreen("gym");
+    else if (go === "ww" || go === "wf") {
+      showScreen("hobby");
+      showHobby(go);
+    }
+  });
   $("screen-hobby").addEventListener("click", (e) => {
     const b = e.target.closest("[data-hobby]");
     if (b) showHobby(b.dataset.hobby);

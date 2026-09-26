@@ -59,8 +59,9 @@
       <div class="card-h"><h2>식단</h2><small>오늘</small></div>
       <ul class="meal-list" id="mealMain"></ul>
     </section>
-    <section class="card" aria-label="오늘 운동">
-      <div class="card-h"><h2>운동</h2><small class="num" id="gymMainTime"></small></div>
+    <!-- 카드 어디를 눌러도 운동 탭으로 -->
+    <section class="card go-card" aria-label="오늘 운동">
+      <div class="card-h"><h2><button class="go-link" data-go="gym" aria-label="운동 탭 열기">운동</button></h2><span class="go-end"><small class="num" id="gymMainTime"></small><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
       <p class="main-line" id="gymMainLabel"></p>
       <div class="meter"><i id="gymMainBar"></i></div>
       <p class="mini" id="gymMainNote"></p>
@@ -70,14 +71,14 @@
       <ul class="buy" id="buyMain"></ul>
       <p class="empty" id="buyMainEmpty" hidden></p>
     </section>
-    <!-- 취미 (시안 그대로: 명조 오늘 + 주간보스, 구분선, 워프레임 오늘) -->
+    <!-- 취미 (시안 그대로: 명조 오늘 + 주간보스, 구분선, 워프레임 오늘) · 제목 줄을 누르면 그 게임 화면으로 -->
     <section class="card game" id="wwMainCard" aria-label="취미">
-      <div class="game-h"><b>명조 · 오늘</b><span class="mono" id="wwMainCount">0 / 4</span></div>
+      <button class="game-h go-row" data-go="ww" aria-label="명조 화면 열기"><b>명조 · 오늘</b><span><span class="mono" id="wwMainCount">0 / 4</span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></button>
       <div class="meter"><i id="wwMainBar"></i></div>
       <div class="checks" id="wwMainDaily"></div>
       <div class="boss" id="wwMainBoss"></div>
       <div class="divider"></div>
-      <div class="game-h"><b>워프레임 · 오늘</b><span class="mono" id="wfMainCount">0 / 2</span></div>
+      <button class="game-h go-row" data-go="wf" aria-label="워프레임 화면 열기"><b>워프레임 · 오늘</b><span><span class="mono" id="wfMainCount">0 / 2</span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></button>
       <div class="checks" id="wfMainDaily"></div>
     </section>
     <!-- 라이브러리 · 메모 (메인 맨 아래, 사용자 결정) -->
