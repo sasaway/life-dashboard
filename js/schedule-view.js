@@ -21,6 +21,13 @@ function loadSettings() {
 }
 let settings = loadSettings();
 export const getScheduleSettings = () => settings;
+// 캘린더 알바 연결에서 받은 것 저장 (null 이면 연결 끊기)
+export function setCalendar(cal) {
+  const next = { ...settings };
+  if (cal) next.cal = cal;
+  else delete next.cal;
+  saveSettings(next);
+}
 function saveSettings(next) {
   settings = next;
   store.save(KEY, settings);
@@ -41,7 +48,8 @@ export function renderToday() {
   $("nowPct").textContent = `${info.pct}%`;
   $("nowLeft").textContent = leftLabel(info.leftMin);
 
-  $("shiftTag").textContent = plan.working ? `${SHIFTS[plan.shift].label} 주` : "쉬는 날";
+  const label = plan.working ? SHIFTS[plan.shift].label : "쉬는 날";
+  $("shiftTag").textContent = plan.fromCal ? `${label} · 캘린더` : plan.working ? `${label} 주` : label;
   const beforeDay = nowMin < toMin(plan.blocks[0].start); // 새벽: 오늘 칸은 아직 시작 전
   $("sched").innerHTML = plan.blocks.map((x, i) => {
     const cls = i === info.index ? "cur" : i < info.index && !beforeDay ? "past" : "";

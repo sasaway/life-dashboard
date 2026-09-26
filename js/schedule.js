@@ -139,13 +139,23 @@ function noExercise(blocks) {
 }
 
 // 그 날의 일과표
+// 캘린더에서 받은 그 날의 알바: "open" · "close" · "off"(받은 기간 안인데 알바 없음) · null(모름 → 격주 규칙)
+export function calShift(date, cal) {
+  if (!cal?.shifts) return null;
+  const day = ymd(date);
+  if (cal.shifts[day]) return cal.shifts[day];
+  return cal.until && cal.from <= day && day <= cal.until ? "off" : null;
+}
+
+// 그 날의 일과표. 캘린더에 알바가 있으면 그걸 먼저 따른다.
 export function dayPlan(date, settings) {
-  const shift = shiftFor(date, settings);
-  const working = settings.workdays[date.getDay()];
+  const c = calShift(date, settings.cal);
+  const shift = c === "open" || c === "close" ? c : shiftFor(date, settings);
+  const working = c ? c !== "off" : settings.workdays[date.getDay()];
   let blocks = settings.templates[shift];
   if (!working) blocks = toDayOff(blocks, shift);
   if (date.getDay() === 0) blocks = noExercise(blocks);
-  return { shift, working, blocks };
+  return { shift, working, blocks, fromCal: Boolean(c) };
 }
 
 // 그 날 어떤 칸(운동·취미·알바 등)의 "시작–끝" (없으면 null). 마지막 칸이면 minutes 만큼으로 본다.

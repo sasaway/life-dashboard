@@ -328,6 +328,18 @@
       <h2 id="settingsTitle">설정</h2>
       <button class="btn btn-ghost" data-close>닫기</button>
     </div>
+    <section class="card" aria-label="캘린더 알바 연결">
+      <div class="card-h"><h2>캘린더 알바 연결</h2><small id="calStatus"></small></div>
+      <p class="mini cal-hint">구글 캘린더 '개인 일정'의 알바 오픈반·마감반 일정으로 하루하루 일과표를 맞춰. 연결하면 아래 '이번 주 알바'보다 캘린더가 먼저야.</p>
+      <input class="field cal-url" id="calUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
+        placeholder="https://script.google.com/macros/s/…/exec" aria-label="심부름꾼 주소">
+      <p class="msg" id="calMsg" role="status"></p>
+      <div class="btns">
+        <button class="btn btn-primary" id="calSave">연결하고 받기</button>
+        <button class="btn btn-ghost" id="calSync" hidden>지금 받기</button>
+        <button class="btn btn-text" id="calOff" hidden>연결 끊기</button>
+      </div>
+    </section>
     <section class="card" aria-label="이번 주 알바">
       <div class="card-h"><h2>이번 주 알바</h2><small>한 주씩 번갈아 가</small></div>
       <div class="seg" id="shiftPick">
