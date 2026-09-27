@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   CATEGORIES, parseWon, formatWon, addBudgetItem, setBudgetAmount, removeBudgetItem, sumBy,
   monthKey, shiftMonth, monthLabel, settlementRows, setActual, budgetStatus, settlementStats,
-  toggleFixed, resolveMonth, withMonth, migrate,
+  toggleFixed, resolveMonth, withMonth, migrate, effective, sumEffective,
 } from "../js/budget.js";
 
 test("분류는 Notion 의 네 가지 그대로다", () => {
@@ -132,4 +132,19 @@ test("통계: 전체와 분류별 사용률", () => {
   assert.deepEqual(by, {
     고정지출: [100, "warn"], 생활비: [115, "danger"], 구독료: [50, "good"], 부가지출: [0, "none"],
   });
+});
+
+test("할인·적립: 실질 예산 = 예산 − 할인·적립, 결산은 실질 예산과 비교하고 고정 항목과 함께 다음 달로", () => {
+  let items = [{ id: "net", cat: "subs", name: "넷플릭스", amount: 17000, fixed: true }, { id: "food", cat: "living", name: "식비", amount: 200000 }];
+  assert.equal(effective(items[0]), 17000); // 할인 칸이 없던 옛 항목은 할인 0
+  items = setBudgetAmount(items, "net", "3,000", "off").items;
+  assert.deepEqual(items[0], { id: "net", cat: "subs", name: "넷플릭스", amount: 17000, off: 3000, fixed: true });
+  assert.match(setBudgetAmount(items, "net", "삼천", "off").error, /숫자/);
+  assert.equal(effective(items[0]), 14000);
+  assert.equal(effective({ amount: 1000, off: 5000 }), 0); // 할인이 더 커도 0 아래로는 안 간다
+  assert.equal(sumEffective(items), 214000);
+  const rows = settlementRows(items, { actual: { net: 15000 } });
+  assert.deepEqual(rows.map((x) => [x.budget, x.actual]), [[14000, 15000], [200000, 0]]);
+  assert.equal(settlementStats(rows).byCat.find((c) => c.key === "subs").status.label, "초과");
+  assert.equal(resolveMonth({ "2026-09": items }, "2026-10")[0].off, 3000);
 });

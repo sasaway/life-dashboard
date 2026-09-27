@@ -3,7 +3,7 @@ import { store } from "./store.js";
 import {
   CATEGORIES, parseWon, formatWon, addBudgetItem, setBudgetAmount, removeBudgetItem, sumBy,
   monthKey, shiftMonth, monthLabel, settlementRows, setActual, settlementStats,
-  toggleFixed, resolveMonth, withMonth, migrate,
+  toggleFixed, resolveMonth, withMonth, migrate, effective, sumEffective,
 } from "./budget.js";
 import { $, esc } from "./dom.js";
 
@@ -13,7 +13,7 @@ const thisMonth = () => monthKey(new Date());
 const lastMonth = () => shiftMonth(thisMonth(), -1);
 let month = lastMonth();
 
-// budgets: { "2026-09": [{ id, cat, name, amount, fixed }] } · settlements: { "2026-08": { actual } }
+// budgets: { "2026-09": [{ id, cat, name, amount, off, fixed }] } (off = 할인·적립) · settlements: { "2026-08": { actual } }
 let { budgets, settlements } = migrate({
   budget: store.load("budget", null),
   settlements: store.load("settlements", {}),
@@ -45,12 +45,15 @@ function renderBudget() {
   $("budgetCats").innerHTML = CATEGORIES.map((c) => {
     const rows = items().filter((x) => x.cat === c.key);
     return `<section class="card" aria-label="${c.label}">
-      <div class="card-h"><h2>${c.label}</h2><small class="num" data-cat-total="${c.key}">${formatWon(sumBy(rows, "amount"))}</small></div>
+      <div class="card-h"><h2>${c.label}</h2><small class="num" data-cat-total="${c.key}"></small></div>
       <ul class="money-rows">${rows.map((x) => `
-        <li><span class="name">${esc(x.name)}</span>
+        <li class="budget-row"><span class="name">${esc(x.name)}</span>
           ${amountInput(x.id, x.amount, `${x.name} 예산`, "data-budget")}
           <button class="pin" data-fixed="${esc(x.id)}" aria-pressed="${Boolean(x.fixed)}" aria-label="${esc(x.name)} 고정 (다음 달에도)">고정</button>
           <button class="icon-btn del" data-remove="${esc(x.id)}" aria-label="${esc(x.name)} 지우기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          <span class="off-label">할인·적립</span>
+          ${amountInput(x.id, x.off, `${x.name} 할인·적립`, "data-off")}
+          <span class="eff num" data-eff="${esc(x.id)}"></span>
         </li>`).join("")}</ul>
       ${rows.length ? "" : `<p class="empty">아직 항목이 없어.</p>`}
       <form class="add-money" data-add="${c.key}" autocomplete="off">
@@ -63,11 +66,19 @@ function renderBudget() {
   updateBudgetTotals();
 }
 
+// 합계는 실질 예산(할인·적립을 뺀 것)으로 보인다
 function updateBudgetTotals() {
-  $("budgetTotal").textContent = num(sumBy(items(), "amount"));
+  const all = items();
+  const off = sumBy(all, "off");
+  $("budgetTotal").textContent = num(sumEffective(all));
+  $("budgetOff").textContent = off ? `예산 ${formatWon(sumBy(all, "amount"))}에서 할인·적립 ${formatWon(off)}을 뺀 실질 예산이야.` : "";
   for (const c of CATEGORIES) {
     const el = document.querySelector(`[data-cat-total="${c.key}"]`);
-    if (el) el.textContent = formatWon(sumBy(items().filter((x) => x.cat === c.key), "amount"));
+    if (el) el.textContent = formatWon(sumEffective(all.filter((x) => x.cat === c.key)));
+  }
+  for (const x of all) {
+    const el = document.querySelector(`[data-eff="${CSS.escape(x.id)}"]`);
+    if (el) el.textContent = x.off ? `실질 ${formatWon(effective(x))}` : "";
   }
 }
 
@@ -83,7 +94,7 @@ function renderSettle() {
     return `<section class="card" aria-label="${c.label} 결산">
       <div class="card-h"><h2>${c.label}</h2><small>실제로 쓴 돈</small></div>
       <ul class="money-rows">${catRows.map((x) => `
-        <li><span class="name">${esc(x.name)}<span class="sub num">예산 ${formatWon(x.budget)}</span></span>
+        <li><span class="name">${esc(x.name)}<span class="sub num">${x.off ? `실질 예산 ${formatWon(x.budget)} (할인·적립 ${formatWon(x.off)})` : `예산 ${formatWon(x.budget)}`}</span></span>
           ${amountInput(x.id, x.actual, `${x.name} 실제로 쓴 돈`, "data-actual")}
         </li>`).join("")}</ul>
     </section>`;
@@ -137,11 +148,11 @@ export function startBudget() {
     renderBudget();
     document.querySelector(`[data-add="${form.dataset.add}"] [name="itemName"]`).focus();
   });
-  // 예산: 금액 고치기 (쓰는 대로 저장, 칸을 벗어나면 쉼표로 정리)
+  // 예산: 금액 · 할인·적립 고치기 (쓰는 대로 저장, 칸을 벗어나면 쉼표로 정리)
   $("budgetCats").addEventListener("input", (e) => {
-    const id = e.target.dataset.budget;
-    if (!id) return;
-    const r = setBudgetAmount(items(), id, e.target.value);
+    const { budget, off } = e.target.dataset;
+    if (!budget && !off) return;
+    const r = setBudgetAmount(items(), budget ?? off, e.target.value, budget ? "amount" : "off");
     $("budgetMsg").textContent = r.error;
     if (r.error) return;
     setItems(r.items);

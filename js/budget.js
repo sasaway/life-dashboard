@@ -1,5 +1,6 @@
-// 예산과 지난달 결산. 규칙은 Notion '돈' (09:41 수정본).
+// 예산과 지난달 결산. 규칙은 Notion '돈' (09:41 · 2026-09-27 12:03 수정본).
 // 예산은 달마다 따로 있다. '고정' 을 켠 항목만 다음 달 예산으로 넘어간다.
+// 항목마다 할인·적립(원)을 적으면 실질 예산 = 예산 − 할인·적립, 결산은 실질 예산과 비교한다.
 import { newId } from "./shopping.js";
 import { pad } from "./schedule.js";
 
@@ -35,11 +36,16 @@ export function addBudgetItem(items, cat, name, amountText, id = newId()) {
   return { items: [...items, { id, cat, name: clean, amount, fixed: DEFAULT_FIXED[cat] }], error: "" };
 }
 
-export function setBudgetAmount(items, id, amountText) {
+// field: "amount" (예산) 또는 "off" (할인·적립)
+export function setBudgetAmount(items, id, amountText, field = "amount") {
   const amount = parseWon(amountText);
   if (Number.isNaN(amount)) return { items, error: "금액은 숫자만 적어 줘." };
-  return { items: items.map((x) => (x.id === id ? { ...x, amount } : x)), error: "" };
+  return { items: items.map((x) => (x.id === id ? { ...x, [field]: amount } : x)), error: "" };
 }
+
+// 실질 예산. 할인·적립이 예산보다 크면 0 (off 가 없는 옛 항목은 할인 0)
+export const effective = (x) => Math.max(0, x.amount - (x.off || 0));
+export const sumEffective = (items) => items.reduce((s, x) => s + effective(x), 0);
 
 export const removeBudgetItem = (items, id) => items.filter((x) => x.id !== id);
 
@@ -75,7 +81,7 @@ export const withMonth = (budgets, month, items) => ({ ...budgets, [month]: item
 // ---------- 결산 ----------
 export function settlementRows(items, settlement) {
   const actual = settlement?.actual ?? {};
-  return items.map((x) => ({ ...x, budget: x.amount, actual: actual[x.id] ?? 0 }));
+  return items.map((x) => ({ ...x, budget: effective(x), actual: actual[x.id] ?? 0 }));
 }
 
 export function setActual(settlements, month, id, amountText) {
