@@ -151,28 +151,34 @@ export const renameParty = (parties, pid, name) =>
 
 export const removeParty = (parties, pid) => parties.filter((p) => p.id !== pid);
 
-// 캐릭터를 칸에 넣는다. 다른 칸에 이미 있으면 거기서 빼서 옮긴다 (한 캐릭터는 한 칸에만)
+// 종말 매트릭스 코스트 2: 두 파티에 편성할 수 있는 공명자 (encore.moe 번호).
+// 벨리나 · 설지 · 파수인 · 복링 · 모니에 · 수수. 버전마다 바뀌는 긴급 공명자는 넣지 않는다 (사용자 선택)
+export const TWO_COST = ["1503", "1103", "1505", "1307", "1209", "1110"];
+export const maxUses = (charId) => (TWO_COST.includes(charId) ? 2 : 1);
+
+// 캐릭터가 들어 있는 칸 전부 (파티 순서 · 칸 순서)
+export function placesOf(parties, charId) {
+  const out = [];
+  for (const p of parties) p.slots.forEach((s, i) => { if (s === charId) out.push({ pid: p.id, name: p.name, idx: i }); });
+  return out;
+}
+
+// 캐릭터를 칸에 넣는다. 한 파티에는 한 번만, 파티 수로는 maxUses 까지.
+// 넘치면 다른 칸에서 빼서 옮긴다 (코스트 2 가 이미 두 곳이면 앞 파티 쪽에서 가져온다)
 export function placeCharacter(parties, pid, idx, charId) {
+  const others = placesOf(parties, charId).filter((x) => x.pid !== pid);
+  const drop = new Set(others.slice(0, Math.max(0, others.length - maxUses(charId) + 1)).map((x) => x.pid));
   return parties.map((p) => ({
     ...p,
     slots: p.slots.map((s, i) => {
       if (p.id === pid && i === idx) return charId;
-      return s === charId ? null : s;
+      return s === charId && (p.id === pid || drop.has(p.id)) ? null : s;
     }),
   }));
 }
 
 export const clearSlot = (parties, pid, idx) =>
   parties.map((p) => (p.id === pid ? { ...p, slots: p.slots.map((s, i) => (i === idx ? null : s)) } : p));
-
-// 캐릭터가 어느 파티 몇 번째 칸에 있는지
-export function whereIs(parties, charId) {
-  for (const p of parties) {
-    const i = p.slots.indexOf(charId);
-    if (i >= 0) return { pid: p.id, name: p.name, idx: i };
-  }
-  return null;
-}
 
 // 파티에 넣은 캐릭터를 파티 순서·칸 순서대로 (취미 첫 화면의 '육성 완료' 숫자)
 export function partyMembers(parties) {

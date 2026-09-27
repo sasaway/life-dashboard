@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   DAILY, WEEKLY, BUILD, gameDay, dailyKey, weeklyKey, dailyDone, weeklyDone, toggleDaily, tapWeekly,
   dailyCount, weeklyCount, cleanCharacters, searchCharacters, addParty, renameParty, removeParty,
-  placeCharacter, clearSlot, whereIs, toggleBuild, buildCount, ELEMENTS, elementKey, filterCharacters,
+  placeCharacter, clearSlot, placesOf, maxUses, TWO_COST, toggleBuild, buildCount, ELEMENTS, elementKey, filterCharacters,
   partyMembers, filledCount, WEAPONS, needsRefresh, UPCOMING, withUpcoming, isPlaceholder, adoptRealIds,
 } from "../js/wuwa.js";
 
@@ -78,11 +78,26 @@ test("캐릭터를 다른 칸에 넣으면 원래 칸에서 옮겨 온다 (한 �
   let ps = addParty(addParty([], "p1"), "p2");
   ps = placeCharacter(ps, "p1", 0, "금희");
   ps = placeCharacter(ps, "p1", 1, "양양");
-  assert.deepEqual(whereIs(ps, "금희"), { pid: "p1", name: "파티 1", idx: 0 });
+  assert.deepEqual(placesOf(ps, "금희"), [{ pid: "p1", name: "파티 1", idx: 0 }]);
   ps = placeCharacter(ps, "p2", 2, "금희");
   assert.deepEqual(ps.map((p) => p.slots), [[null, "양양", null], [null, null, "금희"]]);
   ps = clearSlot(ps, "p1", 1);
-  assert.equal(whereIs(ps, "양양"), null);
+  assert.deepEqual(placesOf(ps, "양양"), []);
+});
+
+test("코스트 2 공명자는 두 파티까지, 한 파티에는 한 번만 (종말 매트릭스)", () => {
+  assert.deepEqual(TWO_COST.map(maxUses), [2, 2, 2, 2, 2, 2]);
+  assert.equal(maxUses("1102"), 1);
+  const V = "1503"; // 벨리나
+  let ps = addParty(addParty(addParty([], "p1"), "p2"), "p3");
+  ps = placeCharacter(ps, "p1", 2, V);
+  ps = placeCharacter(ps, "p2", 0, V); // 옮기지 않고 한 번 더
+  assert.deepEqual(ps.map((p) => p.slots), [[null, null, V], [V, null, null], [null, null, null]]);
+  ps = placeCharacter(ps, "p2", 1, V); // 같은 파티 안에서는 옮긴다
+  assert.deepEqual(ps.map((p) => p.slots), [[null, null, V], [null, V, null], [null, null, null]]);
+  ps = placeCharacter(ps, "p3", 0, V); // 이미 두 곳이면 앞 파티에서 가져온다
+  assert.deepEqual(ps.map((p) => p.slots), [[null, null, null], [null, V, null], [V, null, null]]);
+  assert.deepEqual(placesOf(ps, V).map((x) => x.pid), ["p2", "p3"]);
 });
 
 test("육성 체크는 캐릭터마다 따로 5개", () => {

@@ -5,7 +5,7 @@ import { openSheet, closeSheet } from "./sheet.js";
 import {
   DAILY, WEEKLY, BUILD, PARTY_SIZE, dailyDone, weeklyDone, toggleDaily, tapWeekly, dailyCount, weeklyCount,
   cleanCharacters, withUpcoming, isPlaceholder, adoptRealIds, ELEMENTS, WEAPONS, elementKey, filterCharacters, needsRefresh, addParty, renameParty, removeParty,
-  placeCharacter, clearSlot, whereIs, partyMembers, filledCount, toggleBuild, buildCount,
+  placeCharacter, clearSlot, placesOf, maxUses, partyMembers, filledCount, toggleBuild, buildCount,
 } from "./wuwa.js";
 import { $, esc } from "./dom.js";
 import { ICON } from "./icons.js";
@@ -98,7 +98,7 @@ function slotHtml(p, i) {
 }
 
 function renderParties() {
-  if (openGrow && !partyMembers(parties).some((m) => m.id === openGrow)) openGrow = null;
+  if (openGrow && !partyMembers(parties).some((m) => `${m.pid}:${m.id}` === openGrow)) openGrow = null;
   $("wwParties").innerHTML = parties.map((p) => `
     <section class="card party" aria-label="${esc(p.name)}">
       <div class="party-h">
@@ -114,7 +114,7 @@ function renderParties() {
 }
 
 // ---------- 육성 체크: 파티 카드 안, 캐릭터마다 한 줄. 한 번에 한 명만 펼친다 ----------
-let openGrow = null; // 펼친 캐릭터 id
+let openGrow = null; // 펼친 '파티id:캐릭터id' (코스트 2 는 두 파티에 있다)
 
 function growHtml(p) {
   const rows = p.slots.map((id, idx) => ({ id, idx })).filter((m) => m.id);
@@ -122,9 +122,10 @@ function growHtml(p) {
   return `<ul class="grow" aria-label="${esc(p.name)} 육성 체크">${rows.map((m) => {
     const c = charById(m.id) ?? unknown;
     const n = buildCount(builds, m.id);
-    const open = openGrow === m.id;
+    const key = `${p.id}:${m.id}`;
+    const open = openGrow === key;
     return `<li class="grow-item${open ? " open" : ""}">
-      <button class="grow-h" data-grow="${esc(m.id)}" aria-expanded="${open}">
+      <button class="grow-h" data-grow="${esc(key)}" aria-expanded="${open}">
         ${face(c, 32)}
         <span class="who"><b>${esc(c.name)}</b><span class="sub">${m.idx + 1}번 칸</span></span>
         <span class="mono grow-cnt${n === BUILD.length ? " done" : ""}">${n} / ${BUILD.length}</span>
@@ -140,8 +141,8 @@ function growHtml(p) {
 
 // 취미 첫 화면의 '파티표' 버튼: 파티 수 · 육성 다 한 캐릭터
 function renderHubParty() {
-  const members = partyMembers(parties);
-  const full = members.filter((m) => buildCount(builds, m.id) === BUILD.length).length;
+  const members = [...new Set(partyMembers(parties).map((m) => m.id))]; // 두 파티에 있는 코스트 2 는 한 번만
+  const full = members.filter((id) => buildCount(builds, id) === BUILD.length).length;
   $("hubWwParty").textContent = parties.length
     ? `파티 ${parties.length}개 · 육성 완료 ${full}/${members.length}`
     : "아직 파티가 없어";
@@ -167,15 +168,19 @@ function renderPicker() {
   const list = filterCharacters(allChars, $("charSearch").value, elFilter, wpFilter);
   $("charCount").textContent = chars.list.length ? `${list.length}명` : "공명자 목록을 받는 중이야.";
   $("charGrid").innerHTML = list.map((c) => {
-    const at = whereIs(parties, c.id);
-    const here = at && at.pid === target.pid && at.idx === target.idx;
-    const away = at && !here;
-    const label = `${c.name}${away ? `, 지금 ${at.name} ${at.idx + 1}번 칸에 있음` : ""}`;
-    return `<li><button class="char${away ? " away" : ""}" data-char="${esc(c.id)}" aria-pressed="${Boolean(here)}" aria-label="${esc(label)}">
+    const places = placesOf(parties, c.id);
+    const here = places.some((x) => x.pid === target.pid && x.idx === target.idx);
+    // 다른 파티 칸 (같은 파티 다른 칸도 누르면 옮겨 오니 포함)
+    const at = places.find((x) => !(x.pid === target.pid && x.idx === target.idx));
+    const two = maxUses(c.id) === 2;
+    // 흐리게 = 누르면 다른 칸에서 빼 온다. 코스트 2 가 다른 파티 한 곳에만 있으면 한 번 더 넣을 수 있다
+    const away = at && !here && (!two || places.length >= 2 || at.pid === target.pid);
+    const label = `${c.name}${two ? ", 코스트 2 두 파티에 넣을 수 있음" : ""}${at ? `, 지금 ${at.name} ${at.idx + 1}번 칸에 있음` : ""}`;
+    return `<li><button class="char${away ? " away" : ""}" data-char="${esc(c.id)}" aria-pressed="${here}" aria-label="${esc(label)}">
       ${here ? `<span class="char-badge">${ICON.check}</span>` : ""}
       ${face(c, 44)}
       <span class="nm">${esc(c.name)}</span>
-      <span class="sub">${away ? `<span class="where">${esc(at.name)}</span><span class="mono">${at.idx + 1}</span>` : elTag(c.element)}</span>
+      <span class="sub">${at && !here ? `<span class="where">${esc(at.name)}</span><span class="mono">${at.idx + 1}</span>` : elTag(c.element)}${two ? `<span class="cost2">· <span class="mono">×2</span></span>` : ""}</span>
     </button></li>`;
   }).join("");
   $("charEmpty").hidden = list.length > 0 || !chars.list.length;
