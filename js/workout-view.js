@@ -11,8 +11,8 @@ import { $, esc } from "./dom.js";
 
 let log = pruneLog(store.load("workoutLog", {}), new Date());
 
-// 일과표의 오늘 운동 칸 (없으면 null). 아침 브리핑도 같이 쓴다.
-export const exerciseTime = (date) => blockRange(dayPlan(date, getScheduleSettings()).blocks, "exercise");
+// 일과표의 오늘 운동 칸 (없으면 null)
+const exerciseTime = (date) => blockRange(dayPlan(date, getScheduleSettings()).blocks, "exercise");
 
 function setButtons(id, day) {
   const ex = EXERCISES[id];

@@ -29,16 +29,13 @@ const pct = (c) => `${(c.done / c.total) * 100}%`;
 // 실시간 현황은 워프레임 쪽 '오늘' 을 보고 있을 때만 새로 받는다
 const wfOpen = () => !$("screen-hobby").hidden && !$("hobby-wf").hidden && !$("wf-page-today").hidden;
 
-// ---------- 오늘 체크 (메인 카드와 워프레임 쪽이 같이 쓴다) ----------
+// ---------- 오늘 체크 (워프레임 쪽 '오늘') ----------
 function renderChecks() {
   const now = new Date();
   const done = dailyDone(checks, now);
   const c = dailyCount(checks, now);
-  const html = DAILY.map((d) => chip(`data-wf-daily="${d.id}"`, d.label, done[d.id])).join("");
-  for (const [count, list] of [["wfMainCount", "wfMainDaily"], ["wfDailyCount", "wfDaily"]]) {
-    $(count).textContent = `${c.done} / ${c.total}`;
-    $(list).innerHTML = html;
-  }
+  $("wfDailyCount").textContent = `${c.done} / ${c.total}`;
+  $("wfDaily").innerHTML = DAILY.map((d) => chip(`data-wf-daily="${d.id}"`, d.label, done[d.id])).join("");
   $("wfDailyBar").style.width = pct(c);
   renderHub();
 }
@@ -208,7 +205,7 @@ export function startWarframe() {
   renderChecks();
   renderTodos();
   renderGear();
-  for (const id of ["wwMainCard", "wfTodayCard"]) $(id).addEventListener("click", onCheckClick);
+  $("wfTodayCard").addEventListener("click", onCheckClick);
 
   document.addEventListener("hobby-open", (e) => {
     if (e.detail !== "wf" || !wfOpen()) return;

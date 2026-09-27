@@ -1,4 +1,4 @@
-// 라이브러리 · 메모: 메인 맨 아래 위젯 두 개, 라이브러리 목록 창, 기록 쓰기 창.
+// 라이브러리 · 메모: 설정 창 안 라이브러리 칸, 라이브러리 목록 창, 기록 쓰기 창, 메인 맨 아래 메모.
 import { store } from "./store.js";
 import { openSheet, guardSheet } from "./sheet.js";
 import { newId } from "./shopping.js";
@@ -33,8 +33,8 @@ function fillPhotos(root) {
   });
 }
 
-// ---------- 메인 위젯 ----------
-function renderMain() {
+// ---------- 설정 창의 라이브러리 칸 ----------
+function renderTiles() {
   const n = countsBy(list);
   $("libMain").innerHTML = CATS.map((c) => `<button class="lib-tile" data-lib="${c.id}">
     <span class="lib-tile-h"><b>${c.label}</b><span class="mono">${n[c.id]}</span></span>
@@ -141,7 +141,7 @@ function save() {
   deletePhotos(removed);
   added = [];
   markSaved();
-  renderMain();
+  renderTiles();
   openList(draft.cat);
 }
 
@@ -160,7 +160,7 @@ function memoSavedLabel() {
 
 // ---------- 시작 ----------
 export function startLibrary() {
-  renderMain();
+  renderTiles();
   $("libMain").addEventListener("click", (e) => {
     const b = e.target.closest("[data-lib]");
     if (b) openList(b.dataset.lib);
@@ -222,7 +222,7 @@ export function startLibrary() {
     deletePhotos([...(saved?.photos ?? []), ...added]);
     added = [];
     markSaved();
-    renderMain();
+    renderTiles();
     openList(draft.cat);
   });
 

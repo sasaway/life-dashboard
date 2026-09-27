@@ -1,6 +1,6 @@
 import { greeting, dateLabel } from "./time.js";
 import { pad } from "./schedule.js";
-import { askToKeepData } from "./store.js";
+import { store, askToKeepData } from "./store.js";
 import { startSchedule, renderToday, openScheduleSettings } from "./schedule-view.js";
 import { startReview, renderReviewCard } from "./review-view.js";
 import { openSheet, startSheets } from "./sheet.js";
@@ -12,7 +12,6 @@ import { startWorkout, renderWorkout } from "./workout-view.js";
 import { startWuwa, renderWuwa } from "./wuwa-view.js";
 import { startWarframe, renderWarframe } from "./warframe-view.js";
 import { startLibrary } from "./library-view.js";
-import { startBriefing, renderBriefing } from "./briefing-view.js";
 import { startCalendar, openCalendarSettings } from "./calendar-view.js";
 import { $ } from "./dom.js";
 
@@ -24,7 +23,6 @@ function renderClock() {
   $("greet").textContent = greeting(d.getHours());
   $("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   renderToday();
-  renderBriefing();   // 05시에 나타나고 12시에 사라진다
   renderReviewCard(); // 06:00 에 오늘 회고로 넘어간다
   renderMeals();      // 자정에 오늘 식단으로 넘어간다
   renderWorkout();    // 자정에 오늘 운동으로 넘어간다
@@ -73,14 +71,9 @@ function startTabs() {
   document.querySelectorAll(".tab").forEach((t) => {
     t.addEventListener("click", () => showScreen(t.dataset.screen));
   });
-  // 메인 카드에서 바로 가기: 운동 카드 → 운동 탭, 취미 카드 제목 줄 → 그 게임 화면
+  // 메인 운동 카드를 누르면 운동 탭으로
   $("screen-main").addEventListener("click", (e) => {
-    const go = e.target.closest("[data-go]")?.dataset.go;
-    if (go === "gym") showScreen("gym");
-    else if (go === "ww" || go === "wf") {
-      showScreen("hobby");
-      showHobby(go);
-    }
+    if (e.target.closest("[data-go]")?.dataset.go === "gym") showScreen("gym");
   });
   $("screen-hobby").addEventListener("click", (e) => {
     const b = e.target.closest("[data-hobby]");
@@ -120,6 +113,9 @@ function registerServiceWorker() {
   });
 }
 
+// 앱 안 아침 브리핑 카드는 없앴다 (브리핑은 Claude 예약 작업 알림으로만 받는다). 폰에 남은 저장값을 지운다
+store.remove("briefing");
+
 startSheets();
 startSchedule();
 startReview();
@@ -131,7 +127,6 @@ startWorkout();
 startWuwa();
 startWarframe();
 startLibrary();
-startBriefing();
 startCalendar();
 startClock();
 startTabs();

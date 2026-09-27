@@ -41,15 +41,6 @@
       <div class="now-bar"><i id="nowBar"></i></div>
       <div class="now-foot"><span id="nowLeft"></span><span class="mono" id="nowPct"></span></div>
     </section>
-    <!-- 아침 브리핑 (Notion '루틴화') · 05~12시에만 보인다 -->
-    <section class="card brief" id="briefCard" aria-label="아침 브리핑" hidden>
-      <div class="card-h"><h2>아침 브리핑</h2><small id="briefStatus"></small><button class="btn btn-text" id="briefUnfold" hidden>다 봤어 · 펼치기</button></div>
-      <div id="briefBody">
-        <ul class="brief-list" id="briefList"></ul>
-        <div class="checks" id="briefLinks"></div>
-        <div class="btns"><button class="btn btn-primary" id="briefDone">다 봤어</button></div>
-      </div>
-    </section>
     <section class="card" aria-label="오늘 일정">
       <div class="card-h"><h2>오늘 일정<span class="tag" id="shiftTag"></span></h2><small class="mono" id="clock">--:--</small></div>
       <ol class="sched" id="sched"></ol>
@@ -80,21 +71,7 @@
       <ul class="buy" id="buyMain"></ul>
       <p class="empty" id="buyMainEmpty" hidden></p>
     </section>
-    <!-- 취미 (시안 그대로: 명조 오늘 + 주간보스, 구분선, 워프레임 오늘) · 제목 줄을 누르면 그 게임 화면으로 -->
-    <section class="card game" id="wwMainCard" aria-label="취미">
-      <button class="game-h go-row" data-go="ww" aria-label="명조 화면 열기"><b>명조 · 오늘</b><span><span class="mono" id="wwMainCount">0 / 4</span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></button>
-      <div class="meter"><i id="wwMainBar"></i></div>
-      <div class="checks" id="wwMainDaily"></div>
-      <div class="boss" id="wwMainBoss"></div>
-      <div class="divider"></div>
-      <button class="game-h go-row" data-go="wf" aria-label="워프레임 화면 열기"><b>워프레임 · 오늘</b><span><span class="mono" id="wfMainCount">0 / 2</span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></button>
-      <div class="checks" id="wfMainDaily"></div>
-    </section>
-    <!-- 라이브러리 · 메모 (메인 맨 아래, 사용자 결정) -->
-    <section class="card" aria-label="라이브러리">
-      <div class="card-h"><h2>라이브러리</h2><small class="num" id="libTotal"></small></div>
-      <div class="lib-grid" id="libMain"></div>
-    </section>
+    <!-- 메모 (메인 맨 아래) -->
     <section class="card" aria-label="메모">
       <div class="card-h"><h2>메모</h2><small id="memoSaved"></small></div>
       <textarea class="field memo" id="memo" rows="4" placeholder="생각나는 걸 적어 둬. 쓰는 대로 저장돼." aria-label="메모"></textarea>
@@ -314,6 +291,11 @@
       <h2 id="settingsTitle">설정</h2>
       <button class="btn btn-ghost" data-close>닫기</button>
     </div>
+    <!-- 라이브러리 (메인에서 옮겨 옴, 사용자 결정) · 칸을 누르면 목록 창 -->
+    <section class="card" aria-label="라이브러리">
+      <div class="card-h"><h2>라이브러리</h2><small class="num" id="libTotal"></small></div>
+      <div class="lib-grid" id="libMain"></div>
+    </section>
     <section class="card" aria-label="캘린더 알바 연결">
       <div class="card-h"><h2>캘린더 알바 연결</h2><small id="calStatus"></small></div>
       <p class="mini cal-hint">구글 캘린더 '개인 일정'의 알바 오픈반·마감반 일정으로 하루하루 일과표를 맞춰. 연결하면 아래 '이번 주 알바'보다 캘린더가 먼저야.</p>

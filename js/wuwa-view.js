@@ -39,21 +39,17 @@ export const chip = (attr, label, on, small = false) =>
 const bossBoxes = (n) => [1, 2, 3].map((i) =>
   `<button data-weekly="boss" data-n="${i}" aria-pressed="${n >= i}" aria-label="주간보스 ${i}회"></button>`).join("");
 
-// ---------- 체크리스트 (메인 카드와 취미 탭이 같이 쓴다) ----------
+// ---------- 체크리스트 (취미 탭 명조 '오늘') ----------
 function renderChecks() {
   const now = new Date();
   const dd = dailyDone(checks, now);
   const wd = weeklyDone(checks, now);
   const dc = dailyCount(checks, now);
   const wc = weeklyCount(checks, now);
-  const dailyHtml = DAILY.map((d) => chip(`data-daily="${d.id}"`, d.label, dd[d.id])).join("");
 
-  for (const [count, bar, list] of [["wwMainCount", "wwMainBar", "wwMainDaily"], ["wwDailyCount", "wwDailyBar", "wwDaily"]]) {
-    $(count).textContent = `${dc.done} / ${dc.total}`;
-    $(bar).style.width = `${(dc.done / dc.total) * 100}%`;
-    $(list).innerHTML = dailyHtml;
-  }
-  $("wwMainBoss").innerHTML = `주간보스 ${bossBoxes(wd.boss ?? 0)}`;
+  $("wwDailyCount").textContent = `${dc.done} / ${dc.total}`;
+  $("wwDailyBar").style.width = `${(dc.done / dc.total) * 100}%`;
+  $("wwDaily").innerHTML = DAILY.map((d) => chip(`data-daily="${d.id}"`, d.label, dd[d.id])).join("");
 
   // 취미 탭 첫 화면의 명조 카드: 오늘 진행도 + '오늘' 버튼에 이번 주
   $("hubWwCount").textContent = `오늘 ${dc.done} / ${dc.total}`;
@@ -248,7 +244,7 @@ export function startWuwa() {
   renderChecks();
   renderParties();
   loadCharacters();
-  for (const id of ["wwMainCard", "wwTodayCard", "wwWeekCard"]) $(id).addEventListener("click", onCheckClick);
+  for (const id of ["wwTodayCard", "wwWeekCard"]) $(id).addEventListener("click", onCheckClick);
 
   $("wwPick").addEventListener("click", (e) => {
     const b = e.target.closest("[data-page]");

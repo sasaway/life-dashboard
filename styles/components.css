@@ -368,7 +368,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .card>.msg:empty{display:none}
 
 /* ---------- 취미: 게임 카드 → 각 게임 쪽 ---------- */
-.divider{height:1px;background:var(--line);margin:2px 0} /* 시안 그대로 */
 .hobby-page{display:flex;flex-direction:column;gap:var(--gap)}
 .hub{display:flex;flex-direction:column;gap:10px}
 .hub-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -382,15 +381,12 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .hub-go-h{display:flex;justify-content:space-between;align-items:center;gap:4px}
 .hub-go-h b{font-size:var(--fs-body);font-weight:600}
 .hub-go-sub{font-size:var(--fs-tiny);color:var(--sub);line-height:1.4;word-break:keep-all}
-.hub .go,.go-end .go,.go-row .go{width:18px;height:18px;stroke:var(--faint);fill:none;stroke-width:1.8}
-/* 메인 카드에서 바로 가기 (취미 탭 게임 카드와 같은 › 표시) */
+.hub .go,.go-end .go{width:18px;height:18px;stroke:var(--faint);fill:none;stroke-width:1.8}
+/* 메인 운동 카드에서 바로 가기 (취미 탭 게임 카드와 같은 › 표시) */
 .go-card{position:relative}
 .go-link{border:0;background:none;padding:0;font:inherit;display:inline-flex;align-items:center;gap:2px}
 .go-link::after{content:"";position:absolute;inset:0;border-radius:var(--r-card)} /* 카드 전체가 누르는 자리 */
-.go-row{position:relative;width:100%;border:0;background:none;padding:0;text-align:left;font:inherit;color:inherit}
-.go-row::after{content:"";position:absolute;inset:-10px -4px} /* 글줄은 20px, 누르는 자리는 40px */
-.go-row>span{display:inline-flex;align-items:center;gap:4px}
-.go-row .go,.go-end .go{width:16px;height:16px}
+.go-end .go{width:16px;height:16px}
 .go-end{display:inline-flex;align-items:center;gap:4px;align-self:center}
 .hub .meter{display:block}
 .sub-top{justify-content:flex-start;align-items:center}
@@ -473,15 +469,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .photo-add input{position:absolute;inset:0;opacity:0;cursor:pointer}
 #libDelete{min-height:var(--touch)}
 #libSave{min-height:var(--touch)}
-
-/* ---------- 아침 브리핑 (메인, 아침에만) ---------- */
-.brief-list{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:6px}
-.brief-list li{display:grid;grid-template-columns:36px 1fr;gap:8px;font-size:var(--fs-small);line-height:1.5}
-.brief-list .k{color:var(--faint)}
-.brief-list .v{color:var(--ink);overflow-wrap:anywhere}
-.brief .btns{margin-top:12px}
-.brief.folded .card-h{margin-bottom:0}
-#briefUnfold{padding:0;font-size:var(--fs-small)}
 
 /* ---------- 설정: 캘린더 알바 연결 ---------- */
 .cal-hint{margin:0 0 10px}
