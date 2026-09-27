@@ -13,6 +13,7 @@ import { startWuwa, renderWuwa } from "./wuwa-view.js";
 import { startWarframe, renderWarframe } from "./warframe-view.js";
 import { startLibrary } from "./library-view.js";
 import { startCalendar, openCalendarSettings } from "./calendar-view.js";
+import { startHobbySync, openHobbySyncSettings } from "./hobby-sync-view.js";
 import { $ } from "./dom.js";
 
 
@@ -87,6 +88,7 @@ function startSettings() {
   $("openSettings").addEventListener("click", () => {
     openScheduleSettings();
     openCalendarSettings();
+    openHobbySyncSettings();
     openSheet("settings");
   });
 }
@@ -128,6 +130,7 @@ startWuwa();
 startWarframe();
 startLibrary();
 startCalendar();
+startHobbySync();
 startClock();
 startTabs();
 startSettings();

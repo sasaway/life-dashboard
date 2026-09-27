@@ -9,6 +9,7 @@ import {
 } from "./wuwa.js";
 import { $, esc } from "./dom.js";
 import { ICON } from "./icons.js";
+import { markHobbyDirty } from "./hobby-sync-view.js";
 
 const CHARS_URL = "https://api.encore.moe/ko/character";
 const CHARS_MAX_AGE = 7 * 864e5; // 일주일마다 새 캐릭터를 확인한다
@@ -21,7 +22,8 @@ let chars = store.load("wuwaChars", { at: 0, list: [] }); // encore.moe 에서 �
 let allChars = withUpcoming(chars.list); // + 아직 encore.moe 에 없는 3.7 공명자
 
 const saveChecks = () => store.save("wuwaChecks", checks);
-const saveParties = () => store.save("wuwaParties", parties) && store.save("wuwaBuilds", builds);
+// 저장할 때마다 취미 시트에도 (연결했으면)
+const saveParties = () => { const ok = store.save("wuwaParties", parties) && store.save("wuwaBuilds", builds); markHobbyDirty(); return ok; };
 const charById = (id) => allChars.find((c) => c.id === id);
 
 // 3.7 공명자의 진짜가 encore.moe 에 올라왔으면 파티 칸·육성 체크를 진짜 번호로 옮긴다

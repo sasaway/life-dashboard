@@ -8,6 +8,7 @@ import {
   addOther, removeOther, sortieView, invasionView, alertView, timeLeft,
 } from "./warframe.js";
 import { $, esc, X_SVG } from "./dom.js";
+import { markHobbyDirty } from "./hobby-sync-view.js";
 
 const LIVE_URL = "https://api.warframestat.us/pc/"; // 공식 worldState 는 브라우저에서 못 읽어서(CORS) 이걸 쓴다
 const LIVE_MAX_AGE = 10 * 60e3; // 워프레임 쪽을 보고 있으면 10분마다 새로 받는다
@@ -150,7 +151,8 @@ function renderGear() {
   renderHub();
 }
 
-const saveGear = () => store.save("wfGear", gear);
+// 저장할 때마다 취미 시트에도 (연결했으면)
+const saveGear = () => { store.save("wfGear", gear); markHobbyDirty(); };
 const editingFrame = () => gear.frames.find((x) => x.id === editing);
 const field = (k, label, f) =>
   `<label><span>${label}</span><input class="field" name="${k}" value="${esc(f[k])}" maxlength="30"></label>`;
