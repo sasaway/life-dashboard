@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="design/tokens.css">
 <link rel="stylesheet" href="styles/components.css">
 <script src="js/version.js"></script>
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/boot.js"></script>
 </head>
 <body>
 
@@ -41,6 +41,11 @@
       <div class="now-bar"><i id="nowBar"></i></div>
       <div class="now-foot"><span id="nowLeft"></span><span class="mono" id="nowPct"></span></div>
     </section>
+    <!-- x.9 자동 백업 안내 (한 번만) · 누르면 설정 › 데이터 백업 -->
+    <div class="bk-note" id="bkNote" hidden>
+      <button class="bk-note-go" id="bkNoteGo"><span id="bkNoteText"></span><b>파일로도 저장하기</b></button>
+      <button class="icon-btn del" id="bkNoteX" aria-label="안내 닫기"></button>
+    </div>
     <section class="card" aria-label="오늘 일정">
       <div class="card-h"><h2>오늘 일정<span class="tag" id="shiftTag"></span></h2><small class="mono" id="clock">--:--</small></div>
       <ol class="sched" id="sched"></ol>
@@ -284,71 +289,114 @@
   <button class="tab" data-screen="hobby"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="4"/><path d="M8 10v4M6 12h4M15.5 11h.01M17.5 13h.01"/></svg>취미</button>
 </nav></div>
 
-<!-- 설정 -->
+<!-- 설정: 항목 목록 → 눌러서 그 항목 화면으로 (v1.9). 목록은 js/settings-view.js 가 그린다 -->
 <div class="sheet-wrap" id="settings" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div class="grab"></div>
-    <div class="sheet-h">
+    <div class="sheet-h set-top">
+      <button class="set-back" id="setBack" hidden></button>
       <h2 id="settingsTitle">설정</h2>
       <button class="btn btn-ghost" data-close>닫기</button>
     </div>
-    <!-- 라이브러리 (메인에서 옮겨 옴, 사용자 결정) · 칸을 누르면 목록 창 -->
-    <section class="card" aria-label="라이브러리">
-      <div class="card-h"><h2>라이브러리</h2><small class="num" id="libTotal"></small></div>
-      <div class="lib-grid" id="libMain"></div>
-    </section>
-    <section class="card" aria-label="캘린더 알바 연결">
-      <div class="card-h"><h2>캘린더 알바 연결</h2><small id="calStatus"></small></div>
-      <p class="mini cal-hint">구글 캘린더 '개인 일정'의 알바 오픈반·마감반 일정으로 하루하루 일과표를 맞춰. 연결하면 아래 '이번 주 알바'보다 캘린더가 먼저야.</p>
-      <input class="field cal-url" id="calUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
-        placeholder="https://script.google.com/macros/s/…/exec" aria-label="심부름꾼 주소">
-      <p class="msg" id="calMsg" role="status"></p>
-      <div class="btns">
-        <button class="btn btn-primary" id="calSave">연결하고 받기</button>
-        <button class="btn btn-ghost" id="calSync" hidden>지금 받기</button>
-        <button class="btn btn-text" id="calOff" hidden>연결 끊기</button>
-      </div>
-    </section>
-    <section class="card" aria-label="취미 시트 연결">
-      <div class="card-h"><h2>취미 시트 연결</h2><small id="hsStatus"></small></div>
-      <p class="mini cal-hint">워프레임 장비 목록과 명조 파티표를 저장할 때마다 구글 시트 '라이프 취미'에 한 벌 복사해. Claude 가 읽을 수 있게. 시트에서 고친 건 앱으로 안 와.</p>
-      <input class="field cal-url" id="hsUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
-        placeholder="https://script.google.com/macros/s/…/exec" aria-label="취미 심부름꾼 주소">
-      <input class="field cal-url hs-token" id="hsToken" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
-        placeholder="암호 글자" aria-label="암호 글자">
-      <p class="msg" id="hsMsg" role="status"></p>
-      <div class="btns">
-        <button class="btn btn-primary" id="hsSave">연결하고 보내기</button>
-        <button class="btn btn-ghost" id="hsSync" hidden>지금 보내기</button>
-        <button class="btn btn-text" id="hsOff" hidden>연결 끊기</button>
-      </div>
-    </section>
-    <section class="card" aria-label="이번 주 알바">
-      <div class="card-h"><h2>이번 주 알바</h2><small>한 주씩 번갈아 가</small></div>
-      <div class="seg" id="shiftPick">
-        <button data-shift="open" aria-pressed="false">오픈반 <span class="mono">08:30</span></button>
-        <button data-shift="close" aria-pressed="false">마감반 <span class="mono">15:00</span></button>
-      </div>
-    </section>
-    <section class="card" aria-label="알바 하는 요일">
-      <div class="card-h"><h2>알바 하는 요일</h2><small>끄면 그날은 쉬는 날</small></div>
-      <div class="days" id="workdays"></div>
-    </section>
-    <section class="card" aria-label="일과표 고치기">
-      <div class="card-h"><h2>일과표 고치기</h2></div>
-      <div class="seg" id="editPick">
-        <button data-shift="open" aria-pressed="false">오픈반 주</button>
-        <button data-shift="close" aria-pressed="false">마감반 주</button>
-      </div>
-      <ol class="edit-rows" id="editRows"></ol>
-      <p class="msg" id="editMsg" role="status"></p>
-      <div class="btns">
-        <button class="btn btn-primary" id="saveRows">저장</button>
-        <button class="btn btn-ghost" id="addRow">칸 추가</button>
-        <button class="btn btn-text" id="resetRows">기본값으로</button>
-      </div>
-    </section>
-    <p class="msg" id="appVersion"></p>
+    <div class="set-list" id="setList">
+      <div id="setGroups"></div>
+      <p class="msg" id="appVersion"></p>
+    </div>
+    <h2 class="set-title" id="setTitle" hidden></h2>
+    <div class="set-page" id="set-lib" hidden>
+      <section class="card" aria-label="라이브러리">
+        <div class="card-h"><small class="num" id="libTotal"></small></div>
+        <div class="lib-grid" id="libMain"></div>
+      </section>
+    </div>
+    <div class="set-page" id="set-shift" hidden>
+      <section class="card" aria-label="이번 주 알바">
+        <div class="card-h"><small>한 주씩 번갈아 가</small></div>
+        <div class="seg" id="shiftPick">
+          <button data-shift="open" aria-pressed="false">오픈반 <span class="mono">08:30</span></button>
+          <button data-shift="close" aria-pressed="false">마감반 <span class="mono">15:00</span></button>
+        </div>
+      </section>
+    </div>
+    <div class="set-page" id="set-days" hidden>
+      <section class="card" aria-label="알바 하는 요일">
+        <div class="card-h"><small>끄면 그날은 쉬는 날</small></div>
+        <div class="days" id="workdays"></div>
+      </section>
+    </div>
+    <div class="set-page" id="set-rows" hidden>
+      <section class="card" aria-label="일과표 고치기">
+        <div class="seg" id="editPick">
+          <button data-shift="open" aria-pressed="false">오픈반 주</button>
+          <button data-shift="close" aria-pressed="false">마감반 주</button>
+        </div>
+        <ol class="edit-rows" id="editRows"></ol>
+        <p class="msg" id="editMsg" role="status"></p>
+        <div class="btns">
+          <button class="btn btn-primary" id="saveRows">저장</button>
+          <button class="btn btn-ghost" id="addRow">칸 추가</button>
+          <button class="btn btn-text" id="resetRows">기본값으로</button>
+        </div>
+      </section>
+    </div>
+    <div class="set-page" id="set-cal" hidden>
+      <section class="card" aria-label="캘린더 알바 연결">
+        <div class="card-h"><small id="calStatus"></small></div>
+        <p class="mini cal-hint">구글 캘린더 '개인 일정'의 알바 오픈반·마감반 일정으로 하루하루 일과표를 맞춰. 연결하면 '이번 주 알바'보다 캘린더가 먼저야.</p>
+        <input class="field cal-url" id="calUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
+          placeholder="https://script.google.com/macros/s/…/exec" aria-label="심부름꾼 주소">
+        <p class="msg" id="calMsg" role="status"></p>
+        <div class="btns">
+          <button class="btn btn-primary" id="calSave">연결하고 받기</button>
+          <button class="btn btn-ghost" id="calSync" hidden>지금 받기</button>
+          <button class="btn btn-text" id="calOff" hidden>연결 끊기</button>
+        </div>
+      </section>
+    </div>
+    <div class="set-page" id="set-hs" hidden>
+      <section class="card" aria-label="취미 시트 연결">
+        <div class="card-h"><small id="hsStatus"></small></div>
+        <p class="mini cal-hint">워프레임 장비 목록과 명조 파티표를 저장할 때마다 구글 시트 '라이프 취미'에 한 벌 복사해. Claude 가 읽을 수 있게. 시트에서 고친 건 앱으로 안 와.</p>
+        <input class="field cal-url" id="hsUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
+          placeholder="https://script.google.com/macros/s/…/exec" aria-label="취미 심부름꾼 주소">
+        <input class="field cal-url hs-token" id="hsToken" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+          placeholder="암호 글자" aria-label="암호 글자">
+        <p class="msg" id="hsMsg" role="status"></p>
+        <div class="btns">
+          <button class="btn btn-primary" id="hsSave">연결하고 보내기</button>
+          <button class="btn btn-ghost" id="hsSync" hidden>지금 보내기</button>
+          <button class="btn btn-text" id="hsOff" hidden>연결 끊기</button>
+        </div>
+      </section>
+    </div>
+    <div class="set-page" id="set-backup" hidden>
+      <section class="card" aria-label="마지막 백업">
+        <div class="card-h"><h2>마지막 백업</h2><small id="bkWhen"></small></div>
+        <p class="bk-sum" id="bkSum"></p>
+        <p class="bk-err" id="bkErr" role="alert" hidden></p>
+        <div class="btns">
+          <button class="btn btn-primary" id="bkNow">지금 백업하기</button>
+          <button class="btn btn-ghost" id="bkSave">백업 파일 저장</button>
+        </div>
+        <p class="msg" id="bkMsg" role="status"></p>
+        <p class="mini">폰 브라우저는 파일을 몰래 저장할 수 없어. 폰 밖(파일 앱·iCloud)에 두려면 '백업 파일 저장'을 눌러 줘.</p>
+      </section>
+      <section class="card" aria-label="백업에서 되살리기">
+        <div class="card-h"><h2>백업에서 되살리기</h2><small>앱 안 백업은 최근 2개</small></div>
+        <ul class="bk-list" id="bkList"></ul>
+        <label class="btn btn-ghost bk-file">백업 파일 고르기<input type="file" id="bkFile" accept="application/json,.json"></label>
+        <div class="bk-preview" id="bkPreview" hidden>
+          <p class="bk-preview-h">이 백업에 들어 있는 것</p>
+          <dl class="bk-dl" id="bkPreviewList"></dl>
+          <div class="btns">
+            <button class="btn btn-primary" id="bkRestore">이 백업으로 되살리기</button>
+            <button class="btn btn-ghost" id="bkCancel">그만두기</button>
+          </div>
+        </div>
+        <p class="msg" id="bkRestoreMsg" role="status"></p>
+      </section>
+      <p class="mini">백업 파일에는 캘린더·취미 시트 심부름꾼 주소와 암호 글자도 들어 있어. 남에게 보내지 마.</p>
+    </div>
   </div>
 </div>
 
@@ -504,6 +552,17 @@
       <button class="btn btn-ghost" data-close>닫기</button>
     </div>
     <ul class="entries" id="pastList"></ul>
+  </div>
+</div>
+
+<!-- 앱 안 확인 창 (브라우저 기본 confirm 대신) -->
+<div class="confirm-wrap" id="confirmBox" hidden>
+  <div class="confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmText">
+    <p id="confirmText"></p>
+    <div class="btns">
+      <button class="btn btn-primary" id="confirmOk"></button>
+      <button class="btn btn-ghost" id="confirmNo">그만두기</button>
+    </div>
   </div>
 </div>
 

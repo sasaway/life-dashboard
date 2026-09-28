@@ -478,3 +478,49 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 /* ---------- 설정: 캘린더 알바 연결 ---------- */
 .cal-hint{margin:0 0 10px}
 .hs-token{margin-top:8px}
+
+/* ---------- 설정: 목록 → 눌러서 항목 화면 (v1.9) ---------- */
+#settings .sheet{height:86%} /* 목록 ↔ 항목 화면을 오가도 창 높이가 출렁이지 않게 */
+.set-top{min-height:var(--touch-nav)}
+.set-top .btn{min-height:var(--touch-nav)}
+.set-back{display:inline-flex;align-items:center;gap:2px;min-height:var(--touch-nav);padding:0 10px 0 0;border:0;background:none;color:var(--accent);font-weight:600;font-size:var(--fs-body)}
+.set-back .ic{width:20px;height:20px}
+.set-list{display:flex;flex-direction:column;gap:var(--gap)}
+.set-list.back{animation:set-back var(--t-fast) var(--ease)}
+.set-group h3{margin:6px 0 6px 4px;font-size:var(--fs-tiny);font-weight:600;color:var(--faint)}
+.set-rows{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow);overflow:hidden}
+.set-row{display:flex;align-items:center;gap:12px;width:100%;min-height:var(--touch-nav);padding:10px 12px 10px 14px;border:0;background:none;text-align:left;transition:background var(--t-fast)}
+.set-row+.set-row{border-top:1px solid var(--line)}
+.set-row:active{background:var(--bg)}
+.set-ic{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:var(--bg);color:var(--sub);flex:none}
+.set-name{flex:1;min-width:0;font-weight:500}
+.set-state{max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-small);color:var(--faint)}
+.set-row>.ic{width:16px;height:16px;color:var(--faint)}
+.set-title{margin:0;font-size:var(--fs-hero);font-weight:700}
+.set-page{display:flex;flex-direction:column;gap:var(--gap)}
+.set-page,.set-title{animation:set-in var(--t-fast) var(--ease)} /* 오른쪽에서 밀려 들어옴 (동작 줄이기면 꺼짐) */
+@keyframes set-in{from{transform:translateX(28px);opacity:0}}
+@keyframes set-back{from{transform:translateX(-28px);opacity:0}}
+
+/* ---------- 설정 › 데이터 백업 · 메인 안내 · 앱 안 확인 창 (v1.9) ---------- */
+.bk-sum{margin:0;font-size:var(--fs-small);color:var(--sub)}
+.bk-err{margin:8px 0 0;font-size:var(--fs-small);font-weight:600;color:var(--danger)}
+.bk-list{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.bk-item{display:flex;flex-direction:column;gap:2px;width:100%;min-height:var(--touch-nav);padding:8px 12px;text-align:left;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface)}
+.bk-item:active{background:var(--bg)}
+.bk-file{position:relative;display:inline-flex;align-items:center;min-height:var(--touch-nav);overflow:hidden}
+.bk-file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.bk-preview{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--bg)}
+.bk-preview-h{margin:0 0 6px;font-size:var(--fs-small);font-weight:600}
+.bk-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 6px;font-size:var(--fs-small)}
+.bk-dl dt{color:var(--faint)}
+.bk-dl dd{margin:0;overflow-wrap:anywhere}
+#set-backup .btn{min-height:var(--touch-nav)}
+.bk-note{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow);padding:2px 4px 2px 14px}
+.bk-note-go{flex:1;min-width:0;min-height:var(--touch-nav);border:0;background:none;padding:6px 0;text-align:left;font-size:var(--fs-small);color:var(--sub)}
+.bk-note-go b{color:var(--accent);font-weight:600}
+.bk-note .icon-btn{width:var(--touch-nav);height:var(--touch-nav)}
+.confirm-wrap{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:var(--gutter);background:color-mix(in srgb,var(--ink) 40%,transparent)}
+.confirm{width:100%;max-width:320px;background:var(--surface);border-radius:var(--r-card);box-shadow:var(--shadow);padding:18px 16px 14px}
+.confirm p{margin:0 0 10px;font-size:var(--fs-body);line-height:1.55}
+.confirm .btn{min-height:var(--touch-nav)}

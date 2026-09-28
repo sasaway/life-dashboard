@@ -33,6 +33,8 @@ function fillPhotos(root) {
   });
 }
 
+export const libraryCount = () => list.length; // 설정 목록에 보이는 개수
+
 // ---------- 설정 창의 라이브러리 칸 ----------
 function renderTiles() {
   const n = countsBy(list);

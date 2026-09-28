@@ -9,6 +9,7 @@ const URL_KEY = "calUrl"; // 심부름꾼 주소는 폰에만 둔다 (코드·Gi
 const EVERY = 30 * 60e3;
 let url = store.load(URL_KEY, "");
 let busy = false;
+export const calendarOn = () => Boolean(url); // 설정 목록의 '연결됨 / 안 됨'
 
 const timeLabel = (ms) => {
   const d = new Date(ms);
@@ -17,7 +18,7 @@ const timeLabel = (ms) => {
 
 function renderCalendar(msg) {
   const cal = getScheduleSettings().cal;
-  const on = Boolean(url);
+  const on = calendarOn();
   $("calStatus").textContent = !on ? "연결 안 됨" : cal ? `알바 ${shiftCount(cal)}일 · ${timeLabel(cal.at)} 받음` : "아직 못 받음";
   $("calUrl").value = url;
   $("calSync").hidden = !on;

@@ -1,9 +1,9 @@
 import { greeting, dateLabel } from "./time.js";
 import { pad } from "./schedule.js";
 import { store, askToKeepData } from "./store.js";
-import { startSchedule, renderToday, openScheduleSettings } from "./schedule-view.js";
+import { startSchedule, renderToday } from "./schedule-view.js";
 import { startReview, renderReviewCard } from "./review-view.js";
-import { openSheet, startSheets } from "./sheet.js";
+import { startSheets } from "./sheet.js";
 import { startShopping } from "./shopping-view.js";
 import { startBudget } from "./budget-view.js";
 import { startMeals, renderAll as renderMeals } from "./meals-view.js";
@@ -12,8 +12,10 @@ import { startWorkout, renderWorkout } from "./workout-view.js";
 import { startWuwa, renderWuwa } from "./wuwa-view.js";
 import { startWarframe, renderWarframe } from "./warframe-view.js";
 import { startLibrary } from "./library-view.js";
-import { startCalendar, openCalendarSettings } from "./calendar-view.js";
-import { startHobbySync, openHobbySyncSettings } from "./hobby-sync-view.js";
+import { startCalendar } from "./calendar-view.js";
+import { startHobbySync } from "./hobby-sync-view.js";
+import { startSettings } from "./settings-view.js";
+import { startBackup } from "./backup-view.js";
 import { $ } from "./dom.js";
 
 
@@ -82,17 +84,6 @@ function startTabs() {
   });
 }
 
-// ---------- 설정 창 ----------
-function startSettings() {
-  $("appVersion").textContent = `앱 버전 ${self.APP_VERSION}`;
-  $("openSettings").addEventListener("click", () => {
-    openScheduleSettings();
-    openCalendarSettings();
-    openHobbySyncSettings();
-    openSheet("settings");
-  });
-}
-
 // ---------- 오프라인 준비 ----------
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
@@ -134,5 +125,6 @@ startHobbySync();
 startClock();
 startTabs();
 startSettings();
+startBackup();
 registerServiceWorker();
 askToKeepData();

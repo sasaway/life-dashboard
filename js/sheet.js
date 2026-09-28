@@ -38,3 +38,31 @@ export function startSheets() {
     if (e.key === "Escape") closeSheet();
   });
 }
+
+// 앱 안 확인 창 (브라우저 기본 confirm 대신). 열린 창 위에 뜬다. 고르면 true / false
+export function askConfirm(text, okLabel) {
+  const box = document.getElementById("confirmBox");
+  document.getElementById("confirmText").textContent = text;
+  document.getElementById("confirmOk").textContent = okLabel;
+  box.hidden = false;
+  document.getElementById("confirmNo").focus();
+  return new Promise((resolve) => {
+    const done = (yes) => {
+      box.hidden = true;
+      box.removeEventListener("click", onClick);
+      document.removeEventListener("keydown", onKey, true);
+      resolve(yes);
+    };
+    const onClick = (e) => {
+      if (e.target.closest("#confirmOk")) done(true);
+      else if (e.target.closest("#confirmNo") || e.target === box) done(false);
+    };
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation(); // 밑에 열린 창까지 닫히지 않게
+      done(false);
+    };
+    box.addEventListener("click", onClick);
+    document.addEventListener("keydown", onKey, true);
+  });
+}

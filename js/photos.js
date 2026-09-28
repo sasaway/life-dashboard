@@ -31,6 +31,31 @@ export function deletePhotos(ids) {
   return run("readwrite", (s) => { ids.forEach((id) => s.delete(id)); }).catch(() => {});
 }
 
+// 백업용: 사진 전부 [{ id, blob }]
+export async function allPhotos() {
+  const d = await db();
+  return new Promise((resolve, reject) => {
+    const tx = d.transaction(STORE, "readonly");
+    const keys = tx.objectStore(STORE).getAllKeys();
+    const blobs = tx.objectStore(STORE).getAll();
+    tx.oncomplete = () => resolve(keys.result.map((id, i) => ({ id, blob: blobs.result[i] })));
+    tx.onerror = tx.onabort = () => reject(tx.error);
+  });
+}
+
+// 되살리기용: 사진 창고를 비우고 이 사진들로 (한 번에 — 중간에 실패하면 원래대로)
+export async function replacePhotos(list) {
+  const d = await db();
+  return new Promise((resolve, reject) => {
+    const tx = d.transaction(STORE, "readwrite");
+    const s = tx.objectStore(STORE);
+    s.clear();
+    for (const p of list) s.put(p.blob, p.id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = tx.onabort = () => reject(tx.error);
+  });
+}
+
 // 긴 변을 1280px 로 줄인 JPEG (한 장 약 150~300KB)
 export async function shrink(file, max = 1280) {
   const bmp = await createImageBitmap(file);

@@ -16,6 +16,7 @@ let busy = false;
 let changes = 0; // 보내는 사이에 또 저장했는지 알려고 센다
 
 const save = () => store.save(KEY, conf);
+export const hobbySyncOn = () => Boolean(conf.url && conf.token); // 설정 목록의 '연결됨 / 안 됨'
 
 const timeLabel = (ms) => {
   const d = new Date(ms);
@@ -24,7 +25,7 @@ const timeLabel = (ms) => {
 };
 
 function render(msg) {
-  const on = Boolean(conf.url && conf.token);
+  const on = hobbySyncOn();
   $("hsStatus").textContent = on ? "연결됨" : "연결 안 됨";
   $("hsSync").hidden = !on;
   $("hsOff").hidden = !on;
