@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  DISHES, LEFTOVER, homeMeals, workMeal, planMeals, planWeek, withOverride,
+  DISHES, LEFTOVER, WORK_DISH, homeMeals, workMeal, planMeals, planWeek, withOverride,
 } from "../js/meals.js";
 import { mondayOf } from "../js/schedule.js";
 import { IDEAS, ideasFor, MAX_IDEAS } from "../js/meal-tips.js";
@@ -14,9 +14,22 @@ test("메인 요리는 Notion 의 네 가지", () => {
   assert.deepEqual(DISHES.map((d) => d.name), ["냉동 대패 짜글이", "계란 볶음밥", "라면", "닭가슴살 + 햇반"]);
 });
 
-test("자동 돌림: 짜글이 다음 끼니는 남은 짜글이, 그다음 볶음밥·라면·닭가슴살", () => {
+test("자동 돌림: 짜글이 다음 끼니는 남은 짜글이, 그다음 볶음밥·라면 (닭가슴살은 알바 끼니라 빠짐)", () => {
   assert.deepEqual(names(planMeals(slots(7))),
-    ["jja", "jja-left", "rice", "ramen", "chicken", "jja", "jja-left"]);
+    ["jja", "jja-left", "rice", "ramen", "jja", "jja-left", "rice"]);
+  assert.ok(!names(planMeals(slots(30))).includes("chicken"));
+});
+
+test("알바 중 끼니는 늘 닭가슴살 + 햇반", () => {
+  assert.equal(WORK_DISH.id, "chicken");
+  assert.equal(workMeal(new Date(2026, 8, 29), DEFAULT_SETTINGS).dish, WORK_DISH);
+  assert.equal(workMeal(new Date(2026, 8, 25), DEFAULT_SETTINGS).dish, WORK_DISH);
+});
+
+test("집 끼니에 닭가슴살을 직접 고르면 그대로 둔다 (자동 돌림에서만 뺀다)", () => {
+  const plan = planMeals(slots(2), { s0: "chicken" });
+  assert.deepEqual(names(plan), ["chicken", "jja"]);
+  assert.equal(plan[0].auto, false);
 });
 
 test("직접 고른 칸은 그대로, 돌림 순서는 건너뛰지 않는다", () => {
@@ -47,8 +60,11 @@ test("집 끼니는 일과표 식사 칸에서: 마감반 주는 점심, 오픈�
   assert.deepEqual(homeMeals(new Date(2026, 8, 25), DEFAULT_SETTINGS).map((m) => [m.key, m.start]),
     [["2026-09-25 점심", "12:30"]]);
   assert.deepEqual(homeMeals(new Date(2026, 8, 29), DEFAULT_SETTINGS).map((m) => m.label), ["저녁"]);
-  assert.equal(workMeal(new Date(2026, 8, 25), DEFAULT_SETTINGS), "저녁");
-  assert.equal(workMeal(new Date(2026, 8, 29), DEFAULT_SETTINGS), "점심");
+  // 마감반은 알바 중 저녁(시각 없음) · 집 점심 다음, 오픈반은 알바 중 점심 13~14시 사이 40분 · 집 저녁보다 먼저
+  assert.deepEqual(workMeal(new Date(2026, 8, 25), DEFAULT_SETTINGS),
+    { label: "저녁", dish: WORK_DISH, note: "", first: false });
+  assert.deepEqual(workMeal(new Date(2026, 8, 29), DEFAULT_SETTINGS),
+    { label: "점심", dish: WORK_DISH, note: "13~14시 사이 시작 · 40분", first: true });
 });
 
 test("쉬는 날은 두 끼 다 집에서, 알바 식대는 없다", () => {
@@ -63,8 +79,8 @@ test("주간 식단표: 월요일부터 7일, 끼니가 주 전체로 이어서 
   assert.equal(week[0].day, "2026-09-21");
   assert.equal(week[6].day, "2026-09-27");
   assert.deepEqual(week.map((d) => d.meals.map((m) => m.dish.short).join()),
-    ["짜글이", "짜글이 (남은 것)", "계란 볶음밥", "라면", "닭가슴살 + 햇반", "짜글이", "짜글이 (남은 것)"]);
-  assert.ok(week.every((d) => d.work === "저녁"));
+    ["짜글이", "짜글이 (남은 것)", "계란 볶음밥", "라면", "짜글이", "짜글이 (남은 것)", "계란 볶음밥"]);
+  assert.ok(week.every((d) => d.work.label === "저녁"));
 });
 
 // ---------- 산 재료로 새 요리 추천 ----------

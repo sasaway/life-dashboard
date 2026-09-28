@@ -1,14 +1,17 @@
-// 식단: 주간 식단표와 오늘의 식단. 규칙은 Notion '식단'.
-// 집에서 먹는 끼니는 일과표의 식사 칸에서 가져온다 (알바 중 끼니는 식대라 빼고).
+// 식단: 주간 식단표와 오늘의 식단. 규칙은 Notion '식단' · '일정 › 알바' (2026-09-28 15:39 수정본).
+// 집에서 먹는 끼니는 일과표의 식사 칸에서 가져온다. 알바 중 끼니는 늘 닭가슴살 + 햇반.
 import { dayPlan, ymd, weekDates } from "./schedule.js";
 
 // 메인 요리. 새 요리는 여기에 한 줄 더하면 돌림에 들어간다.
+// work: 알바 중에 먹는 요리 — 집 끼니 자동 돌림에서는 뺀다 (칸을 눌러 직접 고르는 건 된다)
 export const DISHES = [
   { id: "jja", name: "냉동 대패 짜글이", short: "짜글이", makesTwo: true },
   { id: "rice", name: "계란 볶음밥", short: "계란 볶음밥" },
   { id: "ramen", name: "라면", short: "라면" },
-  { id: "chicken", name: "닭가슴살 + 햇반", short: "닭가슴살 + 햇반" },
+  { id: "chicken", name: "닭가슴살 + 햇반", short: "닭가슴살 + 햇반", work: true },
 ];
+export const WORK_DISH = DISHES.find((d) => d.work);
+const ROTATION = DISHES.filter((d) => !d.work);
 // 짜글이는 두 끼 분량을 만들어 다음 끼니에 남은 것을 먹는다
 export const LEFTOVER = { id: "jja-left", name: "짜글이 (남은 것)", short: "짜글이 (남은 것)" };
 
@@ -24,17 +27,19 @@ export function homeMeals(date, settings) {
     .map((x) => ({ key: `${day} ${x.name}`, day, label: x.name, start: x.start }));
 }
 
-// 알바 중 식대로 먹는 끼니 (오픈반은 점심, 마감반은 저녁)
+// 알바 중에 먹는 끼니: 오픈반은 점심(13~14시 사이 시작, 40분), 마감반은 저녁(시각은 Notion 에 없음)
 export function workMeal(date, settings) {
   const plan = dayPlan(date, settings);
   if (!plan.working) return null;
-  return plan.shift === "open" ? "점심" : "저녁";
+  return plan.shift === "open"
+    ? { label: "점심", dish: WORK_DISH, note: "13~14시 사이 시작 · 40분", first: true }
+    : { label: "저녁", dish: WORK_DISH, note: "", first: false };
 }
 
 // 끼니마다 요리를 정한다.
 // - 직접 고른 칸(overrides)은 그대로 쓴다
 // - 짜글이를 만든 다음 끼니는 남은 짜글이
-// - 나머지는 짜글이 → 볶음밥 → 라면 → 닭가슴살 순서로 돈다 (직접 고른 칸은 순서를 쓰지 않는다)
+// - 나머지는 짜글이 → 볶음밥 → 라면 순서로 돈다 (닭가슴살은 알바 끼니라 빠짐, 직접 고른 칸은 순서를 쓰지 않는다)
 export function planMeals(slots, overrides = {}) {
   let turn = 0;
   let cookedJja = false;
@@ -43,13 +48,13 @@ export function planMeals(slots, overrides = {}) {
     let auto = false;
     if (overrides[slot.key]) id = overrides[slot.key];
     else if (cookedJja) { id = LEFTOVER.id; auto = true; }
-    else { id = DISHES[turn++ % DISHES.length].id; auto = true; }
+    else { id = ROTATION[turn++ % ROTATION.length].id; auto = true; }
     cookedJja = DISHES.find((d) => d.id === id)?.makesTwo ?? false;
     return { ...slot, dish: dishById(id) ?? DISHES[0], auto };
   });
 }
 
-// 이번 주 식단표: 날짜마다 집 끼니(요리 포함)와 알바 식대 끼니
+// 이번 주 식단표: 날짜마다 집 끼니(요리 포함)와 알바 중 끼니
 export function planWeek(monday, settings, overrides) {
   const dates = weekDates(monday);
   const planned = planMeals(dates.flatMap((d) => homeMeals(d, settings)), overrides);

@@ -53,6 +53,6 @@ test("주 중간에 반이 바뀌어도 하루하루 일과표·식단이 따라
   assert.deepEqual(dayPlan(at(11, 24), set), { ...dayPlan(at(11, 24), DEFAULT_SETTINGS), fromCal: false });
 
   const week = planWeek(new Date(2026, 10, 16), set, {});
-  assert.deepEqual(week.map((d) => d.work), ["점심", "점심", "점심", "저녁", "저녁", "저녁", "저녁"]);
+  assert.deepEqual(week.map((d) => d.work.label), ["점심", "점심", "점심", "저녁", "저녁", "저녁", "저녁"]);
   assert.deepEqual(week.map((d) => d.meals.map((m) => m.label).join()), ["저녁", "저녁", "저녁", "점심", "점심", "점심", "점심"]);
 });

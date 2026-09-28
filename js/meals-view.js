@@ -16,19 +16,24 @@ let overrides = store.load("mealOverrides", {}); // { "2026-09-25 점심": "rame
 const week = () => planWeek(mondayOf(new Date()), getScheduleSettings(), overrides);
 const todayOf = (w) => w.find((d) => d.day === ymd(new Date()));
 
-const mealLine = (m) =>
-  `<span class="t mono">${esc(m.start)}</span><span class="n"><b>${esc(m.label)}</b> · ${esc(m.dish.short)}</span>`;
-const workLine = (label) => `<li class="work"><span class="t"></span><span class="n">${esc(label)} · 알바 식대</span></li>`;
+// 오늘 메뉴 한 줄 (누르면 레시피). t = 왼쪽 칸(시각 또는 '알바 중')
+const mealRow = (dish, t, label, note = "") =>
+  `<li><button class="meal-link" data-recipe-dish="${esc(dish.id)}" aria-label="${esc(label)} ${esc(dish.short)} 레시피 보기">${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}${note ? `<span class="meal-note">${esc(note)}</span>` : ""}</span><span class="go">레시피</span></button></li>`;
+// 알바 중 끼니는 먹는 차례대로: 오픈반 점심은 집 저녁보다 먼저, 마감반 저녁은 집 점심 다음
+const inOrder = (home, work, first) => (work ? (first ? [work, ...home] : [...home, work]) : home);
 
 // ---------- 메인 카드: 오늘 메뉴만 ----------
 export function renderMealMain() {
   const t = todayOf(week());
-  $("mealMain").innerHTML = t.meals.map((m) =>
-    `<li><button class="meal-link" data-recipe-dish="${esc(m.dish.id)}" aria-label="${esc(m.label)} ${esc(m.dish.short)} 레시피 보기">${mealLine(m)}<span class="go">레시피</span></button></li>`).join("")
-    + (t.work ? workLine(t.work) : "");
+  const home = t.meals.map((m) => mealRow(m.dish, `<span class="t mono">${esc(m.start)}</span>`, m.label));
+  const work = t.work && mealRow(t.work.dish, `<span class="t">알바 중</span>`, t.work.label, t.work.note);
+  $("mealMain").innerHTML = inOrder(home, work, t.work?.first).join("");
 }
 
 // ---------- 식단 탭 ----------
+// 알바 중 끼니는 늘 같아서 고르는 칸이 아니라 작은 한 줄
+const workNote = (w) =>
+  `<span class="work-note">${esc(w.label)} · 알바 중 · ${esc(w.dish.short)}${w.note ? ` (${esc(w.note)})` : ""}</span>`;
 // 이번 주 식단표가 이 탭의 주인공이다. 오늘 줄은 일정표의 '진행 중' 칸처럼 강조하고, 지난 날은 흐리게.
 function renderMealTab() {
   const w = week();
@@ -42,9 +47,9 @@ function renderMealTab() {
       <span class="wd"><b>${DAYS[d.date.getDay()]}</b><span class="num">${d.date.getMonth() + 1}/${d.date.getDate()}</span></span>
       <span class="slots">
         ${d.day === today ? '<span class="pill">오늘</span>' : ""}
-        ${d.meals.map((m) => `<button class="meal-chip" data-slot="${esc(m.key)}" aria-label="${esc(shortDay(d.date))} ${esc(m.label)}: ${esc(m.dish.short)}. 바꾸기">
-          <span class="lbl">${esc(m.label)}</span><span class="dish">${esc(m.dish.short)}</span>${m.auto ? "" : '<span class="mark">직접</span>'}</button>`).join("")}
-        ${d.work ? `<span class="work-note">${esc(d.work)}은 알바 식대</span>` : ""}
+        ${inOrder(d.meals.map((m) => `<button class="meal-chip" data-slot="${esc(m.key)}" aria-label="${esc(shortDay(d.date))} ${esc(m.label)}: ${esc(m.dish.short)}. 바꾸기">
+          <span class="lbl">${esc(m.label)}</span><span class="dish">${esc(m.dish.short)}</span>${m.auto ? "" : '<span class="mark">직접</span>'}</button>`),
+          d.work && workNote(d.work), d.work?.first).join("")}
       </span>
     </li>`;
   }).join("");

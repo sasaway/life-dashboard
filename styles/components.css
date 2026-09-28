@@ -176,7 +176,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .meal-list li{display:grid;grid-template-columns:48px 1fr;gap:8px;align-items:baseline}
 .meal-list .t{font-size:var(--fs-small);color:var(--sub)}
 .meal-list b{font-weight:600}
-.meal-list li.work .n{color:var(--faint);font-size:var(--fs-small)}
+.meal-note{display:block;font-size:var(--fs-tiny);color:var(--faint);font-weight:400}
 /* 이번 주 식단표: 오늘 줄은 일정표의 진행 중 칸과 같은 모양 (시안 .sched li.cur) */
 .week-hint{margin:-6px 0 8px}
 .week-meals{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
@@ -192,7 +192,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .meal-chip{align-self:stretch;display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--surface);text-align:left}
 .meal-chip .lbl{font-size:var(--fs-tiny);color:var(--faint);flex:none}
 .meal-chip .dish{font-size:var(--fs-body);font-weight:600;color:var(--ink)}
-.meal-chip .mark{margin-left:auto;font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 6px}
+.meal-chip .mark{margin-left:auto;flex:none;white-space:nowrap;font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 6px}
 .work-note{font-size:var(--fs-tiny);color:var(--faint);padding-left:2px}
 
 /* 산 재료로 새로 해 볼 요리 */

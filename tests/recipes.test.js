@@ -86,3 +86,7 @@ test("타이머: 두 번 눌러도 끝나는 시각이 밀리지 않고, 되돌�
   const idle = newTimer(60);
   assert.equal(pause(idle, 5), idle); // 안 돌고 있으면 일시정지해도 그대로
 });
+
+test("레시피 설명에 키·몸무게 숫자를 적지 않는다 (공개 저장소)", () => {
+  for (const r of RECIPES) assert.ok(!/\d{2,3}\s*(cm|kg)/.test(r.why ?? ""), r.name); // "1kg당" 같은 단위 설명은 괜찮다
+});
