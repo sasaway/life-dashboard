@@ -504,7 +504,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 
 /* ---------- 설정 › 데이터 백업 · 메인 안내 · 앱 안 확인 창 (v1.9) ---------- */
 .bk-sum{margin:0;font-size:var(--fs-small);color:var(--sub)}
-.bk-err{margin:8px 0 0;font-size:var(--fs-small);font-weight:600;color:var(--danger)}
+.bk-err{margin:8px 0 0;font-size:var(--fs-small);font-weight:700;color:var(--ink)} /* 빨강은 예산 상태에만 (DESIGN 8번) — 굵은 글씨로 */
 .bk-list{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
 .bk-item{display:flex;flex-direction:column;gap:2px;width:100%;min-height:var(--touch-nav);padding:8px 12px;text-align:left;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface)}
 .bk-item:active{background:var(--bg)}
