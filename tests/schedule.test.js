@@ -187,6 +187,9 @@ test("일요일은 운동·샤워 칸이 휴식이 되고, 이어진 휴식은 �
   const openSun = dayPlan(new Date(2026, 9, 4), DEFAULT_SETTINGS); // 오픈반 주 일요일
   assert.deepEqual(openSun.blocks.slice(3, 6).map((x) => `${x.start} ${x.name}`),
     ["15:30 휴식", "18:30 저녁", "19:30 취미"]);
+  // 운동·샤워가 휴식으로 합쳐져 3시간이 되니 '알바 끝나고 30분' 설명은 뗀다
+  assert.equal(openSun.blocks[3].note, "");
+  assert.equal(DEFAULT_TEMPLATES.open[3].note, "알바 끝나고 30분"); // 기본 일과표는 그대로
 });
 
 test("쉬는 일요일: 쉬는 날 규칙과 운동 없음이 같이 적용된다", () => {

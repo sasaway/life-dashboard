@@ -124,9 +124,15 @@ export function setThisWeek(settings, date, shift) {
   return { ...settings, anchorMonday: ymd(mondayOf(date)), anchorShift: shift };
 }
 
-// 이어진 휴식 칸은 하나로 합친다
+// 이어진 휴식 칸은 하나로 합친다. 합친 칸은 길이가 달라지니 설명('알바 끝나고 30분' 등)을 뗀다
 function mergeRest(blocks) {
-  return blocks.filter((x, i) => !(i > 0 && x.kind === "rest" && blocks[i - 1].kind === "rest"));
+  const out = [];
+  for (const x of blocks) {
+    const last = out[out.length - 1];
+    if (x.kind === "rest" && last?.kind === "rest") out[out.length - 1] = { ...last, note: "" };
+    else out.push(x);
+  }
+  return out;
 }
 
 // 쉬는 날: 알바·출근 준비 → 휴식, 알바 중에 먹던 끼니를 집에서 먹는다
