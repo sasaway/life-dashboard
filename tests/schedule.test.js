@@ -53,7 +53,7 @@ for (const shift of ["open", "close"]) {
 
   test(`${label} 주: 집에서 먹는 끼니는 1시간씩, 알바 중 끼니는 없다`, () => {
     const meals = find(blocks, "meal");
-    assert.equal(meals.length, 1); // 나머지 한 끼는 알바 식대
+    assert.equal(meals.length, 1); // 나머지 한 끼는 알바 중 (닭가슴살 + 햇반)
     assert.equal(meals[0].len, 60);
   });
 
@@ -74,9 +74,27 @@ test("취미 시간은 두 주가 같거나 12시간 차이다", () => {
   assert.ok(a === c || Math.abs(a - c) === 720);
 });
 
-test("저녁 취미는 인터넷이 몰리는 8시 전, 7시에 시작한다 (Notion 22:25)", () => {
-  assert.equal(find(DEFAULT_TEMPLATES.open, "hobby")[0].start, "19:00");
-  assert.equal(find(DEFAULT_TEMPLATES.close, "hobby")[0].start, "07:00");
+test("저녁 취미는 인터넷이 몰리는 8시 전에 시작한다 — 저녁 1시간을 지키느라 19:30, 12시간 차이로 07:30 (v2.1 사용자 선택)", () => {
+  assert.equal(find(DEFAULT_TEMPLATES.open, "hobby")[0].start, "19:30");
+  assert.equal(find(DEFAULT_TEMPLATES.close, "hobby")[0].start, "07:30");
+});
+
+test("오픈반 주: 알바가 끝나면 30분 쉬고 운동 (Notion 09-28)", () => {
+  const all = spans(DEFAULT_TEMPLATES.open);
+  const i = all.findIndex((x) => x.kind === "work");
+  assert.deepEqual([all[i + 1].kind, all[i + 1].len, all[i + 2].kind], ["rest", 30, "exercise"]);
+});
+
+test("가사는 이른 아침(08시 전)·늦은 저녁(22시 뒤)에 넣지 않는다 (Notion 09-28, 21:30 까지는 괜찮음)", () => {
+  for (const shift of ["open", "close"]) {
+    const [c] = find(DEFAULT_TEMPLATES[shift], "chores");
+    assert.ok(c.s >= toMin("08:00") && c.e <= toMin("22:00"), `${shift} ${c.start}`);
+  }
+});
+
+test("알바 칸 설명: 오픈반은 점심 13~14시 사이 40분, 마감반은 알바 중 저녁", () => {
+  assert.equal(find(DEFAULT_TEMPLATES.open, "work")[0].note, "점심 · 13~14시 사이 · 40분");
+  assert.equal(find(DEFAULT_TEMPLATES.close, "work")[0].note, "저녁 · 닭가슴살 + 햇반");
 });
 
 test("폰에 옛 기본 일과표가 그대로 있으면 새 기본값으로, 직접 고친 건 그대로", () => {
@@ -88,6 +106,35 @@ test("폰에 옛 기본 일과표가 그대로 있으면 새 기본값으로, �
   assert.equal(up.open, DEFAULT_TEMPLATES.open);
   assert.equal(up.close, mine);
   assert.equal(upgradeTemplates(DEFAULT_TEMPLATES).open, DEFAULT_TEMPLATES.open);
+});
+
+test("v2.0 까지의 기본 일과표(취미 19:00 / 07:00)도 새 기본값으로 바뀐다", () => {
+  const v23 = {
+    open: [["06:00", "rest", "휴식"], ["07:30", "prep", "출근 준비"], ["08:30", "work", "알바 · 오픈반", "점심은 식대"], ["15:30", "exercise", "운동"],
+      ["17:30", "shower", "샤워"], ["18:00", "meal", "저녁"], ["19:00", "hobby", "취미"], ["21:00", "chores", "가사"], ["21:30", "rest", "휴식"],
+      ["22:30", "review", "리뷰"], ["23:00", "sleep", "취침"]],
+    close: [["06:00", "chores", "가사"], ["06:30", "rest", "휴식"], ["07:00", "hobby", "취미"], ["09:00", "rest", "휴식"], ["10:00", "exercise", "운동"],
+      ["12:00", "shower", "샤워"], ["12:30", "meal", "점심"], ["13:30", "rest", "휴식"], ["14:00", "prep", "출근 준비"],
+      ["15:00", "work", "알바 · 마감반", "저녁은 식대"], ["22:00", "rest", "휴식"], ["22:30", "review", "리뷰"], ["23:00", "sleep", "취침"]],
+  };
+  const toBlocks = (rows) => rows.map(([start, kind, name, note = ""]) => ({ start, kind, name, note }));
+  const up = upgradeTemplates({ open: toBlocks(v23.open), close: toBlocks(v23.close) });
+  assert.equal(up.open, DEFAULT_TEMPLATES.open);
+  assert.equal(up.close, DEFAULT_TEMPLATES.close);
+});
+
+test("직접 고친 일과표는 시각을 그대로 두고, 알바 칸의 옛 설명 '식대' 만 새 설명으로", () => {
+  const mine = [
+    { start: "06:00", kind: "rest", name: "기상", note: "" },
+    { start: "15:00", kind: "work", name: "알바 · 마감반", note: "저녁은 식대" },
+    { start: "23:00", kind: "sleep", name: "취침", note: "" },
+  ];
+  const up = upgradeTemplates({ close: mine });
+  assert.deepEqual(up.close.map((x) => `${x.start} ${x.name} ${x.note}`),
+    ["06:00 기상 ", "15:00 알바 · 마감반 저녁 · 닭가슴살 + 햇반", "23:00 취침 "]);
+  assert.equal(mine[1].note, "저녁은 식대"); // 원본은 건드리지 않는다
+  const plain = [mine[0], mine[2]];
+  assert.equal(upgradeTemplates({ close: plain }).close, plain); // 바꿀 게 없으면 그대로
 });
 
 // ---------- 격주 ----------
@@ -115,7 +162,7 @@ test("오픈반 주 쉬는 날: 알바·출근 준비 대신 휴식, 12:00 점�
   assert.equal(plan.working, false);
   assert.equal(plan.blocks.some((x) => x.kind === "work" || x.kind === "prep"), false);
   assert.deepEqual(plan.blocks.slice(0, 4).map((x) => [x.start, x.name]),
-    [["06:00", "휴식"], ["12:00", "점심"], ["13:00", "휴식"], ["15:30", "운동"]]);
+    [["06:00", "휴식"], ["12:00", "점심"], ["13:00", "휴식"], ["16:00", "운동"]]);
 });
 
 test("마감반 주 쉬는 날: 18:00 저녁이 생긴다", () => {
@@ -136,10 +183,10 @@ test("일요일은 운동·샤워 칸이 휴식이 되고, 이어진 휴식은 �
   const sun = dayPlan(new Date(2026, 8, 27), DEFAULT_SETTINGS); // 마감반 주 일요일
   assert.equal(sun.blocks.some((x) => x.kind === "exercise" || x.kind === "shower"), false);
   assert.deepEqual(sun.blocks.slice(0, 5).map((x) => `${x.start} ${x.name}`),
-    ["06:00 가사", "06:30 휴식", "07:00 취미", "09:00 휴식", "12:30 점심"]);
+    ["06:00 휴식", "07:30 취미", "09:30 가사", "10:00 휴식", "12:30 점심"]);
   const openSun = dayPlan(new Date(2026, 9, 4), DEFAULT_SETTINGS); // 오픈반 주 일요일
   assert.deepEqual(openSun.blocks.slice(3, 6).map((x) => `${x.start} ${x.name}`),
-    ["15:30 휴식", "18:00 저녁", "19:00 취미"]);
+    ["15:30 휴식", "18:30 저녁", "19:30 취미"]);
 });
 
 test("쉬는 일요일: 쉬는 날 규칙과 운동 없음이 같이 적용된다", () => {
@@ -171,7 +218,7 @@ test("'지금' 카드 값: 남은 시간과 진행률", () => {
   assert.equal(info.end, "15:30");
   assert.equal(info.leftMin, 360);
   assert.equal(info.pct, 14);
-  assert.equal(info.next.name, "운동");
+  assert.equal(info.next.name, "휴식"); // 알바 끝나고 30분 쉰다
   assert.equal(leftLabel(360), "남은 시간 6시간 0분");
   assert.equal(leftLabel(45), "남은 시간 45분");
 });
