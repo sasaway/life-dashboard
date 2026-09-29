@@ -4,7 +4,7 @@ import { openSheet, closeSheet } from "./sheet.js";
 import { getScheduleSettings } from "./schedule-view.js";
 import { ymd, mondayOf } from "./schedule.js";
 import { DAYS } from "./time.js";
-import { planWeek, withOverride, pickable } from "./meals.js";
+import { planWeek, withOverride, pickable, syncMealLog, recordDay } from "./meals.js";
 import { ideasFor } from "./meal-tips.js";
 import { openRecipeForDish } from "./recipe-view.js";
 import { $, esc } from "./dom.js";
@@ -12,13 +12,23 @@ import { $, esc } from "./dom.js";
 const shortDay = (d) => `${DAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
 
 let overrides = store.load("mealOverrides", {}); // { "2026-09-25 점심": "ramen" }
+let mealLog = store.load("mealLog", {});          // 날마다 먹은 끼니 한 벌 (v2.2, 주간 보고서용)
+
+// 오늘 기록을 새로 맞추고, 지난 며칠 중 빈 날을 채운다 (바뀐 게 있을 때만 저장)
+function syncLog() {
+  const next = syncMealLog(mealLog, new Date(), getScheduleSettings(), overrides);
+  if (JSON.stringify(next) === JSON.stringify(mealLog)) return;
+  mealLog = next;
+  store.save("mealLog", mealLog);
+}
 
 const week = () => planWeek(mondayOf(new Date()), getScheduleSettings(), overrides);
 const todayOf = (w) => w.find((d) => d.day === ymd(new Date()));
 
-// 오늘 메뉴 한 줄 (누르면 레시피). t = 왼쪽 칸(시각 또는 '알바 중')
-const mealRow = (dish, t, label, note = "") =>
-  `<li><button class="meal-link" data-recipe-dish="${esc(dish.id)}" aria-label="${esc(label)} ${esc(dish.short)} 레시피 보기">${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}${note ? `<span class="meal-note">${esc(note)}</span>` : ""}</span><span class="go">레시피</span></button></li>`;
+// 오늘 메뉴 한 줄 (누르면 레시피, '안 먹음 · 외식' 은 레시피 없이 글만). t = 왼쪽 칸(시각 또는 '알바 중')
+const mealRow = (dish, t, label, note = "") => dish.none
+  ? `<li>${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}</span></li>`
+  : `<li><button class="meal-link" data-recipe-dish="${esc(dish.id)}" aria-label="${esc(label)} ${esc(dish.short)} 레시피 보기">${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}${note ? `<span class="meal-note">${esc(note)}</span>` : ""}</span><span class="go">레시피</span></button></li>`;
 // 알바 중 끼니는 먹는 차례대로: 오픈반 점심은 집 저녁보다 먼저, 마감반 저녁은 집 점심 다음
 const inOrder = (home, work, first) => (work ? (first ? [work, ...home] : [...home, work]) : home);
 
@@ -72,6 +82,7 @@ function openPicker(key) {
   $("pickTitle").textContent = `${m.label} 바꾸기`;
   $("pickDate").textContent = shortDay(new Date(`${m.day}T00:00`));
   $("pickRecipe").dataset.dish = m.dish.id;
+  $("pickRecipe").hidden = Boolean(m.dish.none); // '안 먹음 · 외식' 은 레시피가 없다
   $("pickList").innerHTML = pickable().map((dish) => `
     <li><button class="pick" data-dish="${dish.id}" aria-pressed="${!m.auto && m.dish.id === dish.id}">${esc(dish.name)}</button></li>`).join("")
     + `<li><button class="pick" data-dish="" aria-pressed="${m.auto}">자동으로 (돌림 순서대로)</button></li>`;
@@ -79,6 +90,7 @@ function openPicker(key) {
 }
 
 export function renderAll() {
+  syncLog(); // 1분마다 불린다 — 자정이 지나면 어제 기록이 그대로 남고 오늘 기록이 새로 생긴다
   renderMealMain();
   renderMealTab();
 }
@@ -105,6 +117,9 @@ export function startMeals() {
     if (!b || !picking) return;
     overrides = withOverride(overrides, picking.key, b.dataset.dish);
     store.save("mealOverrides", overrides);
+    // 지난 날을 고치면 그 날 먹은 기록도 고친다 (오늘은 renderAll 이 맞춘다)
+    mealLog = recordDay(mealLog, new Date(`${picking.day}T00:00`), new Date(), getScheduleSettings(), overrides);
+    store.save("mealLog", mealLog);
     closeSheet();
     renderAll();
   });

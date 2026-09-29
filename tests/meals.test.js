@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  DISHES, LEFTOVER, WORK_DISH, homeMeals, workMeal, planMeals, planWeek, withOverride,
+  DISHES, LEFTOVER, WORK_DISH, CHAPA, SKIP, homeMeals, workMeal, planMeals, planWeek, withOverride,
+  pickable, dishById, dayMeals, syncMealLog, recordDay, MEAL_LOG_DAYS,
 } from "../js/meals.js";
 import { mondayOf } from "../js/schedule.js";
 import { IDEAS, ideasFor, MAX_IDEAS } from "../js/meal-tips.js";
@@ -10,8 +11,21 @@ import { DEFAULT_SETTINGS } from "../js/schedule.js";
 const slots = (n) => Array.from({ length: n }, (_, i) => ({ key: `s${i}` }));
 const names = (plan) => plan.map((m) => m.dish.id);
 
-test("메인 요리는 Notion 의 네 가지", () => {
-  assert.deepEqual(DISHES.map((d) => d.name), ["냉동 대패 짜글이", "계란 볶음밥", "라면", "닭가슴살 + 햇반"]);
+test("메인 요리는 Notion 의 네 가지 (자동 돌림의 라면은 안성탕면)", () => {
+  assert.deepEqual(DISHES.map((d) => d.name), ["냉동 대패 짜글이", "계란 볶음밥", "라면 (안성탕면)", "닭가슴살 + 햇반"]);
+});
+
+test("고르기 창: 라면을 안성탕면·짜파게티로 나누고, 맨 아래 '안 먹음 · 외식'", () => {
+  assert.deepEqual(pickable().map((d) => d.short),
+    ["짜글이", "계란 볶음밥", "안성탕면", "짜파게티", "닭가슴살 + 햇반", "짜글이 (남은 것)", "안 먹음 · 외식"]);
+  assert.equal(dishById("chapa"), CHAPA);
+  assert.equal(dishById("skip"), SKIP);
+});
+
+test("짜파게티·안 먹음을 직접 고른 칸은 그대로, 다음 칸은 돌림 순서대로", () => {
+  const plan = planMeals(slots(4), { s1: "chapa", s2: "skip" });
+  assert.deepEqual(names(plan), ["jja", "chapa", "skip", "rice"]);
+  assert.deepEqual(plan.map((m) => m.auto), [true, false, false, true]);
 });
 
 test("자동 돌림: 짜글이 다음 끼니는 남은 짜글이, 그다음 볶음밥·라면 (닭가슴살은 알바 끼니라 빠짐)", () => {
@@ -79,8 +93,47 @@ test("주간 식단표: 월요일부터 7일, 끼니가 주 전체로 이어서 
   assert.equal(week[0].day, "2026-09-21");
   assert.equal(week[6].day, "2026-09-27");
   assert.deepEqual(week.map((d) => d.meals.map((m) => m.dish.short).join()),
-    ["짜글이", "짜글이 (남은 것)", "계란 볶음밥", "라면", "짜글이", "짜글이 (남은 것)", "계란 볶음밥"]);
+    ["짜글이", "짜글이 (남은 것)", "계란 볶음밥", "안성탕면", "짜글이", "짜글이 (남은 것)", "계란 볶음밥"]);
   assert.ok(week.every((d) => d.work.label === "저녁"));
+});
+
+// ---------- 먹은 기록 (v2.2) ----------
+// 2026-09-28 주 = 오픈반 (알바 중 점심 → 집 저녁)
+test("그 날 먹은 끼니는 먹는 차례대로: 오픈반은 알바 중 점심 다음 집 저녁, 쉬는 날은 집 두 끼", () => {
+  assert.deepEqual(dayMeals(new Date(2026, 8, 28), DEFAULT_SETTINGS),
+    [{ label: "점심", dish: "chicken", work: true }, { label: "저녁", dish: "jja" }]);
+  assert.deepEqual(dayMeals(new Date(2026, 8, 25), DEFAULT_SETTINGS), // 마감반 주 금요일
+    [{ label: "점심", dish: "jja" }, { label: "저녁", dish: "chicken", work: true }]);
+  const off = { ...DEFAULT_SETTINGS, workdays: [true, true, true, true, true, true, false] };
+  assert.deepEqual(dayMeals(new Date(2026, 9, 3), off).map((m) => m.label), ["점심", "저녁"]);
+});
+
+test("기록 맞추기: 오늘과 지난 6일을 채우고, 한 번 적은 지난 날은 설정이 바뀌어도 그대로", () => {
+  const today = new Date(2026, 8, 30);
+  const log = syncMealLog({}, today, DEFAULT_SETTINGS);
+  assert.deepEqual(Object.keys(log), ["2026-09-24", "2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", "2026-09-29", "2026-09-30"]);
+  // 나중에 알바 요일을 바꿔도(쉬는 날로) 지난 날 기록은 안 바뀌고, 오늘만 새로
+  const off = { ...DEFAULT_SETTINGS, workdays: [false, false, false, false, false, false, false] };
+  const again = syncMealLog(log, today, off);
+  assert.deepEqual(again["2026-09-29"], log["2026-09-29"]);
+  assert.deepEqual(again["2026-09-30"].map((m) => m.label), ["점심", "저녁"]);
+  assert.ok(again["2026-09-30"].every((m) => !m.work));
+});
+
+test("기록은 60일까지만 남긴다", () => {
+  assert.equal(MEAL_LOG_DAYS, 60);
+  const log = syncMealLog({ "2026-07-01": [], "2026-08-01": [] }, new Date(2026, 8, 30), DEFAULT_SETTINGS);
+  assert.ok(!("2026-07-01" in log));
+  assert.ok("2026-08-01" in log);
+});
+
+test("지난 날 칸을 '안 먹음'으로 고치면 그 날 기록도 고친다, 내일 칸은 아직 기록하지 않는다", () => {
+  const today = new Date(2026, 8, 30);
+  const log = syncMealLog({}, today, DEFAULT_SETTINGS);
+  const o = { "2026-09-29 저녁": "skip" };
+  const fixed = recordDay(log, new Date(2026, 8, 29), today, DEFAULT_SETTINGS, o);
+  assert.deepEqual(fixed["2026-09-29"].find((m) => m.label === "저녁"), { label: "저녁", dish: "skip" });
+  assert.equal(recordDay(log, new Date(2026, 9, 1), today, DEFAULT_SETTINGS, o), log);
 });
 
 // ---------- 산 재료로 새 요리 추천 ----------

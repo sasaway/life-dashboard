@@ -3,17 +3,19 @@ import assert from "node:assert/strict";
 import {
   RECIPES, HEATS, DISH_RECIPES, recipesForDish, hasTimer, totalMinutes, mmss,
 } from "../js/recipes.js";
-import { DISHES, LEFTOVER } from "../js/meals.js";
+import { DISHES, LEFTOVER, CHAPA } from "../js/meals.js";
 import { newTimer, start, pause, reset, remaining, isRunning, progress } from "../js/timer.js";
 
 test("식단의 모든 요리(남은 짜글이 포함)에 레시피가 있다", () => {
-  for (const d of [...DISHES, LEFTOVER]) {
+  for (const d of [...DISHES, CHAPA, LEFTOVER]) {
     const list = recipesForDish(d.id);
     assert.ok(list.length > 0, d.id);
     assert.ok(list.every(Boolean), `${d.id} 의 레시피 id 가 틀렸다`);
   }
-  assert.deepEqual(recipesForDish("ramen").map((r) => r.name), ["안성탕면 + 단백질", "짜파게티 + 계란 프라이"]);
-  assert.deepEqual(Object.keys(DISH_RECIPES).sort(), [...DISHES, LEFTOVER].map((d) => d.id).sort());
+  assert.deepEqual(recipesForDish("ramen").map((r) => r.name), ["안성탕면 + 단백질"]);
+  assert.deepEqual(recipesForDish("chapa").map((r) => r.name), ["짜파게티 + 계란 프라이"]);
+  assert.deepEqual(recipesForDish("skip"), []); // '안 먹음 · 외식' 은 레시피 없음
+  assert.deepEqual(Object.keys(DISH_RECIPES).sort(), [...DISHES, CHAPA, LEFTOVER].map((d) => d.id).sort());
 });
 
 test("모든 단계에 불 세기가 있고, 재료에는 양이 적혀 있다", () => {

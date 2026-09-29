@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   x9Of, versionTag, makeBackup, readBackupText, checkBackup, restoreItems, photosOf, fileName, sizeLabel,
 } from "../js/backup.js";
+import { syncMealLog } from "../js/meals.js";
+import { DEFAULT_SETTINGS } from "../js/schedule.js";
 
 // localStorage 흉내 (key · length 까지)
 function fakeStorage(entries = {}) {
@@ -97,4 +99,15 @@ test("파일 이름은 버전과 백업한 날짜, 크기는 KB · MB 로", () =
   assert.equal(sizeLabel(300), "1KB");
   assert.equal(sizeLabel(812 * 1024), "812KB");
   assert.equal(sizeLabel(2.34 * 1024 * 1024), "2.3MB");
+});
+
+// 새 저장 칸이 생길 때마다 여기에 하나씩 (CLAUDE.md x.9 규칙: 새 칸이 백업에 빠짐없이 들어가는지)
+test("v2.2 먹은 기록(mealLog)도 백업 → 되살리기로 그대로 돌아온다", async () => {
+  const mealLog = syncMealLog({}, new Date(2026, 8, 30), DEFAULT_SETTINGS, { "2026-09-29 저녁": "skip" });
+  const phone = fakeStorage({ "ld:mealLog": JSON.stringify(mealLog), "ld:memo": "\"메모\"" });
+  const text = JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v2.2 식단 기록 · 9월 29일" }));
+  const later = fakeStorage({ "ld:memo": "\"바뀐 메모\"" }); // 기록이 날아간 폰
+  restoreItems(later, readBackupText(text).backup.items);
+  assert.deepEqual(JSON.parse(later.getItem("ld:mealLog")), mealLog);
+  assert.equal(Object.keys(mealLog).length, 7);
 });

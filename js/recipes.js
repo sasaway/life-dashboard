@@ -111,12 +111,13 @@ export const RECIPES = [
   },
 ];
 
-// 식단 요리 → 레시피 (라면은 두 가지, 남은 짜글이는 짜글이 레시피의 마지막 단계)
+// 식단 요리 → 레시피 (남은 짜글이는 짜글이 레시피의 마지막 단계, '안 먹음 · 외식' 은 레시피 없음)
 export const DISH_RECIPES = {
   jja: ["jja"],
   "jja-left": ["jja"],
   rice: ["rice"],
-  ramen: ["ramen-anseong", "ramen-chapa"],
+  ramen: ["ramen-anseong"],
+  chapa: ["ramen-chapa"],
   chicken: ["chicken"],
 };
 
