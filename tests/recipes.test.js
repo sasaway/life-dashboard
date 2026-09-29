@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  RECIPES, HEATS, DISH_RECIPES, recipesForDish, hasTimer, totalMinutes, mmss,
+  RECIPES, HEATS, DISH_RECIPES, recipesForDish, hasTimer, totalMinutes, mmss, proteinOf, PROTEIN_GOAL,
 } from "../js/recipes.js";
 import { DISHES, LEFTOVER, CHAPA } from "../js/meals.js";
 import { newTimer, start, pause, reset, remaining, isRunning, progress } from "../js/timer.js";
@@ -91,4 +91,11 @@ test("타이머: 두 번 눌러도 끝나는 시각이 밀리지 않고, 되돌�
 
 test("레시피 설명에 키·몸무게 숫자를 적지 않는다 (공개 저장소)", () => {
   for (const r of RECIPES) assert.ok(!/\d{2,3}\s*(cm|kg)/.test(r.why ?? ""), r.name); // "1kg당" 같은 단위 설명은 괜찮다
+});
+
+test("요리마다 한 끼 단백질 숫자 (v2.2.1, 은월 확인)", () => {
+  for (const r of RECIPES) assert.ok(Number.isInteger(r.protein) && r.protein > 0, r.name);
+  assert.deepEqual(Object.fromEntries(["jja", "jja-left", "rice", "ramen", "chapa", "chicken", "skip"].map((id) => [id, proteinOf(id)])),
+    { jja: 25, "jja-left": 25, rice: 18, ramen: 30, chapa: 24, chicken: 29, skip: null });
+  assert.equal(PROTEIN_GOAL, 22);
 });

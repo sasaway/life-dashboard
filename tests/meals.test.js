@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   DISHES, LEFTOVER, WORK_DISH, CHAPA, SKIP, homeMeals, workMeal, planMeals, planWeek, withOverride,
-  pickable, dishById, dayMeals, syncMealLog, recordDay, MEAL_LOG_DAYS,
+  pickable, dishById, dayMeals, syncMealLog, recordDay, MEAL_LOG_DAYS, proteinSummary,
 } from "../js/meals.js";
 import { mondayOf } from "../js/schedule.js";
 import { IDEAS, ideasFor, MAX_IDEAS } from "../js/meal-tips.js";
@@ -134,6 +134,14 @@ test("지난 날 칸을 '안 먹음'으로 고치면 그 날 기록도 고친다
   const fixed = recordDay(log, new Date(2026, 8, 29), today, DEFAULT_SETTINGS, o);
   assert.deepEqual(fixed["2026-09-29"].find((m) => m.label === "저녁"), { label: "저녁", dish: "skip" });
   assert.equal(recordDay(log, new Date(2026, 9, 1), today, DEFAULT_SETTINGS, o), log);
+});
+
+test("단백질 요약: 한 끼 22g 넘긴 끼니 수와 합계, '안 먹음 · 외식' 은 세지 않는다", () => {
+  const log = {
+    "2026-09-28": [{ label: "점심", dish: "chicken", work: true }, { label: "저녁", dish: "rice" }],
+    "2026-09-29": [{ label: "점심", dish: "chicken", work: true }, { label: "저녁", dish: "skip" }],
+  };
+  assert.deepEqual(proteinSummary(log, ["2026-09-28", "2026-09-29", "2026-09-30"]), { meals: 3, hit: 2, grams: 29 + 18 + 29 });
 });
 
 // ---------- 산 재료로 새 요리 추천 ----------

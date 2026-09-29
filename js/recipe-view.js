@@ -1,6 +1,9 @@
 // 레시피 화면: 재료·단계·불 세기, 불 쓰는 단계의 타이머, 지금 하는 단계 표시.
 import { openSheet } from "./sheet.js";
 import { RECIPES, HEATS, recipeById, recipesForDish, hasTimer, totalMinutes, mmss } from "./recipes.js";
+
+// 단백질은 한 끼 기준 (짜글이는 두 끼 분량이라 '한 끼' 를 붙인다)
+const proteinLabel = (r) => `단백질 약 ${r.protein}g${r.serves.startsWith("2끼") ? " (한 끼)" : ""}`;
 import { newTimer, start, pause, reset, remaining, isRunning, progress } from "./timer.js";
 import { $, esc } from "./dom.js";
 
@@ -38,7 +41,7 @@ function timerBlock(i, st) {
 
 function render() {
   $("recipeTitle").textContent = recipe.name;
-  $("recipeMeta").textContent = `${recipe.serves} · 약 ${totalMinutes(recipe)}분`;
+  $("recipeMeta").textContent = `${recipe.serves} · 약 ${totalMinutes(recipe)}분 · ${proteinLabel(recipe)}`;
   $("recipeVariants").hidden = variants.length < 2;
   $("recipeVariants").innerHTML = variants.map((r) =>
     `<button data-variant="${r.id}" aria-pressed="${r.id === recipe.id}">${esc(r.name.split(" + ")[0])}</button>`).join("");
@@ -159,7 +162,7 @@ function ensureLoop() {
 
 export function startRecipes() {
   $("recipeList").innerHTML = RECIPES.map((r) => `
-    <li><button class="recipe-link" data-recipe="${r.id}"><b>${esc(r.name)}</b><span class="sub">${esc(r.serves)} · 약 ${totalMinutes(r)}분</span></button></li>`).join("");
+    <li><button class="recipe-link" data-recipe="${r.id}"><b>${esc(r.name)}</b><span class="sub">${esc(r.serves)} · 약 ${totalMinutes(r)}분 · ${proteinLabel(r)}</span></button></li>`).join("");
   $("recipeList").addEventListener("click", (e) => {
     const b = e.target.closest("button[data-recipe]");
     if (!b) return;

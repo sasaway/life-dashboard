@@ -1,6 +1,7 @@
 // 식단: 주간 식단표와 오늘의 식단. 규칙은 Notion '식단' · '일정 › 알바' (2026-09-28 15:39 수정본).
 // 집에서 먹는 끼니는 일과표의 식사 칸에서 가져온다. 알바 중 끼니는 늘 닭가슴살 + 햇반.
 import { dayPlan, ymd, weekDates, mondayOf } from "./schedule.js";
+import { proteinOf, PROTEIN_GOAL } from "./recipes.js";
 
 // 메인 요리. 새 요리는 여기에 한 줄 더하면 돌림에 들어간다.
 // work: 알바 중에 먹는 요리 — 집 끼니 자동 돌림에서는 뺀다 (칸을 눌러 직접 고르는 건 된다)
@@ -108,4 +109,10 @@ export function syncMealLog(log, today, settings, overrides = {}) {
 export function recordDay(log, date, today, settings, overrides = {}) {
   if (ymd(date) > ymd(today)) return log;
   return { ...log, [ymd(date)]: dayMeals(date, settings, overrides) };
+}
+
+// 며칠 치 기록의 단백질 (주간 보고서용): 먹은 끼니 수 · 한 끼 목표를 넘긴 끼니 수 · 합계(g). '안 먹음 · 외식' 은 세지 않는다
+export function proteinSummary(log, days) {
+  const eaten = days.flatMap((day) => log[day] ?? []).map((m) => proteinOf(m.dish)).filter((g) => g != null);
+  return { meals: eaten.length, hit: eaten.filter((g) => g >= PROTEIN_GOAL).length, grams: eaten.reduce((a, g) => a + g, 0) };
 }
