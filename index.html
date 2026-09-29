@@ -282,8 +282,32 @@
           <ul class="money-rows">
             <li><label class="name" for="gcDate">픽업 날짜<span class="sub" id="gcDateSub"></span></label>
               <input class="field mono gc-date" id="gcDate" type="date" data-g="plan.date" aria-describedby="gcDateSub"></li>
+            <li><button class="gc-char" id="gcChar" aria-label="픽업할 공명자 고르기"></button></li>
+            <li class="gc-block"><span class="name">목표 체인<span class="sub" id="gcCopies"></span></span>
+              <div class="filter-row seven" id="gcChains" role="group" aria-label="목표 체인"></div></li>
+            <li><label class="name" for="gcOwned">이미 가진 체인</label>
+              <select class="field gc-select" id="gcOwned" data-g="plan.owned">
+                <option value="-1">없음</option><option value="0">명함</option><option value="1">1체인</option><option value="2">2체인</option>
+                <option value="3">3체인</option><option value="4">4체인</option><option value="5">5체인</option><option value="6">6체인</option>
+              </select></li>
+            <li><span class="name">전용 무기(전무)<span class="sub">무기 픽업도 뽑기</span></span><button class="pin" data-gt="plan.weapon" aria-pressed="false" aria-label="전무 뽑기">끔</button></li>
           </ul>
-          <p class="mini">날짜는 폰 시계(한국 시간)로 세. 자정이 지나면 하루 줄어. 공명자 · 체인 · 기댓값은 다음 버전에서 여기 생겨.</p>
+          <p class="mini">날짜는 폰 시계(한국 시간)로 세. 자정이 지나면 하루 줄어.</p>
+        </section>
+        <section class="card" aria-labelledby="gcStackH">
+          <div class="card-h"><h2 id="gcStackH">지금 스택</h2><small>5성 없이 뽑은 횟수</small></div>
+          <ul class="money-rows">
+            <li><span class="name">캐릭 픽업<span class="sub">몇 연째 (0~79)</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" data-g="plan.stack" data-max="79" placeholder="0" aria-label="캐릭 픽업 스택, 0부터 79"></li>
+            <li><span class="name">확정<span class="sub">지난 5성이 픽뚫이었으면 켬</span></span><button class="pin" data-gt="plan.guaranteed" aria-pressed="false" aria-label="캐릭 픽업 확정 상태">끔</button></li>
+            <li><span class="name">무기 픽업<span class="sub">몇 연째 (0~79)</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" data-g="plan.wStack" data-max="79" placeholder="0" aria-label="무기 픽업 스택, 0부터 79"></li>
+          </ul>
+          <p class="mini">스택과 확정은 다음 같은 종류 픽업으로 이어져.</p>
+        </section>
+        <section class="card" aria-labelledby="gcExpH">
+          <div class="card-h"><h2 id="gcExpH">기댓값</h2><small class="mono" id="gcExpD"></small></div>
+          <div class="gc-exp" id="gcExp"></div>
+          <p class="mini" id="gcExpNote"></p>
+          <p class="mini gc-hint">평균은 종합 확률 약 1.8% 기준 대략값, 최악은 천장 80연 기준. 필요 별소는 무과금 합계의 뽑권을 먼저 쓰고 남은 만큼이야.</p>
         </section>
       </div>
     </div>
@@ -581,7 +605,7 @@
     </div>
     <ul class="char-grid" id="charGrid"></ul>
     <p class="empty" id="charEmpty" hidden>조건에 맞는 공명자가 없어.</p>
-    <p class="msg">흐린 공명자는 다른 칸에 있어. 누르면 이 칸으로 옮겨 와. ×2 는 종말 매트릭스 코스트 2 라 두 파티에 넣을 수 있어. · 공명자 정보: encore.moe</p>
+    <p class="msg" id="charHelp">흐린 공명자는 다른 칸에 있어. 누르면 이 칸으로 옮겨 와. ×2 는 종말 매트릭스 코스트 2 라 두 파티에 넣을 수 있어. · 공명자 정보: encore.moe</p>
   </div>
 </div>
 

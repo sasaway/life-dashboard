@@ -78,13 +78,15 @@ function onCheckClick(e) {
   renderChecks();
 }
 
-// ---------- 공통: 얼굴 · 속성 ----------
+// ---------- 공통: 얼굴 · 속성 (가챠 화면도 같이 쓴다) ----------
 const unknown = { name: "알 수 없는 캐릭터", element: "", stars: 0, icon: "" };
-const face = (c, size) => (c.icon
+// 번호로 찾고, 없으면 이름으로 (3.7 공명자가 encore.moe 에 올라와 번호가 바뀌어도)
+export const findChar = (id, name) => charById(id) ?? allChars.find((c) => c.name === name) ?? null;
+export const face = (c, size) => (c.icon
   ? `<img class="face" src="${esc(c.icon)}" alt="" width="${size}" height="${size}" loading="lazy">`
   : `<span class="face noimg" style="width:${size}px;height:${size}px"></span>`);
 // 속성: 색 점 + 글자 (색만으로 구분하지 않는다)
-const elTag = (name) => (name
+export const elTag = (name) => (name
   ? `<span class="el"><i class="el-dot" data-el="${elementKey(name)}"></i>${esc(name)}</span>`
   : "");
 
@@ -154,6 +156,7 @@ function renderHubParty() {
 
 // ---------- 공명자 고르기 ----------
 let target = null; // { pid, idx }
+let pickFor = null; // 가챠 픽업에서 열면 { current, onPick, onClear } — 5성만, 파티 표시 없이 (v2.5)
 let elFilter = ""; // "" = 전체
 let wpFilter = "";
 
@@ -169,14 +172,15 @@ function renderFilters() {
 }
 
 function renderPicker() {
-  const list = filterCharacters(allChars, $("charSearch").value, elFilter, wpFilter);
+  const pool = pickFor ? allChars.filter((c) => c.stars === 5) : allChars;
+  const list = filterCharacters(pool, $("charSearch").value, elFilter, wpFilter);
   $("charCount").textContent = chars.list.length ? `${list.length}명` : "공명자 목록을 받는 중이야.";
   $("charGrid").innerHTML = list.map((c) => {
-    const places = placesOf(parties, c.id);
-    const here = places.some((x) => x.pid === target.pid && x.idx === target.idx);
+    const places = pickFor ? [] : placesOf(parties, c.id);
+    const here = pickFor ? c.id === pickFor.current : places.some((x) => x.pid === target.pid && x.idx === target.idx);
     // 다른 파티 칸 (같은 파티 다른 칸도 누르면 옮겨 오니 포함)
     const at = places.find((x) => !(x.pid === target.pid && x.idx === target.idx));
-    const two = maxUses(c.id) === 2;
+    const two = !pickFor && maxUses(c.id) === 2;
     // 흐리게 = 누르면 다른 칸에서 빼 온다. 코스트 2 가 다른 파티 한 곳에만 있으면 한 번 더 넣을 수 있다
     const away = at && !here && (!two || places.length >= 2 || at.pid === target.pid);
     const label = `${c.name}${two ? ", 코스트 2 두 파티에 넣을 수 있음" : ""}${at ? `, 지금 ${at.name} ${at.idx + 1}번 칸에 있음` : ""}`;
@@ -199,12 +203,26 @@ function toGridTop() {
 
 function openPicker(pid, idx) {
   target = { pid, idx };
+  pickFor = null;
   const p = parties.find((x) => x.id === pid);
   const cur = p.slots[idx] ? (charById(p.slots[idx]) ?? unknown) : null;
-  $("charTitle").textContent = `${p.name} · ${idx + 1}번 칸`;
+  showPicker(`${p.name} · ${idx + 1}번 칸`, cur);
+}
+
+// 가챠 픽업의 공명자 고르기: 같은 창을 5성만으로 연다
+export function openGachaPicker({ current, currentName, onPick, onClear }) {
+  target = null;
+  pickFor = { current: findChar(current, currentName)?.id ?? current, onPick, onClear };
+  if (!chars.list.length) loadCharacters();
+  showPicker("다음 픽업 · 5성만", current ? (findChar(current, currentName) ?? unknown) : null);
+}
+
+function showPicker(title, cur) {
+  $("charTitle").textContent = title;
+  $("charHelp").hidden = Boolean(pickFor);
   $("charNow").hidden = !cur;
   $("charNow").innerHTML = cur
-    ? `${face(cur, 40)}<span class="who"><span class="sub">지금 이 칸</span><b>${esc(cur.name)}</b></span>
+    ? `${face(cur, 40)}<span class="who"><span class="sub">${pickFor ? "지금 고른 공명자" : "지금 이 칸"}</span><b>${esc(cur.name)}</b></span>
        <button class="btn btn-ghost" id="charClear"><span class="ic-wrap">${ICON.x}</span>빼기</button>`
     : "";
   $("charSearch").value = "";
@@ -219,7 +237,7 @@ function openPicker(pid, idx) {
 function showWwPage(page) {
   for (const p of ["today", "party", "cash", "pickup"]) $(`ww-page-${p}`).hidden = p !== page;
   $("wwPick").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.page === page)));
-  if (page === "party") loadCharacters();
+  if (page === "party" || page === "pickup") loadCharacters();
 }
 
 // 캐릭터 목록: 저장된 게 일주일(얼굴 없는 3.7 공명자가 있으면 하루) 넘었거나, 없거나, 무기 칸이 없는 옛 사본이면 encore.moe 에서 새로 받는다
@@ -235,7 +253,8 @@ async function loadCharacters() {
     adoptReal();
     $("wwCharsMsg").textContent = "";
     renderParties();
-    if (!$("charSheet").hidden && target) { renderFilters(); renderPicker(); }
+    document.dispatchEvent(new Event("ww-chars")); // 가챠 픽업의 공명자 얼굴도 새로
+    if (!$("charSheet").hidden && (target || pickFor)) { renderFilters(); renderPicker(); }
   } catch {
     $("wwCharsMsg").textContent = chars.list.length
       ? ""
@@ -312,6 +331,7 @@ export function startWuwa() {
   }
   $("charGrid").addEventListener("click", (e) => {
     const b = e.target.closest("[data-char]");
+    if (b && pickFor) { const c = charById(b.dataset.char); pickFor.onPick(c.id, c.name); closeSheet(); return; }
     if (!b || !target) return;
     parties = placeCharacter(parties, target.pid, target.idx, b.dataset.char);
     saveParties();
@@ -320,6 +340,7 @@ export function startWuwa() {
   });
   $("charNow").addEventListener("click", (e) => {
     if (!e.target.closest("#charClear")) return;
+    if (pickFor) { pickFor.onClear(); closeSheet(); return; }
     parties = clearSlot(parties, target.pid, target.idx);
     saveParties();
     closeSheet();

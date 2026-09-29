@@ -28,12 +28,14 @@ const MAX_COUNT = 9_999_999;
 // { have: { astrite, char, weap },                       ← 지금 가진 것
 //   free: { daily, astrite, char },                      ← 무과금: 일일 의뢰 하루 값, 그 밖에 받을 것
 //   paid: { monthly, monthlyDay, pass, passAstrite, passChar, passDate, topup },  ← 과금: 켬/끔과 값, passDate = 패스 산 날
-//   plan: { date } }                                     ← 픽업 날짜 "2026-10-14" (없으면 "")
+//   plan: { date,                                        ← 픽업 날짜 "2026-10-14" (없으면 "")
+//           char, charName, chain, owned, weapon,        ← v2.5 공명자(번호 · 이름), 목표 체인 0~6, 가진 체인(-1 = 없음), 전무 켬/끔
+//           stack, guaranteed, wStack } }                ← 캐릭 픽업 스택 0~79 · 확정 켬/끔, 무기 픽업 스택
 export const defaultGacha = () => ({
   have: { astrite: 0, char: 0, weap: 0 },
   free: { daily: DAILY_ASTRITE, astrite: 0, char: 0 },
   paid: { monthly: false, monthlyDay: MONTHLY_PER_DAY, pass: false, passAstrite: PASS_ASTRITE, passChar: PASS_CHAR, passDate: "", topup: 0 },
-  plan: { date: "" },
+  plan: { date: "", char: "", charName: "", chain: 0, owned: -1, weapon: false, stack: 0, guaranteed: false, wStack: 0 },
 });
 
 // 저장된 값에 빠진 칸이 있으면 기본값으로 채운다 (나중에 칸이 늘어도 옛 저장이 그대로 열린다)
@@ -89,4 +91,55 @@ export function income(g, days) {
   const add = (a, b) => ({ astrite: a.astrite + b.astrite, char: a.char + b.char, weap: a.weap + b.weap });
   const freeOnly = add(g.have, free);
   return { free, paid, monthlyDays, freeOnly, withPaid: add(freeOnly, paid) };
+}
+
+// ---------- v2.5 픽업 계산 ----------
+export const CHAINS = [0, 1, 2, 3, 4, 5, 6];
+export const chainLabel = (n) => (n < 0 ? "없음" : n === 0 ? "명함" : `${n}체인`);
+export const MAX_STACK = HARD_PITY - 1; // 79연째까지 5성이 없을 수 있다
+
+// 데려올 5성 캐릭 수: 목표 체인 + 1 (가진 게 없을 때), 가진 체인이 있으면 그만큼 뺀다
+export const copiesNeeded = (chain, owned) => (owned < 0 ? chain + 1 : Math.max(chain - owned, 0));
+
+// 5성이 몇 번 나와야 하나: 픽뚫 안 당함 = n번, 픽뚫 당함 = 2n번. 확정 상태면 첫 장은 두 경우 모두 5성 1번
+export function fiveStars(n, guaranteed) {
+  if (n <= 0) return { win: 0, lose: 0 };
+  return { win: n, lose: guaranteed ? 2 * n - 1 : 2 * n };
+}
+
+// 5성 k번에 드는 연차. 첫 5성만 지금 스택을 반영한다
+//   평균(대략): max(56 − 스택, 1) + 56 × (k − 1)   최악(천장, 정확): (80 − 스택) + 80 × (k − 1)
+export function pullsFor(k, stack) {
+  if (k <= 0) return { avg: 0, worst: 0 };
+  const s = Math.min(Math.max(stack, 0), MAX_STACK);
+  return {
+    avg: Math.max(AVG_PER_FIVE - s, 1) + AVG_PER_FIVE * (k - 1),
+    worst: HARD_PITY - s + HARD_PITY * (k - 1),
+  };
+}
+
+// 두 경우('픽뚫 안 당함' win / '픽뚫 당함' lose). 전무를 켜면 무기 픽업 연차를 따로 더한다 (무기는 늘 픽업 무기라 한 번)
+export function expectation(plan) {
+  const copies = copiesNeeded(plan.chain, plan.owned);
+  const k = fiveStars(copies, plan.guaranteed);
+  const weapon = plan.weapon ? pullsFor(1, plan.wStack) : { avg: 0, worst: 0 };
+  const side = (fives) => {
+    const char = pullsFor(fives, plan.stack);
+    return { fives, char, weapon, avg: char.avg + weapon.avg, worst: char.worst + weapon.worst };
+  };
+  return { copies, win: side(k.win), lose: side(k.lose) };
+}
+
+// 필요 별소 = (필요 연차 − 해당 뽑권) × 160, 0보다 작으면 0. 캐릭뽑은 캐릭 쪽에만, 무기뽑은 무기 쪽에만
+export function astriteNeeded(side, kind, funds) {
+  return astriteOf(side.char[kind] - funds.char) + astriteOf(side.weapon[kind] - funds.weap);
+}
+
+// 판정 한 줄: 최악(천장)이어도 되면 '최악이어도 확정', 평균이면 되면 '평균이면 가능', 아니면 평균까지 몇 연 모자란지
+export function verdict(side, funds) {
+  if (astriteNeeded(side, "worst", funds) <= funds.astrite) return { key: "sure", text: "최악이어도 확정" };
+  const avg = astriteNeeded(side, "avg", funds);
+  if (avg <= funds.astrite) return { key: "avg", text: "평균이면 가능" };
+  const short = Math.ceil((avg - funds.astrite) / PULL_COST);
+  return { key: "short", short, text: `${short}연 부족` };
 }

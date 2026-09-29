@@ -559,3 +559,24 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gc-pulls .mono{font-size:var(--fs-hero);font-weight:600;color:var(--ink);margin-right:2px}
 .gc-date{width:156px;flex:none}
 .gc-go{margin-top:8px;min-height:var(--touch)}
+/* 가챠 픽업 (v2.5): 공명자 줄 · 목표 체인 칩(속성 필터 .filter-row 그대로) · 기댓값 두 칸 */
+.gc-char{display:flex;align-items:center;gap:10px;width:100%;min-height:var(--touch-nav);padding:4px 0;border:0;background:none;text-align:left;color:var(--ink)}
+.gc-char .who{flex:1;min-width:0;display:flex;flex-direction:column}
+.gc-char .who b{font-weight:600;overflow-wrap:anywhere}
+.gc-char-go{flex:none;font-size:var(--fs-small);color:var(--sub)}
+.gc-plus{width:40px;height:40px;flex:none;display:grid;place-items:center;border:1.5px dashed var(--line);border-radius:50%;color:var(--faint)}
+.gc-plus svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.money-rows li.gc-block{flex-direction:column;align-items:stretch}
+.gc-select{width:112px;flex:none}
+.gc-exp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gc-col{min-width:0;display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:var(--r-btn);word-break:keep-all}
+.gc-col h3{margin:0;font-size:var(--fs-label);font-weight:600}
+.gc-col p{margin:0}
+.gc-k{font-size:var(--fs-tiny);color:var(--faint);margin-top:-6px!important}
+.gc-v,.gc-j{display:flex;flex-direction:column;gap:1px}
+.gc-v>span,.gc-j>span{font-size:var(--fs-tiny);color:var(--faint)}
+.gc-v b{font-size:var(--fs-small);font-weight:500;color:var(--sub)}
+.gc-v b .mono{font-size:var(--fs-hero);font-weight:600;color:var(--ink);margin-right:2px}
+.gc-j{padding-top:8px;border-top:1px solid var(--line)}
+.gc-j+.gc-j{padding-top:0;border-top:0}
+.gc-j b{font-size:var(--fs-small);font-weight:600}
