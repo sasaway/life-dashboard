@@ -203,9 +203,11 @@
 
     <div class="hobby-page" id="hobby-ww" hidden>
       <header class="top sub-top"><button class="icon-btn" data-hobby="hub" aria-label="취미로 돌아가기"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><h1>명조</h1></header>
-      <div class="seg" id="wwPick">
+      <div class="seg four" id="wwPick">
         <button data-page="today" aria-pressed="true">오늘</button>
         <button data-page="party" aria-pressed="false">파티표</button>
+        <button data-page="cash" aria-pressed="false">재화</button>
+        <button data-page="pickup" aria-pressed="false">픽업</button>
       </div>
 
       <div class="stack" id="ww-page-today">
@@ -228,6 +230,59 @@
         <div class="parties" id="wwParties"></div>
         <p class="empty parties-empty" id="wwPartiesEmpty">아직 파티가 없어. 아래 '파티 추가' 로 만들어 봐.</p>
         <button class="btn btn-ghost add-party" id="wwAddParty"><span class="ic-wrap"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>파티 추가</button>
+      </div>
+
+      <!-- 가챠 기댓값 계산기 (v2.4 재화 · v2.5 픽업). 계산 js/gacha.js, 화면 js/gacha-view.js -->
+      <div class="stack gc" id="ww-page-cash" hidden>
+        <p class="msg gc-msg" role="status"></p>
+        <section class="card" aria-labelledby="gcHaveH">
+          <div class="card-h"><h2 id="gcHaveH">지금 가진 것</h2><small class="mono" id="gcHavePulls"></small></div>
+          <ul class="money-rows">
+            <li><span class="name">별소</span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="have.astrite" placeholder="0" aria-label="지금 가진 별소"></li>
+            <li><span class="name">캐릭뽑</span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="have.char" placeholder="0" aria-label="지금 가진 캐릭뽑"></li>
+            <li><span class="name">무기뽑</span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="have.weap" placeholder="0" aria-label="지금 가진 무기뽑"></li>
+          </ul>
+        </section>
+        <section class="card" aria-labelledby="gcFreeH">
+          <div class="card-h"><h2 id="gcFreeH">무과금으로 받을 것</h2><small class="mono" id="gcFreeDays"></small></div>
+          <ul class="money-rows">
+            <li><span class="name">일일 의뢰<span class="sub num" id="gcDailyCalc"></span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="free.daily" placeholder="0" aria-label="일일 의뢰 하루 별소"></li>
+            <li><span class="name">그 밖에 별소<span class="sub">이벤트 · 탐사 · 주간 등</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="free.astrite" placeholder="0" aria-label="그 밖에 받을 별소"></li>
+            <li><span class="name">그 밖에 캐릭뽑</span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="free.char" placeholder="0" aria-label="그 밖에 받을 캐릭뽑"></li>
+          </ul>
+          <p class="mini gc-hint" id="gcFreeHint"></p>
+        </section>
+        <section class="card" aria-labelledby="gcPaidH">
+          <div class="card-h"><h2 id="gcPaidH">과금으로 받을 것</h2><small>대략</small></div>
+          <ul class="money-rows">
+            <li class="gc-row"><span class="name">월정액<span class="sub num" id="gcMonthlyCalc"></span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.monthlyDay" placeholder="0" aria-label="월정액 하루 별소"><button class="pin" data-gt="paid.monthly" aria-pressed="false" aria-label="월정액 켜기">끔</button></li>
+            <li class="gc-row"><span class="name">유료 패스<span class="sub">별소</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.passAstrite" placeholder="0" aria-label="유료 패스 별소"><button class="pin" data-gt="paid.pass" aria-pressed="false" aria-label="유료 패스 켜기">끔</button>
+              <span class="gc-sub">캐릭뽑</span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.passChar" placeholder="0" aria-label="유료 패스 캐릭뽑"></li>
+            <li><span class="name">직접 충전<span class="sub">별소</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.topup" placeholder="0" aria-label="직접 충전할 별소"></li>
+          </ul>
+          <p class="mini">게임 안 값이 다르면 고쳐 줘. 켠 것만 합계에 들어가.</p>
+        </section>
+        <section class="card" aria-labelledby="gcSumH">
+          <div class="card-h"><h2 id="gcSumH">픽업 날까지 모이는 것</h2><small class="mono" id="gcSumD"></small></div>
+          <ul class="gc-sum" id="gcSum"></ul>
+          <div id="gcNoDate" hidden>
+            <p class="empty" id="gcNoDateMsg">픽업 페이지에서 날짜를 정하면 계산돼.</p>
+            <button class="btn btn-ghost gc-go" data-ww-go="pickup">픽업 날짜 정하기</button>
+          </div>
+          <p class="mini">n연 = 별소 ÷ 160 (나머지는 버림) + 캐릭뽑 + 무기뽑</p>
+        </section>
+      </div>
+
+      <div class="stack gc" id="ww-page-pickup" hidden>
+        <p class="msg gc-msg" role="status"></p>
+        <section class="card" aria-labelledby="gcPlanH">
+          <div class="card-h"><h2 id="gcPlanH">다음 픽업 계획</h2><small class="mono" id="gcPlanD"></small></div>
+          <ul class="money-rows">
+            <li><label class="name" for="gcDate">픽업 날짜<span class="sub" id="gcDateSub"></span></label>
+              <input class="field mono gc-date" id="gcDate" type="date" data-g="plan.date" aria-describedby="gcDateSub"></li>
+          </ul>
+          <p class="mini">날짜는 폰 시계(한국 시간)로 세. 자정이 지나면 하루 줄어. 공명자 · 체인 · 기댓값은 다음 버전에서 여기 생겨.</p>
+        </section>
       </div>
     </div>
 

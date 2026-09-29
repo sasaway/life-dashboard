@@ -539,3 +539,21 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
   padding:8px 0;min-height:var(--touch);font-size:var(--fs-small);color:var(--ink);overflow-wrap:anywhere}
 .rep-ans .d{color:var(--faint)}
 .rep-list li{font-size:var(--fs-small);padding:3px 0;overflow-wrap:anywhere}
+
+/* ---------- 명조 가챠 계산기 (v2.4): 재화 · 픽업. 숫자 칸 줄은 돈 화면 .money-rows 를 그대로 쓴다 ---------- */
+.gc .money-rows .field.won{width:104px}
+.money-rows li.gc-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px;row-gap:6px}
+.gc-row .gc-sub{grid-column:1;text-align:right;font-size:var(--fs-tiny);color:var(--faint)}
+.gc .name,.gc .mini{word-break:keep-all}
+.gc-row .pin{min-width:48px}
+.gc-hint{font-size:var(--fs-tiny);color:var(--faint);line-height:1.5}
+.gc-sum{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.gc-sum li{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.gc-sum li:first-child{border-top:0;padding-top:0}
+.gc-sum .name{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gc-sum .name b{font-weight:600}
+.gc-sum .sub{font-size:var(--fs-tiny);color:var(--faint)}
+.gc-pulls{flex:none;font-size:var(--fs-small);color:var(--sub);white-space:nowrap}
+.gc-pulls .mono{font-size:var(--fs-hero);font-weight:600;color:var(--ink);margin-right:2px}
+.gc-date{width:156px;flex:none}
+.gc-go{margin-top:8px;min-height:var(--touch)}

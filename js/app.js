@@ -10,6 +10,7 @@ import { startMeals, renderAll as renderMeals } from "./meals-view.js";
 import { startRecipes } from "./recipe-view.js";
 import { startWorkout, renderWorkout } from "./workout-view.js";
 import { startWuwa, renderWuwa } from "./wuwa-view.js";
+import { startGacha, renderGacha } from "./gacha-view.js";
 import { startWarframe, renderWarframe } from "./warframe-view.js";
 import { startLibrary } from "./library-view.js";
 import { startCalendar } from "./calendar-view.js";
@@ -30,6 +31,7 @@ function renderClock() {
   renderMeals();      // 자정에 오늘 식단으로 넘어간다
   renderWorkout();    // 자정에 오늘 운동으로 넘어간다
   renderWuwa();       // 새벽 5시에 명조 체크가 비워진다
+  renderGacha();      // 자정에 픽업까지 남은 날이 하루 준다
   renderWarframe();   // 새벽 1시에 워프레임 체크가 비워지고, 출격 남은 시간을 맞춘다
 }
 
@@ -118,6 +120,7 @@ startMeals();
 startRecipes();
 startWorkout();
 startWuwa();
+startGacha();
 startWarframe();
 startLibrary();
 startCalendar();

@@ -1,4 +1,4 @@
-// 명조 화면: 취미 탭 [오늘 · 파티표] (워프레임 [오늘 · 장비] 처럼), 메인 취미 카드, 공명자 고르기 창.
+// 명조 화면: 취미 탭 [오늘 · 파티표 · 재화 · 픽업] (워프레임 [오늘 · 장비] 처럼), 메인 취미 카드, 공명자 고르기 창.
 // 파티표 = 파티마다 카드 한 장, 3칸 + 그 아래에 캐릭터마다 육성 체크 5개 (Notion '목표 육성 파티표')
 import { store } from "./store.js";
 import { noteHobby } from "./hobby-log-view.js";
@@ -215,11 +215,11 @@ function openPicker(pid, idx) {
   openSheet("charSheet");
 }
 
-// 명조 쪽 위 [오늘 · 파티표] 전환 (워프레임 [오늘 · 장비] 와 같게)
+// 명조 쪽 위 [오늘 · 파티표 · 재화 · 픽업] 전환 (워프레임 [오늘 · 장비] 와 같게). 재화 · 픽업은 gacha-view.js (v2.4)
 function showWwPage(page) {
-  for (const p of ["today", "party"]) $(`ww-page-${p}`).hidden = p !== page;
+  for (const p of ["today", "party", "cash", "pickup"]) $(`ww-page-${p}`).hidden = p !== page;
   $("wwPick").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.page === page)));
-  if (page !== "today") loadCharacters();
+  if (page === "party") loadCharacters();
 }
 
 // 캐릭터 목록: 저장된 게 일주일(얼굴 없는 3.7 공명자가 있으면 하루) 넘었거나, 없거나, 무기 칸이 없는 옛 사본이면 encore.moe 에서 새로 받는다

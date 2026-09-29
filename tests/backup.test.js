@@ -6,6 +6,7 @@ import {
 import { syncMealLog } from "../js/meals.js";
 import { emptyHobbyLog, noteDay, noteWeek } from "../js/hobby-log.js";
 import { DEFAULT_SETTINGS } from "../js/schedule.js";
+import { normalizeGacha } from "../js/gacha.js";
 
 // localStorage 흉내 (key · length 까지)
 function fakeStorage(entries = {}) {
@@ -133,4 +134,14 @@ test("v2.3 주간회고(weekReviews)도 백업 → 되살리기로 그대로, �
   restoreItems(later, readBackupText(text).backup.items);
   assert.deepEqual(JSON.parse(later.getItem("ld:weekReviews")), weekReviews);
   assert.deepEqual(JSON.parse(later.getItem("ld:weekly")), weekly);
+});
+
+test("v2.4 가챠 계산기(wuwaGacha)도 백업 → 되살리기로 그대로 돌아온다", async () => {
+  const wuwaGacha = normalizeGacha({ have: { astrite: 16000, char: 3, weap: 1 }, paid: { monthly: true }, plan: { date: "2026-10-14" } });
+  const phone = fakeStorage({ "ld:wuwaGacha": JSON.stringify(wuwaGacha), "ld:wuwaParties": "[]" });
+  const text = JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v2.4 가챠 재화 · 9월 30일" }));
+  const later = fakeStorage({ "ld:wuwaGacha": JSON.stringify(normalizeGacha({})) }); // 되살리기 전에 비워 둔 폰
+  restoreItems(later, readBackupText(text).backup.items);
+  assert.deepEqual(JSON.parse(later.getItem("ld:wuwaGacha")), wuwaGacha);
+  assert.equal(normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha"))).have.astrite, 16000);
 });
