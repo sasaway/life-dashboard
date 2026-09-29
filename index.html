@@ -256,8 +256,10 @@
           <div class="card-h"><h2 id="gcPaidH">과금으로 받을 것</h2><small>대략</small></div>
           <ul class="money-rows">
             <li class="gc-row"><span class="name">월정액<span class="sub num" id="gcMonthlyCalc"></span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.monthlyDay" placeholder="0" aria-label="월정액 하루 별소"><button class="pin" data-gt="paid.monthly" aria-pressed="false" aria-label="월정액 켜기">끔</button></li>
-            <li class="gc-row"><span class="name">유료 패스<span class="sub">별소</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.passAstrite" placeholder="0" aria-label="유료 패스 별소"><button class="pin" data-gt="paid.pass" aria-pressed="false" aria-label="유료 패스 켜기">끔</button>
-              <span class="gc-sub">캐릭뽑</span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.passChar" placeholder="0" aria-label="유료 패스 캐릭뽑"></li>
+            <li class="gc-row"><span class="name">유료 패스<span class="sub">별소 · 바로</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.passAstrite" placeholder="0" aria-label="유료 패스 별소"><button class="pin" data-gt="paid.pass" aria-pressed="false" aria-label="유료 패스 켜기">끔</button>
+              <span class="gc-sub">캐릭뽑 · 3주 뒤</span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.passChar" placeholder="0" aria-label="유료 패스 캐릭뽑">
+              <label class="gc-sub gc-pass" for="gcPassDate" hidden>산 날</label><input class="field mono gc-date gc-pass" id="gcPassDate" type="date" data-g="paid.passDate" aria-describedby="gcPassCalc" hidden>
+              <span class="gc-note num gc-pass" id="gcPassCalc" hidden></span></li>
             <li><span class="name">직접 충전<span class="sub">별소</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.topup" placeholder="0" aria-label="직접 충전할 별소"></li>
           </ul>
           <p class="mini">게임 안 값이 다르면 고쳐 줘. 켠 것만 합계에 들어가.</p>

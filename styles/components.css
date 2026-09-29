@@ -545,6 +545,8 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .money-rows li.gc-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px;row-gap:6px}
 .gc-row .gc-sub{grid-column:1;text-align:right;font-size:var(--fs-tiny);color:var(--faint)}
 .gc .name,.gc .mini{word-break:keep-all}
+.gc-row .gc-date{grid-column:2/-1;width:100%}
+.gc-row .gc-note{grid-column:1/-1;font-size:var(--fs-tiny);color:var(--sub);text-align:right}
 .gc-row .pin{min-width:48px}
 .gc-hint{font-size:var(--fs-tiny);color:var(--faint);line-height:1.5}
 .gc-sum{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}

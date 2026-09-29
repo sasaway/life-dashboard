@@ -1,7 +1,7 @@
 // 명조 가챠 기댓값 계산기 화면: 명조 위 전환 [오늘 · 파티표 · 재화 · 픽업] 의 '재화' · '픽업' (v2.4).
 // 입력 칸은 index.html 에 한 번만 있고, 숫자가 바뀌면 계산 글자만 다시 쓴다 (치는 도중에 칸이 다시 그려지지 않게).
 import { store } from "./store.js";
-import { normalizeGacha, count, pullsOf, daysUntil, dLabel, income, FREE_HINT, MONTHLY_MAX_DAYS } from "./gacha.js";
+import { normalizeGacha, count, pullsOf, daysUntil, dLabel, income, passCharDay, passCharIn, FREE_HINT, MONTHLY_MAX_DAYS } from "./gacha.js";
 import { ymd } from "./schedule.js";
 import { $, esc } from "./dom.js";
 
@@ -33,6 +33,7 @@ function paintToggle(b) {
   b.textContent = on ? "켬" : "끔";
 }
 
+const md = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`;
 const bundle = (x) => `별소 ${num(x.astrite)} · 캐릭뽑 ${num(x.char)} · 무기뽑 ${num(x.weap)}`;
 
 // 계산 글자만 다시 쓴다 (분마다 · 입력할 때마다)
@@ -49,6 +50,13 @@ export function renderGacha() {
     ? ` × ${r.monthlyDays}일${days > MONTHLY_MAX_DAYS ? ` (최대 ${MONTHLY_MAX_DAYS}일)` : ""} = ${num(g.paid.monthlyDay * r.monthlyDays)}`
     : ""}`;
   $("gcFreeHint").textContent = FREE_HINT;
+  // 유료 패스: 켜면 산 날 칸이 보이고, 캐릭뽑이 픽업 전에 오는지 알려 준다
+  document.querySelectorAll(".gc-pass").forEach((el) => { el.hidden = !g.paid.pass; });
+  const charDay = passCharDay(g);
+  $("gcPassCalc").textContent = !charDay ? "산 날을 적으면 캐릭뽑이 언제 오는지 계산돼"
+    : !has ? `캐릭뽑은 ${md(charDay)}부터 · 픽업 날짜를 정하면 합계에 넣을지 정해져`
+    : passCharIn(g) ? `캐릭뽑은 ${md(charDay)}부터 · 픽업 전이라 합계에 넣어`
+    : `캐릭뽑은 ${md(charDay)}부터 · 픽업 뒤라 합계에서 빼`;
 
   $("gcSumD").textContent = left;
   $("gcNoDate").hidden = has;
@@ -68,6 +76,8 @@ export function renderGacha() {
 }
 
 export function startGacha() {
+  // v2.4 에 유료 패스를 켜 둔 폰: 산 날이 없으니 오늘로 (v2.4.1)
+  if (g.paid.pass && !g.paid.passDate) { setAt("paid.passDate", ymd(new Date())); save(); }
   fillInputs();
   renderGacha();
 
@@ -91,6 +101,11 @@ export function startGacha() {
       const go = e.target.closest("[data-ww-go]");
       if (t) {
         setAt(t.dataset.gt, !getAt(t.dataset.gt));
+        // 유료 패스를 켜면 산 날 = 오늘 (고칠 수 있음), 끄면 비운다
+        if (t.dataset.gt === "paid.pass") {
+          setAt("paid.passDate", g.paid.pass ? ymd(new Date()) : "");
+          $("gcPassDate").value = g.paid.passDate;
+        }
         paintToggle(t);
         save();
         renderGacha();

@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   PULL_COST, HARD_PITY, AVG_PER_FIVE, defaultGacha, normalizeGacha, count, astriteOf, pullsOf, daysUntil, dLabel, income,
+  passCharDay, passCharIn,
 } from "../js/gacha.js";
 
 test("가챠 규칙 값: 1연 160 별소, 천장 80연, 평균 약 56연", () => {
@@ -60,7 +61,8 @@ test("재화 합계: 무과금만 / 과금 포함", () => {
   const g = normalizeGacha({
     have: { astrite: 16000, char: 3, weap: 1 },
     free: { daily: 60, astrite: 1000, char: 2 },
-    paid: { monthly: true, pass: true, topup: 500 },
+    paid: { monthly: true, pass: true, passDate: "2026-09-20", topup: 500 },
+    plan: { date: "2026-10-14" },
   });
   const r = income(g, 14);
   assert.deepEqual(r.free, { astrite: 60 * 14 + 1000, char: 2, weap: 0 });
@@ -85,4 +87,19 @@ test("날짜가 없거나 지났으면 앞으로 받을 것은 0 (지금 가진 
     assert.equal(r.paid.astrite, 0);
     assert.equal(pullsOf(r.withPaid), 3);
   }
+});
+
+test("유료 패스 캐릭뽑은 산 뒤 3주: 픽업 날(당일 포함)까지 받으면 넣고, 아니면 뺀다. 별소는 바로", () => {
+  const at = (passDate, date) => normalizeGacha({ paid: { pass: true, passDate }, plan: { date } });
+  assert.equal(passCharDay(at("2026-09-30", "")), "2026-10-21");
+  assert.equal(passCharDay(at("2026-10-20", "")), "2026-11-10", "달을 넘어도");
+  assert.equal(passCharIn(at("2026-09-30", "2026-10-21")), true, "딱 3주 되는 날 픽업이면 받는다");
+  assert.equal(passCharIn(at("2026-09-30", "2026-10-20")), false, "하루 모자라면 안 받는다");
+  assert.equal(passCharIn(at("", "2026-12-01")), false, "산 날을 모르면 안 넣는다");
+  assert.equal(passCharIn(at("2026-09-30", "")), false, "픽업 날짜가 없으면 안 넣는다");
+  assert.equal(passCharIn(normalizeGacha({ paid: { pass: false, passDate: "2026-09-01" }, plan: { date: "2026-12-01" } })), false, "끄면 안 넣는다");
+  const early = income(at("2026-09-30", "2026-10-14"), 14).paid;
+  assert.deepEqual([early.astrite, early.char], [680, 0], "10/14 픽업: 별소 680 만");
+  const late = income(at("2026-09-30", "2026-10-28"), 28).paid;
+  assert.deepEqual([late.astrite, late.char], [680, 2], "10/28 픽업: 캐릭뽑 2 도");
 });
