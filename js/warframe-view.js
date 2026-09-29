@@ -1,5 +1,6 @@
 // 워프레임 화면: 위 [오늘 · 장비] 전환. 오늘 = 오늘 체크(출격·포르마)·할 일·실시간 현황, 장비 = 장비 목록. 메인 취미 카드의 워프레임 줄.
 import { store } from "./store.js";
+import { noteHobby } from "./hobby-log-view.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import { chip } from "./wuwa-view.js";
 import {
@@ -39,6 +40,7 @@ function renderChecks() {
   $("wfDaily").innerHTML = DAILY.map((d) => chip(`data-wf-daily="${d.id}"`, d.label, done[d.id])).join("");
   $("wfDailyBar").style.width = pct(c);
   renderHub();
+  noteHobby(now); // 주간리뷰용 취미 기록 (v2.2.2)
 }
 
 // 취미 탭 첫 화면의 워프레임 카드: 오늘 진행도 + '오늘' · '장비' 버튼

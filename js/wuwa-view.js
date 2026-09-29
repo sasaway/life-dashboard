@@ -1,6 +1,7 @@
 // 명조 화면: 취미 탭 [오늘 · 파티표] (워프레임 [오늘 · 장비] 처럼), 메인 취미 카드, 공명자 고르기 창.
 // 파티표 = 파티마다 카드 한 장, 3칸 + 그 아래에 캐릭터마다 육성 체크 5개 (Notion '목표 육성 파티표')
 import { store } from "./store.js";
+import { noteHobby } from "./hobby-log-view.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import {
   DAILY, WEEKLY, BUILD, PARTY_SIZE, dailyDone, weeklyDone, toggleDaily, tapWeekly, dailyCount, weeklyCount,
@@ -57,6 +58,7 @@ function renderChecks() {
   $("hubWwCount").textContent = `오늘 ${dc.done} / ${dc.total}`;
   $("hubWwBar").style.width = `${(dc.done / dc.total) * 100}%`;
   $("hubWwToday").textContent = `일일 ${dc.done}/${dc.total} · 주간 ${wc.done}/${wc.total}`;
+  noteHobby(now); // 주간리뷰용 취미 기록 (v2.2.2)
 
   $("wwWeeklyCount").textContent = `${wc.done} / ${wc.total}`;
   $("wwWeeklyBar").style.width = `${(wc.done / wc.total) * 100}%`;

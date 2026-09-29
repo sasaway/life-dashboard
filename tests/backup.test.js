@@ -4,6 +4,7 @@ import {
   x9Of, versionTag, makeBackup, readBackupText, checkBackup, restoreItems, photosOf, fileName, sizeLabel,
 } from "../js/backup.js";
 import { syncMealLog } from "../js/meals.js";
+import { emptyHobbyLog, noteDay, noteWeek } from "../js/hobby-log.js";
 import { DEFAULT_SETTINGS } from "../js/schedule.js";
 
 // localStorage 흉내 (key · length 까지)
@@ -110,4 +111,15 @@ test("v2.2 먹은 기록(mealLog)도 백업 → 되살리기로 그대로 돌아
   restoreItems(later, readBackupText(text).backup.items);
   assert.deepEqual(JSON.parse(later.getItem("ld:mealLog")), mealLog);
   assert.equal(Object.keys(mealLog).length, 7);
+});
+
+test("v2.2.2 취미 기록(hobbyLog)도 백업 → 되살리기로 그대로 돌아온다", async () => {
+  const now = new Date(2026, 8, 29, 20, 0);
+  let hobbyLog = noteDay(emptyHobbyLog(), { wwKey: "2026-09-29", ww: { done: 3, total: 4 }, wwWeek: { done: 5, total: 6 }, wfKey: "2026-09-29", wf: { done: 2, total: 2 } });
+  hobbyLog = noteWeek(hobbyLog, "2026-09-28", () => ({ parties: [{ id: "p1", name: "파티 \"1\"", slots: ["1503", null, null] }], builds: { 1503: { lv: 1 } }, gear: { frames: [{ id: "f1", name: "오락시아" }], others: [] } }), now);
+  const phone = fakeStorage({ "ld:hobbyLog": JSON.stringify(hobbyLog) });
+  const text = JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v2.2.2 취미 기록 · 9월 29일" }));
+  const later = fakeStorage({});
+  restoreItems(later, readBackupText(text).backup.items);
+  assert.deepEqual(JSON.parse(later.getItem("ld:hobbyLog")), hobbyLog);
 });
