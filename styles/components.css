@@ -524,3 +524,18 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .confirm{width:100%;max-width:320px;background:var(--surface);border-radius:var(--r-card);box-shadow:var(--shadow);padding:18px 16px 14px}
 .confirm p{margin:0 0 10px;font-size:var(--fs-body);line-height:1.55}
 .confirm .btn{min-height:var(--touch-nav)}
+
+/* 주간리뷰 보고서 (v2.3) — 카드 네 장(식단 · 운동 · 회고 · 취미)을 펼쳐 두고, 아래에 주간회고 */
+.rep-dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:var(--fs-small)}
+.rep-dl>div{display:contents}
+.rep-dl dt{color:var(--faint)}
+.rep-dl dd{margin:0;overflow-wrap:anywhere}
+.rep .meter{margin-top:10px}
+.rep .q{margin:14px 0 4px;font-size:var(--fs-label);font-weight:600}
+.rep-q:first-of-type .q{margin-top:0}
+.rep-q .mini{margin:0 0 4px}
+.rep-ans,.rep-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.rep-ans button{width:100%;display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-top:1px solid var(--line);
+  padding:8px 0;min-height:var(--touch);font-size:var(--fs-small);color:var(--ink);overflow-wrap:anywhere}
+.rep-ans .d{color:var(--faint)}
+.rep-list li{font-size:var(--fs-small);padding:3px 0;overflow-wrap:anywhere}

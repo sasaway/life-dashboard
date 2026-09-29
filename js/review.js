@@ -9,13 +9,28 @@ export const QUESTIONS = [
   "내일 처음으로 할 일은?",
 ];
 
+// 주간리뷰의 주간회고 (v2.3): 일일 회고와 같은 네 질문을 한 주 기준으로 (사용자 '추천대로')
+export const WEEK_QUESTIONS = [
+  "이번 주 잘 되었던 일은?",
+  "이번 주 안 되었던 일은?",
+  "이번 주 배운 것은?",
+  "다음 주 처음으로 할 일은?",
+];
+
 // 하루는 06:00 에 바뀐다 (취침 23:00~06:00). 새벽 1시에 쓰면 어제 회고다.
 const DAY_START_HOUR = 6;
+const WEEKLY_START_HOUR = 18; // 일요일 저녁 ('좋은 저녁' 과 같은 시각)
 
 export function reviewDay(now) {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   if (now.getHours() < DAY_START_HOUR) d.setDate(d.getDate() - 1);
   return ymd(d);
+}
+
+// 주간리뷰 시간: 일요일 18시 ~ 월요일 새벽 6시 전 (새벽은 어제 회고라는 규칙 그대로 → 월요일 새벽도 일요일 주간리뷰)
+export function isWeeklyTime(now) {
+  const h = now.getHours();
+  return parseDate(reviewDay(now)).getDay() === 0 && (h >= WEEKLY_START_HOUR || h < DAY_START_HOUR);
 }
 
 export function answeredCount(entry) {
@@ -60,7 +75,7 @@ export function weekLabel(monday) {
   return `${a.getMonth() + 1}월 ${a.getDate()}일 – ${end}`;
 }
 
-// 답을 고친 새 기록. 네 칸이 다 비면 그 날 기록을 지운다.
+// 답을 고친 새 기록. 네 칸이 다 비면 그 날 기록을 지운다. (주간회고도 같은 모양: key 가 그 주 월요일)
 export function withAnswer(reviews, day, index, text) {
   const answers = [...(reviews[day]?.answers ?? ["", "", "", ""])];
   answers[index] = text;

@@ -123,3 +123,14 @@ test("v2.2.2 취미 기록(hobbyLog)도 백업 → 되살리기로 그대로 돌
   restoreItems(later, readBackupText(text).backup.items);
   assert.deepEqual(JSON.parse(later.getItem("ld:hobbyLog")), hobbyLog);
 });
+
+test("v2.3 주간회고(weekReviews)도 백업 → 되살리기로 그대로, 옛 이번 주 메모(weekly)도 함께", async () => {
+  const weekReviews = { "2026-09-28": { answers: ["운동 4일", "", "모딩 순서", "월요일 장보기"] } };
+  const weekly = { "2026-09-21": "예전 메모" };
+  const phone = fakeStorage({ "ld:weekReviews": JSON.stringify(weekReviews), "ld:weekly": JSON.stringify(weekly) });
+  const text = JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v2.3 주간리뷰 · 9월 29일" }));
+  const later = fakeStorage({});
+  restoreItems(later, readBackupText(text).backup.items);
+  assert.deepEqual(JSON.parse(later.getItem("ld:weekReviews")), weekReviews);
+  assert.deepEqual(JSON.parse(later.getItem("ld:weekly")), weekly);
+});

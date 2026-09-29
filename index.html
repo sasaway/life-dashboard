@@ -51,12 +51,12 @@
       <ol class="sched" id="sched"></ol>
     </section>
     <section class="card" aria-label="회고">
-      <div class="card-h"><h2>회고</h2><small id="reviewStatus"></small></div>
+      <div class="card-h"><h2 id="reviewCardTitle">회고</h2><small id="reviewStatus"></small></div>
       <div class="meter"><i id="reviewBar"></i></div>
       <p class="mini" id="reviewHint"></p>
       <div class="btns">
         <button class="btn btn-primary" id="openReview">쓰기</button>
-        <button class="btn btn-text" id="openWeekly">주간 회고</button>
+        <button class="btn btn-text" id="openWeekly">주간리뷰</button>
         <button class="btn btn-text" id="openPast">지난 회고</button>
       </div>
     </section>
@@ -418,7 +418,7 @@
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="weeklyTitle">
     <div class="grab"></div>
     <div class="sheet-h">
-      <h2 id="weeklyTitle">주간 회고</h2>
+      <h2 id="weeklyTitle">주간리뷰</h2>
       <button class="btn btn-ghost" data-close>닫기</button>
     </div>
     <div class="week-nav">
@@ -426,10 +426,14 @@
       <span id="weekLabel"></span>
       <button class="icon-btn" id="nextWeek" aria-label="다음 주"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
-    <ul class="entries" id="weekDays"></ul>
-    <section class="card">
+    <div class="stack" id="weekReport"></div>
+    <section class="card" aria-labelledby="weekFormTitle">
+      <div class="card-h"><h2 id="weekFormTitle">주간회고</h2><small id="weekFormStatus"></small></div>
+      <div id="weekForm"></div>
+    </section>
+    <section class="card" id="weekNoteCard" hidden>
       <label class="qa">
-        <span class="q">이번 주는 어땠어?</span>
+        <span class="q">이번 주 메모 (예전에 쓴 것)</span>
         <textarea class="field" rows="3" id="weekNote"></textarea>
       </label>
     </section>

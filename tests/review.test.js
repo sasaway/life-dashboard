@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   QUESTIONS, reviewDay, answeredCount, statusLabel, pastDays, mondayKey,
-  weekDays, shiftWeek, dayLabel, weekLabel, withAnswer,
+  weekDays, shiftWeek, dayLabel, weekLabel, withAnswer, WEEK_QUESTIONS, isWeeklyTime,
 } from "../js/review.js";
 
 test("Notion 의 4가지 질문 그대로다", () => {
@@ -66,4 +66,20 @@ test("원래 기록은 건드리지 않는다", () => {
   const before = { "2026-09-25": { answers: ["a", "", "", ""] } };
   withAnswer(before, "2026-09-25", 1, "b");
   assert.deepEqual(before["2026-09-25"].answers, ["a", "", "", ""]);
+});
+
+// ---------- 주간리뷰 (v2.3) ----------
+test("주간리뷰 시간은 일요일 18시 ~ 월요일 새벽 6시 전", () => {
+  assert.equal(isWeeklyTime(new Date(2026, 9, 4, 17, 59)), false); // 일 17:59
+  assert.equal(isWeeklyTime(new Date(2026, 9, 4, 18, 0)), true);   // 일 18:00
+  assert.equal(isWeeklyTime(new Date(2026, 9, 4, 23, 30)), true);
+  assert.equal(isWeeklyTime(new Date(2026, 9, 5, 3, 0)), true);    // 월 새벽 3시 = 아직 일요일
+  assert.equal(isWeeklyTime(new Date(2026, 9, 5, 6, 0)), false);   // 월 06:00
+  assert.equal(isWeeklyTime(new Date(2026, 9, 4, 3, 0)), false);   // 일 새벽 3시 = 토요일
+  assert.equal(isWeeklyTime(new Date(2026, 9, 3, 20, 0)), false);  // 토 저녁
+});
+
+test("주간회고 네 질문은 일일 회고와 같은 모양, 한 주 기준", () => {
+  assert.equal(WEEK_QUESTIONS.length, 4);
+  assert.deepEqual(WEEK_QUESTIONS, ["이번 주 잘 되었던 일은?", "이번 주 안 되었던 일은?", "이번 주 배운 것은?", "다음 주 처음으로 할 일은?"]);
 });
