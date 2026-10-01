@@ -145,3 +145,13 @@ test("v2.4 가챠 계산기(wuwaGacha)도 백업 → 되살리기로 그대로 �
   assert.deepEqual(JSON.parse(later.getItem("ld:wuwaGacha")), wuwaGacha);
   assert.equal(normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha"))).have.astrite, 16000);
 });
+
+test("핫픽스 v2.5.1 의 예전 마감반(oldClose)도 백업 → 되살리기로 그대로 돌아온다", async () => {
+  const schedule = { workdays: [true, true, true, true, true, true, true], closeReset: "2.5.1",
+    oldClose: { at: "2026-10-02T00:00:00.000Z", blocks: [{ start: "06:00", kind: "chores", name: "가사", note: "" }] } };
+  const phone = fakeStorage({ "ld:schedule": JSON.stringify(schedule) });
+  const text = JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v2.5.1 핫픽스 · 10월 2일" }));
+  const later = fakeStorage({});
+  restoreItems(later, readBackupText(text).backup.items);
+  assert.deepEqual(JSON.parse(later.getItem("ld:schedule")), schedule);
+});

@@ -70,6 +70,23 @@ export function upgradeTemplates(templates) {
   return out;
 }
 
+// 핫픽스 v2.5.1 (은월 10-02): 폰의 마감반 일과표가 기본값과 다르게 남아 있었다 (한 번 고친 옛 일과표는 위 자동 바꾸기가 건너뜀).
+// 한 번만 마감반을 기본값으로 맞춘다. 바뀌기 전 일과표는 지우지 않고 oldClose 에 남긴다 (백업에도 들어간다).
+// 맞춘 뒤 closeReset 표시가 남아서, 그 뒤에 설정에서 직접 고친 마감반은 다시 건드리지 않는다.
+export const CLOSE_RESET = "2.5.1";
+export function alignCloseOnce(settings, now) {
+  if (settings.closeReset === CLOSE_RESET) return settings;
+  const cur = settings.templates?.close;
+  const same = !cur || JSON.stringify(cur) === JSON.stringify(DEFAULT_TEMPLATES.close);
+  if (same) return { ...settings, closeReset: CLOSE_RESET };
+  return {
+    ...settings,
+    templates: { ...settings.templates, close: DEFAULT_TEMPLATES.close },
+    oldClose: { at: now.toISOString(), blocks: cur },
+    closeReset: CLOSE_RESET,
+  };
+}
+
 // 쉬는 날 알바 대신 집에서 먹는 끼니
 const DAY_OFF_MEAL = {
   open: b("12:00", "meal", "점심"),

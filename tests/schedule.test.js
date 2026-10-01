@@ -4,6 +4,7 @@ import {
   DEFAULT_SETTINGS, DEFAULT_TEMPLATES, SHIFTS, toMin, shiftFor, setThisWeek,
   dayPlan, currentIndex, nowInfo, leftLabel, checkTemplate, sortBlocks, upgradeTemplates,
 } from "../js/schedule.js";
+import { alignCloseOnce, CLOSE_RESET } from "../js/schedule.js";
 
 // 칸마다 [시작, 끝] 분. 마지막 칸은 다음 날 첫 칸까지.
 function spans(blocks) {
@@ -234,3 +235,25 @@ test("설정에서 고친 일과표의 잘못을 알려 준다", () => {
   assert.match(checkTemplate([]), /하나도/);
   assert.equal(checkTemplate([{ start: "", name: "" }]), "새 칸에 시각을 적어 줘.");
 });
+
+test("핫픽스 v2.5.1: 기본값과 다른 마감반은 한 번만 기본값으로 맞추고, 예전 것은 oldClose 에 남긴다", () => {
+  const now = new Date(2026, 9, 2, 9);
+  const edited = [b2("06:00", "chores", "가사"), b2("06:30", "rest", "휴식"), b2("09:00", "hobby", "취미"), b2("15:00", "work", "알바 · 마감반"), b2("23:00", "sleep", "취침")];
+  const phone = { ...DEFAULT_SETTINGS, templates: { open: DEFAULT_TEMPLATES.open, close: edited } };
+  const fixed = alignCloseOnce(phone, now);
+  assert.deepEqual(fixed.templates.close, DEFAULT_TEMPLATES.close);
+  assert.deepEqual(fixed.templates.open, DEFAULT_TEMPLATES.open, "오픈반은 그대로");
+  assert.deepEqual(fixed.oldClose, { at: now.toISOString(), blocks: edited }, "예전 마감반은 지우지 않는다");
+  assert.equal(fixed.closeReset, CLOSE_RESET);
+  // 그 뒤에 직접 고친 마감반은 다시 건드리지 않는다
+  const later = { ...fixed, templates: { ...fixed.templates, close: edited } };
+  assert.equal(alignCloseOnce(later, now), later);
+  // 이미 기본값이면 표시만 남기고 보관할 것 없음
+  const same = alignCloseOnce({ ...DEFAULT_SETTINGS }, now);
+  assert.equal(same.closeReset, CLOSE_RESET);
+  assert.equal(same.oldClose, undefined);
+  // 오픈반을 고쳐 둔 폰도 오픈반은 그대로
+  const openEdited = [...DEFAULT_TEMPLATES.open.slice(0, -1), b2("23:30", "sleep", "취침")];
+  assert.deepEqual(alignCloseOnce({ ...DEFAULT_SETTINGS, templates: { open: openEdited, close: edited } }, now).templates.open, openEdited);
+});
+function b2(start, kind, name, note = "") { return { start, kind, name, note }; }

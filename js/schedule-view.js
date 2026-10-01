@@ -2,7 +2,7 @@
 import { store } from "./store.js";
 import {
   DEFAULT_SETTINGS, SHIFTS, dayPlan, nowInfo, leftLabel, setThisWeek,
-  shiftFor, checkTemplate, sortBlocks, toMin, upgradeTemplates,
+  shiftFor, checkTemplate, sortBlocks, toMin, upgradeTemplates, alignCloseOnce, CLOSE_RESET,
 } from "./schedule.js";
 import { $, esc } from "./dom.js";
 
@@ -12,11 +12,12 @@ const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]; // 월요일부터 보여 준다
 
 function loadSettings() {
   const saved = store.load(KEY, null);
-  if (!saved) return DEFAULT_SETTINGS;
+  if (!saved) return { ...DEFAULT_SETTINGS, closeReset: CLOSE_RESET }; // 처음 쓰는 폰은 이미 기본값
   // 옛 기본 일과표가 그대로 저장돼 있으면 새 기본값으로 (직접 고친 건 그대로)
-  const templates = upgradeTemplates(saved.templates ?? DEFAULT_SETTINGS.templates);
-  const next = { ...DEFAULT_SETTINGS, ...saved, templates };
-  if (saved.templates && JSON.stringify(templates) !== JSON.stringify(saved.templates)) store.save(KEY, next);
+  const templates = upgradeTemplates({ ...DEFAULT_SETTINGS.templates, ...saved.templates }); // 빠진 반이 있으면 기본값으로
+  // 핫픽스 v2.5.1: 마감반을 한 번 기본값으로 (예전 것은 oldClose 에 보관)
+  const next = alignCloseOnce({ ...DEFAULT_SETTINGS, ...saved, templates }, new Date());
+  if (JSON.stringify(next) !== JSON.stringify({ ...DEFAULT_SETTINGS, ...saved })) store.save(KEY, next);
   return next;
 }
 let settings = loadSettings();
