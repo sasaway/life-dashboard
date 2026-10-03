@@ -1,9 +1,12 @@
-// 취미 시트 연결: 워프레임 장비 목록과 명조 파티표를 구글 시트 '라이프 취미' 로 보낼 모양으로 바꾼다.
-// 앱 → 시트 한 방향 (Claude 가 시트를 읽는다). Notion '취미' 2026-09-27 19:57 수정본.
+// 기록 시트 연결: 워프레임 장비 목록 · 명조 파티표 (v1.8) 와 라이프 기록 (v2.6) 을 구글 시트 '라이프 기록' 으로 보낼 모양으로 바꾼다.
+// 앱 → 시트 한 방향 (Claude 가 시트를 읽는다). Notion '취미' 2026-09-27 19:57 수정본 + 은월 요청 2026-10-03.
 // 시트 탭과 칸 이름은 apps-script/hobby-sync.gs 의 TABS 에 있다. 여기서는 칸 순서대로 값만 만든다.
 import { BUILD } from "./wuwa.js";
+import { lifeSnapshot } from "./life-sync.js";
 
 export const EMPTY_SLOT = "(비어 있음)";
+// 앱이 적는 탭 이름 (설정 화면에 보여 준다). apps-script/hobby-sync.gs 의 TABS 와 같아야 한다 — 테스트가 맞춰 본다
+export const SENT_TABS = ["워프레임 장비", "그 외 무기", "명조 파티", "오늘 요약", "최근 14일", "식단 기록", "운동 기록", "취미 체크", "회고 기록"];
 const yes = (b) => (b ? "예" : "아니오");
 
 // 워프레임 장비: 워프레임 | 플레이스타일(쉼표) | 주무기 | Sortie 분류 | 보조무기 | 근접무기 | 동반자 | 위시리스트
@@ -28,16 +31,18 @@ export function partyRows(parties, builds, chars) {
   ]));
 }
 
-export const snapshot = ({ gear, parties, builds, chars }) => ({
-  warframe: gearRows(gear),
-  others: otherRows(gear),
-  wuwa: partyRows(parties, builds, chars),
+// 취미 탭 세 개 + 라이프 기록 탭 여섯 개 (v2.6, js/life-sync.js)
+export const snapshot = (data, now) => ({
+  warframe: gearRows(data.gear),
+  others: otherRows(data.gear),
+  wuwa: partyRows(data.parties, data.builds, data.chars),
+  ...lifeSnapshot(data, now),
 });
 
 // 보낼 글. 주소나 암호 글자가 없으면 null (아무것도 안 보낸다)
-export function payload(conf, data) {
+export function payload(conf, data, now) {
   if (!conf.url || !conf.token) return null;
-  return JSON.stringify({ token: conf.token, ...snapshot(data) });
+  return JSON.stringify({ token: conf.token, ...snapshot(data, now) });
 }
 
 // 심부름꾼 답 → 화면에 띄울 말 ("" = 잘 보냄)

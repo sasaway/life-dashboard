@@ -6,6 +6,7 @@ import { DAYS } from "./time.js";
 import {
   EXERCISES, ROUTINES, WEEK, VIDEO_URL, REST_BETWEEN_SETS, planFor, doneSets, tapSet, progressOf, pruneLog, searchUrl,
 } from "./workout.js";
+import { markSyncDirty } from "./hobby-sync-view.js";
 import { $, esc } from "./dom.js";
 
 
@@ -92,6 +93,7 @@ export function startWorkout() {
     const id = b.dataset.set;
     log = tapSet(log, ymd(new Date()), id, Number(b.dataset.n));
     store.save("workoutLog", log);
+    markSyncDirty(); // 기록 시트에도 (연결했으면)
     // 누른 카드의 칸만 바꾸고(스크롤이 튀지 않게), 요약을 다시 그린다
     b.closest(".sets").innerHTML = setButtons(id, ymd(new Date()));
     const day = ymd(new Date());

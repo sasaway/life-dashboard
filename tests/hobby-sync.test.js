@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { gearRows, otherRows, partyRows, payload, replyError, EMPTY_SLOT } from "../js/hobby-sync.js";
+import { readFileSync } from "node:fs";
+import { gearRows, otherRows, partyRows, payload, replyError, EMPTY_SLOT, SENT_TABS } from "../js/hobby-sync.js";
+import { DEFAULT_SETTINGS } from "../js/schedule.js";
 
 const gear = {
   frames: [
@@ -37,14 +39,37 @@ test("코스트 2 공명자가 두 파티에 있으면 두 줄 다, 육성 체�
   assert.deepEqual(rows, [["A", "1", "벨리나", "O", "", "", "", ""], ["B", "2", "벨리나", "O", "", "", "", ""]]);
 });
 
-test("주소나 암호 글자가 없으면 보내지 않는다 · 있으면 세 탭과 암호만 보낸다", () => {
-  const data = { gear, parties: [], builds: {}, chars };
-  assert.equal(payload({ url: "", token: "t" }, data), null);
-  assert.equal(payload({ url: "https://script.google.com/macros/s/x/exec", token: "" }, data), null);
-  const body = JSON.parse(payload({ url: "https://script.google.com/macros/s/x/exec", token: "t" }, data));
-  assert.deepEqual(Object.keys(body), ["token", "warframe", "others", "wuwa"]);
+test("주소나 암호 글자가 없으면 보내지 않는다 · 있으면 아홉 탭과 암호만 보낸다", () => {
+  const data = { gear, parties: [], builds: {}, chars, settings: DEFAULT_SETTINGS, workoutLog: {}, mealLog: {}, reviews: {}, weekReviews: {}, hobbyLog: {}, todos: [] };
+  const now = new Date(2026, 9, 3, 20, 0);
+  assert.equal(payload({ url: "", token: "t" }, data, now), null);
+  assert.equal(payload({ url: "https://script.google.com/macros/s/x/exec", token: "" }, data, now), null);
+  const body = JSON.parse(payload({ url: "https://script.google.com/macros/s/x/exec", token: "t" }, data, now));
+  assert.deepEqual(Object.keys(body), ["token", "warframe", "others", "wuwa", "today", "recent", "meals", "workouts", "hobby", "reviews"]);
   assert.equal(body.token, "t");
   assert.equal(body.warframe.length, 2);
+});
+
+// 심부름꾼 코드(TABS)와 앱이 보내는 것이 어긋나지 않게: 탭 이름 · 보내는 이름 · 칸 수
+test("심부름꾼의 탭 목록과 앱이 보내는 것이 같다 (이름 · 칸 수), '픽업 일정' 은 앱이 적는 탭이 아니다", () => {
+  const gs = readFileSync(new URL("../apps-script/hobby-sync.gs", import.meta.url), "utf8");
+  const DAY = [...gs.match(/const DAY = \[([\s\S]*?)\];/)[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+  const tabs = [...gs.matchAll(/\{ key: "(\w+)", name: "([^"]+)", header: (DAY|\[[^\]]*\])/g)].map((m) => ({
+    key: m[1], name: m[2], width: m[3] === "DAY" ? DAY.length : [...m[3].matchAll(/"([^"]+)"/g)].length,
+  }));
+  assert.deepEqual(tabs.map((t) => t.name), SENT_TABS);
+  assert.ok(!SENT_TABS.includes("픽업 일정"));
+  const data = {
+    gear, parties: [{ id: "p", name: "x", slots: ["1102", null, null] }], builds: {}, chars, settings: DEFAULT_SETTINGS,
+    workoutLog: { "2026-10-03": { legpress: 2 } }, mealLog: { "2026-10-03": [{ label: "저녁", dish: "jja" }] },
+    reviews: { "2026-10-03": { answers: ["a", "", "", ""] } }, weekReviews: {}, hobbyLog: { days: { "2026-10-03": { ww: [1, 4] } } }, todos: [],
+  };
+  const body = JSON.parse(payload({ url: "u", token: "t" }, data, new Date(2026, 9, 3, 20, 0)));
+  assert.deepEqual(Object.keys(body).slice(1), tabs.map((t) => t.key));
+  for (const t of tabs) {
+    assert.ok(body[t.key].length > 0, `${t.name} 에 줄이 있다`);
+    for (const row of body[t.key]) assert.equal(row.length, t.width, `${t.name} 칸 수`);
+  }
 });
 
 test("심부름꾼 답 읽기", () => {

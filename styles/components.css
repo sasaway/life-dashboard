@@ -478,6 +478,8 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 /* ---------- 설정: 캘린더 알바 연결 ---------- */
 .cal-hint{margin:0 0 10px}
 .hs-token{margin-top:8px}
+#set-hs .mini{word-break:keep-all}
+.hs-tabs{margin:0;font-size:13px;line-height:1.6;color:var(--sub);word-break:keep-all}
 
 /* ---------- 설정: 목록 → 눌러서 항목 화면 (v1.9) ---------- */
 #settings .sheet{height:86%} /* 목록 ↔ 항목 화면을 오가도 창 높이가 출렁이지 않게 */

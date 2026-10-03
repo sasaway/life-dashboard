@@ -5,7 +5,7 @@ import { SHIFTS, shiftFor } from "./schedule.js";
 import { workdaysLabel } from "./time.js";
 import { getScheduleSettings, openScheduleSettings } from "./schedule-view.js";
 import { calendarOn, openCalendarSettings } from "./calendar-view.js";
-import { hobbySyncOn, openHobbySyncSettings } from "./hobby-sync-view.js";
+import { hobbySyncState, openHobbySyncSettings } from "./hobby-sync-view.js";
 import { libraryCount } from "./library-view.js";
 import { backupState } from "./backup-view.js";
 import { openSheet } from "./sheet.js";
@@ -23,7 +23,7 @@ const GROUPS = [
   ] },
   { title: "연결", items: [
     { id: "cal", label: "캘린더 알바 연결", icon: "calendarSync", state: () => (calendarOn() ? "연결됨" : "안 됨") },
-    { id: "hs", label: "취미 시트 연결", icon: "sheet", state: () => (hobbySyncOn() ? "연결됨" : "안 됨") },
+    { id: "hs", label: "기록 시트 연결", icon: "sheet", state: hobbySyncState },
   ] },
   { title: "보관", items: [
     { id: "backup", label: "데이터 백업", icon: "archive", state: backupState },

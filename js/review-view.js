@@ -10,6 +10,7 @@ import { parseDate } from "./schedule.js";
 import { DAYS } from "./time.js";
 import { withUpcoming } from "./wuwa.js";
 import { migrateGear, DEFAULT_GEAR } from "./warframe.js";
+import { markSyncDirty } from "./hobby-sync-view.js";
 import { $, esc } from "./dom.js";
 
 let reviews = store.load("reviews", {});         // { "2026-09-25": { answers: [4개] } }
@@ -153,6 +154,7 @@ export function startReview() {
     const i = Number(e.target.dataset.i);
     reviews = withAnswer(reviews, editingDay, i, e.target.value);
     $("reviewSaved").textContent = store.save("reviews", reviews) ? "저장했어." : "저장이 안 됐어. 저장 공간을 확인해 줘.";
+    markSyncDirty(); // 기록 시트에도 (연결했으면, 글이 멈추고 3초 뒤 한 번)
     renderReviewCard();
   });
 
@@ -161,6 +163,7 @@ export function startReview() {
   $("weekForm").addEventListener("input", (e) => {
     weekReviews = withAnswer(weekReviews, week, Number(e.target.dataset.i), e.target.value);
     $("weekSaved").textContent = store.save("weekReviews", weekReviews) ? "저장했어." : "저장이 안 됐어. 저장 공간을 확인해 줘.";
+    markSyncDirty();
     $("weekFormStatus").textContent = statusLabel(weekReviews[week]);
     renderReviewCard();
   });

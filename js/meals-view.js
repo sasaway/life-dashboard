@@ -7,6 +7,7 @@ import { DAYS } from "./time.js";
 import { planWeek, withOverride, pickable, syncMealLog, recordDay } from "./meals.js";
 import { ideasFor } from "./meal-tips.js";
 import { openRecipeForDish } from "./recipe-view.js";
+import { markSyncDirty } from "./hobby-sync-view.js";
 import { $, esc } from "./dom.js";
 
 const shortDay = (d) => `${DAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
@@ -120,6 +121,7 @@ export function startMeals() {
     // 지난 날을 고치면 그 날 먹은 기록도 고친다 (오늘은 renderAll 이 맞춘다)
     mealLog = recordDay(mealLog, new Date(`${picking.day}T00:00`), new Date(), getScheduleSettings(), overrides);
     store.save("mealLog", mealLog);
+    markSyncDirty(); // 기록 시트에도 (연결했으면)
     closeSheet();
     renderAll();
   });
