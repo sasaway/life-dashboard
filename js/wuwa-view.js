@@ -5,12 +5,13 @@ import { noteHobby } from "./hobby-log-view.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import {
   DAILY, WEEKLY, BUILD, PARTY_SIZE, dailyDone, weeklyDone, toggleDaily, tapWeekly, dailyCount, weeklyCount,
-  cleanCharacters, withUpcoming, isPlaceholder, adoptRealIds, ELEMENTS, WEAPONS, elementKey, filterCharacters, needsRefresh, addParty, renameParty, removeParty,
+  cleanCharacters, withUpcoming, isPlaceholder, adoptRealIds, findByName, pickupPlaceholder, ELEMENTS, WEAPONS, elementKey, filterCharacters, needsRefresh, addParty, renameParty, removeParty,
   placeCharacter, clearSlot, placesOf, maxUses, partyMembers, filledCount, toggleBuild, buildCount,
 } from "./wuwa.js";
 import { $, esc } from "./dom.js";
 import { ICON } from "./icons.js";
 import { markSyncDirty } from "./hobby-sync-view.js";
+import { pickupNames } from "./pickups.js";
 
 const CHARS_URL = "https://api.encore.moe/ko/character";
 const CHARS_MAX_AGE = 7 * 864e5; // 일주일마다 새 캐릭터를 확인한다
@@ -20,7 +21,9 @@ let checks = store.load("wuwaChecks", {});
 let parties = store.load("wuwaParties", []);
 let builds = store.load("wuwaBuilds", {});
 let chars = store.load("wuwaChars", { at: 0, list: [] }); // encore.moe 에서 받은 그대로
-let allChars = withUpcoming(chars.list); // + 아직 encore.moe 에 없는 3.7 공명자
+// + 아직 encore.moe 에 없는 공명자 (3.7 공명자 · 픽업 일정에만 있는 새 공명자 v2.7)
+const charsNow = () => withUpcoming(chars.list, pickupNames(store.load("wuwaPickups", null)));
+let allChars = charsNow();
 
 const saveChecks = () => { const ok = store.save("wuwaChecks", checks); markSyncDirty(); return ok; };
 // 저장할 때마다 기록 시트에도 (연결했으면)
@@ -81,7 +84,9 @@ function onCheckClick(e) {
 // ---------- 공통: 얼굴 · 속성 (가챠 화면도 같이 쓴다) ----------
 const unknown = { name: "알 수 없는 캐릭터", element: "", stars: 0, icon: "" };
 // 번호로 찾고, 없으면 이름으로 (3.7 공명자가 encore.moe 에 올라와 번호가 바뀌어도)
-export const findChar = (id, name) => charById(id) ?? allChars.find((c) => c.name === name) ?? null;
+export const findChar = (id, name) => charById(id) ?? findByName(allChars, name) ?? null;
+// 픽업 일정의 이름 → 공명자 (띄어쓰기·가운뎃점 무시). 목록에 없으면 임시 번호 · 빈 얼굴
+export const charByName = (name) => findByName(allChars, name) ?? pickupPlaceholder(name);
 export const face = (c, size) => (c.icon
   ? `<img class="face" src="${esc(c.icon)}" alt="" width="${size}" height="${size}" loading="lazy">`
   : `<span class="face noimg" style="width:${size}px;height:${size}px"></span>`);
@@ -249,7 +254,7 @@ async function loadCharacters() {
     if (!res.ok) throw new Error(res.status);
     chars = { at: Date.now(), list: cleanCharacters((await res.json()).roleList ?? []) };
     store.save("wuwaChars", chars);
-    allChars = withUpcoming(chars.list);
+    allChars = charsNow();
     adoptReal();
     $("wwCharsMsg").textContent = "";
     renderParties();
@@ -269,6 +274,12 @@ export function renderWuwa() {
 
 export function startWuwa() {
   adoptReal();
+  // 픽업 일정을 새로 받으면 (v2.7): 목록에 없는 새 공명자를 임시로 더하고, 가챠 화면도 다시 그리게 알린다
+  document.addEventListener("ww-pickups", () => {
+    allChars = charsNow();
+    renderParties();
+    document.dispatchEvent(new Event("ww-chars"));
+  });
   renderChecks();
   renderParties();
   loadCharacters();

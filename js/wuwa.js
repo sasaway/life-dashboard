@@ -90,16 +90,27 @@ export const UPCOMING = [
   { id: "pre-suoming", name: "쇄명", stars: 5, element: "전도", weapon: "직검", icon: "" },
 ];
 export const isPlaceholder = (c) => c.id.startsWith("pre-");
-const findByName = (list, name) => list.find((c) => squash(c.name) === squash(name));
+// 이름으로 찾기: 띄어쓰기와 가운뎃점은 무시한다
+export const findByName = (list, name) => list.find((c) => squash(c.name) === squash(name));
 
-// encore.moe 목록에 아직 없는 3.7 공명자만 더한다
-export const withUpcoming = (list) =>
-  [...list, ...UPCOMING.filter((u) => !findByName(list, u.name))].sort(byStarsThenName);
+// 픽업 일정(v2.7)에만 있는 새 공명자: 임시 번호 'pre-pk-이름' · 빈 얼굴 · 5성 (속성·무기는 아직 모름).
+// 번호 안에 이름이 들어 있어서, 진짜가 올라오면 이름으로 찾아 옮길 수 있다
+const PICKUP_PRE = "pre-pk-";
+export const pickupPlaceholder = (name) => ({ id: PICKUP_PRE + squash(name), name: name.trim(), stars: 5, element: "", weapon: "", icon: "" });
+
+// encore.moe 목록에 아직 없는 공명자만 더한다: 3.7 공명자 + 픽업 일정의 이름들(names)
+export function withUpcoming(list, names = []) {
+  const out = [...list];
+  for (const u of [...UPCOMING, ...names.filter((n) => squash(n)).map(pickupPlaceholder)]) if (!findByName(out, u.name)) out.push(u);
+  return out.sort(byStarsThenName);
+}
 
 // 진짜가 올라왔으면 파티 칸과 육성 체크를 임시 번호에서 진짜 번호로 옮긴다. 옮길 게 없으면 null
 export function adoptRealIds(parties, builds, list) {
   const to = {};
-  for (const u of UPCOMING) {
+  const used = new Set([...Object.keys(builds), ...parties.flatMap((p) => p.slots)].filter((id) => id?.startsWith(PICKUP_PRE)));
+  const pre = [...UPCOMING, ...[...used].map((id) => ({ id, name: id.slice(PICKUP_PRE.length) }))];
+  for (const u of pre) {
     const real = findByName(list, u.name);
     if (real && !isPlaceholder(real) && (u.id in builds || parties.some((p) => p.slots.includes(u.id)))) to[u.id] = real.id;
   }
@@ -112,7 +123,7 @@ export function adoptRealIds(parties, builds, list) {
 }
 
 // 이름 일부만 쳐도 찾는다 (카르 → 카르티시아). 띄어쓰기와 가운뎃점은 무시한다. 속성·무기 이름으로도 찾는다
-const squash = (t) => (t ?? "").replace(/[\s·.]+/g, "");
+export const squash = (t) => (t ?? "").replace(/[\s·.]+/g, "");
 export function searchCharacters(list, text) {
   const q = squash(text);
   if (!q) return list;

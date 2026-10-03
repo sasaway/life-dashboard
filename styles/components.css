@@ -479,6 +479,13 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .cal-hint{margin:0 0 10px}
 .hs-token{margin-top:8px}
 #set-hs .mini{word-break:keep-all}
+#set-hs .card-h{flex-wrap:wrap;gap:2px 8px}
+#set-hs .card-h h2{white-space:nowrap}
+.hs-pk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.hs-pk li{padding:8px 0;border-top:1px solid var(--line);font-size:var(--fs-small);word-break:keep-all;overflow-wrap:anywhere}
+.hs-pk li:first-child{border-top:0;padding-top:0}
+.hs-pk li.past{color:var(--faint)}
+.hs-pk .sub{display:block;font-size:var(--fs-tiny);color:var(--faint)}
 .hs-tabs{margin:0;font-size:13px;line-height:1.6;color:var(--sub);word-break:keep-all}
 
 /* ---------- 설정: 목록 → 눌러서 항목 화면 (v1.9) ---------- */
@@ -570,6 +577,20 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gc-plus svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
 .money-rows li.gc-block{flex-direction:column;align-items:stretch}
 .gc-select{width:112px;flex:none}
+/* 픽업 일정 (v2.7): '다음 픽업' 한 줄 · 새 일정 안내 · 고르는 창 · '직접' / '예정' 표시 */
+.gc .sub>span:empty+.mark{margin-left:0}
+.gc .mark,.pk-row .mark,.hs-pk .mark{margin-left:6px;white-space:nowrap;font-size:11px;font-weight:400;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
+.gc-next{display:flex;align-items:center;gap:8px;width:100%;min-height:var(--touch-nav);margin-bottom:6px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--bg);text-align:left;color:var(--ink)}
+.gc-next-k{flex:none;font-size:var(--fs-tiny);color:var(--sub)}
+.gc-next-v{flex:1;min-width:0;font-size:var(--fs-small);font-weight:600;word-break:keep-all;overflow-wrap:anywhere}
+.gc-next-by{display:block;font-size:var(--fs-tiny);font-weight:400;color:var(--sub)}
+.gc-next svg{flex:none;width:16px;height:16px;stroke:var(--faint);fill:none;stroke-width:2}
+.gc-new{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px;font-size:var(--fs-small);color:var(--sub)}
+.gc-new .btn{min-height:var(--touch)}
+.pk-row{display:flex;align-items:center;gap:10px}
+.pk-row .who{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pk-row .who b{font-weight:600}
+.pk-row .sub{font-size:var(--fs-tiny);font-weight:400;color:var(--sub);word-break:keep-all}
 .gc-exp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .gc-col{min-width:0;display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:var(--r-btn);word-break:keep-all}
 .gc-col h3{margin:0;font-size:var(--fs-label);font-weight:600}

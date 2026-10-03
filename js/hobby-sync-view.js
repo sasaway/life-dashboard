@@ -1,6 +1,7 @@
-// 설정 창의 '기록 시트 연결' (v1.8 취미 시트 → v2.6 라이프 기록까지).
+// 설정 창의 '기록 시트 연결' (v1.8 취미 시트 → v2.6 라이프 기록 → v2.7 픽업 일정 받기).
 // 기록을 저장하면 몇 초 모았다가 심부름꾼에게 통째로 보낸다. 앱을 열 때 날짜가 바뀌어 있으면 한 번 보낸다.
 // 못 보내면 '보낼 것 있음' 만 기억해 두고, 앱을 다시 열거나 인터넷이 돌아오면 다시 보낸다.
+// 받는 건 '픽업 일정' 탭 하나 (Claude 가 적는 탭): 앱을 열 때 · 돌아올 때, 마지막으로 받은 지 6시간이 넘었을 때만. 못 받으면 저장해 둔 걸 쓴다.
 import { store } from "./store.js";
 import { isHelperUrl } from "./calendar.js";
 import { payload, replyError, SENT_TABS } from "./hobby-sync.js";
@@ -9,7 +10,8 @@ import { withUpcoming } from "./wuwa.js";
 import { pad } from "./schedule.js";
 import { reviewDay } from "./review.js";
 import { getScheduleSettings } from "./schedule-view.js";
-import { $ } from "./dom.js";
+import { emptyPickups, shouldFetch, readPickupReply, pickupsOf, pickupNames, isTentative, isRerun } from "./pickups.js";
+import { $, esc } from "./dom.js";
 
 const KEY = "hobbySync"; // { url, token, dirty, sentAt, sentDay, error } — 주소·암호 글자는 폰에만 (코드·GitHub 에는 없음)
 const WAIT = 3000;       // 저장이 이어지면 3초 모았다가 한 번
@@ -18,6 +20,9 @@ let conf = { ...OFF, ...store.load(KEY, {}) };
 let timer = 0;
 let busy = false;
 let changes = 0; // 보내는 사이에 또 저장했는지 알려고 센다
+let pk = { ...emptyPickups(), ...store.load("wuwaPickups", {}) }; // 받은 픽업 일정 (v2.7)
+let pkBusy = false;
+let pkError = "";
 
 const save = () => store.save(KEY, conf);
 export const hobbySyncOn = () => Boolean(conf.url && conf.token);
@@ -28,8 +33,10 @@ const timeLabel = (ms) => {
   return d.toDateString() === new Date().toDateString() ? hm : `${d.getMonth() + 1}/${d.getDate()} ${hm}`;
 };
 
-// 설정 목록 줄 오른쪽의 짧은 상태: '안 됨' / '연결됨' / '보냄 22:10'
-export const hobbySyncState = () => (!hobbySyncOn() ? "안 됨" : conf.sentAt ? `보냄 ${timeLabel(conf.sentAt)}` : "연결됨");
+const mdOf = (ms) => `${new Date(ms).getMonth() + 1}/${new Date(ms).getDate()}`;
+// 설정 목록 줄 오른쪽의 짧은 상태: '안 됨' / '연결됨' / '보냄 22:10 · 픽업 10/1' (픽업 = 마지막으로 받은 날)
+export const hobbySyncState = () => (!hobbySyncOn() ? "안 됨"
+  : [conf.sentAt ? `보냄 ${timeLabel(conf.sentAt)}` : "연결됨", pk.at ? `픽업 ${mdOf(pk.at)}` : ""].filter(Boolean).join(" · "));
 
 // msg = 연결 카드에 띄울 말 (주소가 다를 때 등). 보낸 결과는 'Claude 가 읽는 기록' 카드에
 function render(msg = "") {
@@ -47,6 +54,60 @@ function render(msg = "") {
     : conf.error ? `못 보냄 — ${conf.error}`
     : conf.dirty ? (navigator.onLine ? "보낼 게 있어. 곧 보낼게." : "못 보냄 — 인터넷이 없어. 연결되면 보낼게.")
     : "";
+  renderPickups();
+}
+
+// 'Claude 가 채우는 픽업 일정' 카드: 받은 줄 목록 (읽기 전용). 연결을 끊어도 받아 둔 건 남아 있다
+function renderPickups() {
+  const on = hobbySyncOn();
+  const now = new Date();
+  const list = pickupsOf(pk);
+  $("hsPkAt").textContent = pk.at ? `마지막으로 받음 ${timeLabel(pk.at)}` : on ? "아직 받은 적 없어" : "";
+  $("hsPkGet").hidden = !on;
+  const tag = (t) => `<span class="mark">${t}</span>`;
+  $("hsPkList").innerHTML = list.map((p) => `<li${p.to <= now ? ' class="past"' : ""}>
+    ${esc([p.version, p.phase, p.char].filter(Boolean).join(" · "))}${isTentative(p) ? tag("예정") : ""}${isRerun(p) ? tag("복각") : ""}${p.to <= now ? tag("끝남") : ""}
+    <span class="sub">${esc(`${p.start} ~ ${p.end}`)}${p.weapon ? esc(` · 전무 ${p.weapon}`) : ""}</span></li>`).join("");
+  const skipped = pk.rows.length - list.length;
+  $("hsPkMsg").textContent = pkBusy ? "받는 중…"
+    : pkError ? `${pkError}${pk.at ? " 저장해 둔 걸 쓰고 있어." : ""}`
+    : !pk.at ? (on ? "" : "연결하면 받아 와.")
+    : !list.length ? "시트에 픽업 일정이 아직 없어. 픽업 페이지에는 직접 적으면 돼."
+    : skipped ? `${skipped}줄은 공명자 이름이나 날짜를 못 읽어서 뺐어.` : "";
+}
+
+// '픽업 일정' 탭 받기. force = '지금 받기' 버튼 (6시간이 안 지났어도)
+async function fetchPickups(force = false) {
+  if (!hobbySyncOn() || pkBusy) return;
+  if (!force && !shouldFetch(pk, Date.now())) return;
+  if (!navigator.onLine) { pkError = "인터넷이 없어서 못 받았어."; return render(); }
+  pkBusy = true;
+  render();
+  try {
+    // 암호 글자는 주소가 아니라 보내는 글 안에 (주소에 드러나지 않게). text/plain 이라 사전 확인 없이 간다
+    const res = await fetch(conf.url, {
+      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ token: conf.token, action: "pickups" }),
+    });
+    const json = await res.json();
+    const got = readPickupReply(json, Date.now());
+    if (got) {
+      pk = got;
+      pkError = "";
+      store.save("wuwaPickups", pk);
+      document.dispatchEvent(new Event("ww-pickups")); // 명조 화면이 새 공명자·다음 픽업을 다시 그린다
+    } else if (json?.ok === true) {
+      // 옛 심부름꾼은 이 요청을 '빈 기록 보내기' 로 알고 탭을 비운다 → 바로 다시 보내서 채워 둔다
+      pkError = "심부름꾼이 옛 코드야. 새 코드로 바꿔 붙이고 '새 버전' 으로 배포해 줘.";
+      markSyncDirty();
+    } else {
+      pkError = replyError(json);
+    }
+  } catch {
+    pkError = "인터넷이 안 되거나 심부름꾼이 답을 안 해서 못 받았어.";
+  } finally {
+    pkBusy = false;
+    render();
+  }
 }
 
 // 보낼 때마다 폰에 저장된 걸 새로 읽는다 (화면 코드와 얽히지 않게)
@@ -56,7 +117,7 @@ function readAll() {
     gear: migrateGear(store.load("wfGear", DEFAULT_GEAR)),
     parties: store.load("wuwaParties", []),
     builds: store.load("wuwaBuilds", {}),
-    chars: withUpcoming(chars),
+    chars: withUpcoming(chars, pickupNames(pk)),
     settings: getScheduleSettings(),
     workoutLog: store.load("workoutLog", {}),
     mealLog: store.load("mealLog", {}),
@@ -114,6 +175,7 @@ function wake() {
   if (!hobbySyncOn()) return;
   if (conf.sentDay !== reviewDay(new Date())) conf.dirty = true;
   send();
+  fetchPickups();
 }
 
 // 입력칸은 설정을 열 때만 저장된 값으로 채운다 (잘못 붙여 넣었을 때 지우지 않게)
@@ -136,7 +198,9 @@ export function startHobbySync() {
     conf = { ...conf, url, token, dirty: true, error: "" };
     save();
     send();
+    fetchPickups(true);
   });
+  $("hsPkGet").addEventListener("click", () => fetchPickups(true));
   $("hsSync").addEventListener("click", () => {
     conf.dirty = true;
     conf.error = "";

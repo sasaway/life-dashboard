@@ -155,3 +155,15 @@ test("핫픽스 v2.5.1 의 예전 마감반(oldClose)도 백업 → 되살리기
   restoreItems(later, readBackupText(text).backup.items);
   assert.deepEqual(JSON.parse(later.getItem("ld:schedule")), schedule);
 });
+
+test("v2.7 픽업 일정(wuwaPickups)과 가챠 계획의 '직접' 표시도 백업 → 되살리기로 그대로 돌아온다", async () => {
+  const wuwaPickups = { at: 1791000000000, updated: "마지막 갱신: 2026-10-03 09:00",
+    rows: [["3.7", "2페이즈", "2026-10-21 10:00", "2026-11-11 09:59", "쇄명", "전무 \"이름\"", "아니오", "예정", "공식 공지", "2026-10-01"]] };
+  const wuwaGacha = normalizeGacha({ plan: { date: "2026-10-15", char: "pre-suoming", charName: "쇄명", charBy: "auto", dateBy: "manual", autoKey: "", seenKey: "3.7|2페이즈|쇄명@a~b" } });
+  const phone = fakeStorage({ "ld:wuwaPickups": JSON.stringify(wuwaPickups), "ld:wuwaGacha": JSON.stringify(wuwaGacha) });
+  const text = JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v2.7 픽업 일정 · 10월 3일" }));
+  const later = fakeStorage({});
+  restoreItems(later, readBackupText(text).backup.items);
+  assert.deepEqual(JSON.parse(later.getItem("ld:wuwaPickups")), wuwaPickups);
+  assert.deepEqual(normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha"))).plan, wuwaGacha.plan);
+});

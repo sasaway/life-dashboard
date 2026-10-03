@@ -9,6 +9,7 @@ import { mealReport, workoutReport, reviewReport, hobbyReport } from "./weekly-r
 import { parseDate } from "./schedule.js";
 import { DAYS } from "./time.js";
 import { withUpcoming } from "./wuwa.js";
+import { pickupNames } from "./pickups.js";
 import { migrateGear, DEFAULT_GEAR } from "./warframe.js";
 import { markSyncDirty } from "./hobby-sync-view.js";
 import { $, esc } from "./dom.js";
@@ -85,7 +86,7 @@ function reportHtml(days) {
     </div>`).join("") : `<p class="mini">이 주에 쓴 일일 회고가 없어.</p>`;
   // 취미: 이 주를 처음 열 때 한 벌 ↔ 다음 주 처음(지난 주면) 또는 지금
   const hobbyLog = { days: {}, weeks: {}, ...store.load("hobbyLog", {}) };
-  const chars = withUpcoming(store.load("wuwaChars", { list: [] }).list);
+  const chars = withUpcoming(store.load("wuwaChars", { list: [] }).list, pickupNames(store.load("wuwaPickups", null)));
   const charName = (id) => chars.find((c) => c.id === id)?.name ?? `알 수 없는 공명자 (${id})`;
   const now = { parties: store.load("wuwaParties", []), builds: store.load("wuwaBuilds", {}), gear: migrateGear(store.load("wfGear", DEFAULT_GEAR)) };
   const end = hobbyLog.weeks[shiftWeek(week, 1)] ?? now;

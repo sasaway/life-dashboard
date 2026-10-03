@@ -6,12 +6,19 @@ import {
   normalizeGacha, count, pullsOf, daysUntil, dLabel, income, passCharDay, passCharIn, FREE_HINT, MONTHLY_MAX_DAYS,
   CHAINS, chainLabel, expectation, astriteNeeded, verdict,
 } from "./gacha.js";
-import { openGachaPicker, findChar, face, elTag } from "./wuwa-view.js";
+import { openGachaPicker, findChar, charByName, face, elTag } from "./wuwa-view.js";
+import {
+  pickupsOf, nextPhase, livePickups, autoFill, applyPickup, markByHand, hasNewPickup, byHand, rowKey, phaseLabel, rangeLabel,
+  isTentative, isRerun, isOngoing,
+} from "./pickups.js";
+import { openSheet, closeSheet } from "./sheet.js";
 import { ICON } from "./icons.js";
 import { ymd } from "./schedule.js";
 import { $, esc } from "./dom.js";
 
 let g = normalizeGacha(store.load("wuwaGacha", null));
+// Claude 가 시트에 적은 픽업 일정 (v2.7). 받기는 hobby-sync-view.js — 여기서는 저장된 걸 읽기만 한다
+let pickups = pickupsOf(store.load("wuwaPickups", null));
 
 const save = () => {
   const ok = store.save("wuwaGacha", g);
@@ -42,9 +49,22 @@ function paintToggle(b) {
 const md = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`;
 const bundle = (x) => `별소 ${num(x.astrite)} · 캐릭뽑 ${num(x.char)} · 무기뽑 ${num(x.weap)}`;
 
+// 픽업 일정으로 공명자·날짜를 채운다 (직접 고친 계획은 그대로). 바뀌었으면 저장하고 날짜 칸도 맞춘다
+function setPlan(plan) {
+  if (plan === g.plan) return;
+  g = { ...g, plan };
+  save();
+  $("gcDate").value = plan.date;
+}
+
 // 계산 글자만 다시 쓴다 (분마다 · 입력할 때마다)
 export function renderGacha() {
-  const days = daysUntil(g.plan.date, new Date());
+  const now = new Date();
+  setPlan(autoFill(g.plan, pickups, now, charByName));
+  // 임시 번호로 고른 공명자가 encore.moe 에 올라왔으면 진짜 번호로 옮긴다 (직접 고른 것도)
+  const real = g.plan.char ? findChar(g.plan.char, g.plan.charName) : null;
+  if (real && real.id !== g.plan.char) setPlan({ ...g.plan, char: real.id, charName: real.name });
+  const days = daysUntil(g.plan.date, now);
   const has = days !== null && days >= 0;
   const r = income(g, days);
   const left = has ? dLabel(days) : "";
@@ -82,14 +102,49 @@ export function renderGacha() {
   $("gcDate").min = ymd(new Date());
 }
 
+// ---------- 픽업 일정 (v2.7): '다음 픽업' 한 줄 · '새 픽업 일정이 있어' 안내 · 고르는 창 ----------
+const mark = (text) => `<span class="mark">${text}</span>`;
+function renderNext() {
+  const now = new Date();
+  const next = nextPhase(pickups, now);
+  $("gcNext").hidden = !next;
+  $("gcNew").hidden = !hasNewPickup(g.plan, pickups, now, charByName);
+  // '직접' 표시는 픽업 일정을 받아 쓰는 폰에서만 (일정이 없으면 전부 직접이라 뜻이 없다)
+  $("gcDateBy").hidden = !(pickups.length && g.plan.dateBy === "manual");
+  if (!next) return;
+  const mine = !byHand(g.plan) && next.rows.some((p) => rowKey(p) === g.plan.autoKey);
+  const tail = mine ? "Claude가 채움" : next.rows.length > 1 && !byHand(g.plan) ? "눌러서 골라 줘" : "";
+  $("gcNext").innerHTML = `<span class="gc-next-k">다음 픽업</span>
+    <span class="gc-next-v">${esc(phaseLabel(next))}${next.rows.some(isTentative) ? mark("예정") : ""}${tail ? `<span class="gc-next-by">${tail}</span>` : ""}</span>${ICON.chevronRight}`;
+}
+
+// 고르는 창: 아직 안 끝난 픽업을 한 줄씩. 누르면 그 공명자와 날짜를 계획에 넣는다
+function openPickupSheet() {
+  const now = new Date();
+  $("pkList").innerHTML = livePickups(pickups, now).map((p) => {
+    const c = charByName(p.char);
+    const on = !byHand(g.plan) && rowKey(p) === g.plan.autoKey;
+    const sub = [p.version, p.phase, rangeLabel(p), isOngoing(p, now) ? "진행 중" : "", isRerun(p) ? "복각" : ""].filter(Boolean).join(" · ");
+    return `<li><button class="pick pk-row" data-pk="${esc(rowKey(p))}" aria-pressed="${on}">
+      ${face(c, 40)}<span class="who"><b>${esc(c.name)}</b><span class="sub">${esc(sub)}${isTentative(p) ? mark("예정") : ""}</span></span></button></li>`;
+  }).join("");
+  openSheet("pkSheet");
+}
+
+function usePickup(row) {
+  setPlan(applyPickup(g.plan, row, new Date(), charByName));
+  renderGacha();
+}
+
 // ---------- 픽업 (v2.5) ----------
 function renderPlan(r, days) {
+  renderNext();
   const p = g.plan;
   const c = p.char ? findChar(p.char, p.charName) : null;
   const name = c?.name ?? p.charName;
   $("gcChar").innerHTML = p.char
     ? `${c ? face(c, 40) : `<span class="face noimg" style="width:40px;height:40px"></span>`}
-       <span class="who"><b>${esc(name)}</b><span class="sub">${c ? elTag(c.element) : ""}</span></span><span class="gc-char-go">바꾸기</span>`
+       <span class="who"><b>${esc(name)}${pickups.length && p.charBy === "manual" ? mark("직접") : ""}</b><span class="sub">${c ? elTag(c.element) : ""}</span></span><span class="gc-char-go">바꾸기</span>`
     : `<span class="gc-plus">${ICON.plus}</span><span class="who"><b>공명자 고르기</b><span class="sub">5성만 보여</span></span>`;
   $("gcChains").innerHTML = CHAINS.map((n) =>
     `<button class="fchip" data-gc-chain="${n}" aria-pressed="${p.chain === n}" aria-label="목표 ${chainLabel(n)}"><span>${n === 0 ? "명함" : n}</span></button>`).join("");
@@ -118,12 +173,17 @@ function renderPlan(r, days) {
   $("gcExp").innerHTML = col("픽뚫 안 당함", e.win) + col("픽뚫 당함", e.lose);
 }
 
+// 은월이 공명자·날짜를 직접 고쳤다 → 픽업 일정이 덮어쓰지 않게 표시한다
+function byMe(what) {
+  g = { ...g, plan: markByHand(g.plan, what, pickups, new Date()) };
+}
+
 function pickChar() {
   openGachaPicker({
     current: g.plan.char,
     currentName: g.plan.charName,
-    onPick: (id, name) => { setAt("plan.char", id); setAt("plan.charName", name); save(); renderGacha(); },
-    onClear: () => { setAt("plan.char", ""); setAt("plan.charName", ""); save(); renderGacha(); },
+    onPick: (id, name) => { setAt("plan.char", id); setAt("plan.charName", name); byMe("char"); save(); renderGacha(); },
+    onClear: () => { setAt("plan.char", ""); setAt("plan.charName", ""); byMe("char"); save(); renderGacha(); },
   });
 }
 
@@ -140,6 +200,7 @@ export function startGacha() {
       if (!el) return;
       if (el.type === "date") {
         setAt(el.dataset.g, el.value);
+        if (el.dataset.g === "plan.date") byMe("date");
       } else if (el.tagName === "SELECT") {
         setAt(el.dataset.g, Number(el.value));
       } else {
@@ -156,7 +217,14 @@ export function startGacha() {
       const t = e.target.closest("[data-gt]");
       const go = e.target.closest("[data-ww-go]");
       const chain = e.target.closest("[data-gc-chain]");
-      if (e.target.closest("#gcChar")) {
+      if (e.target.closest("#gcNext")) {
+        openPickupSheet();
+      } else if (e.target.closest("#gcNewGo")) {
+        // 다음 픽업에 공명자가 한 명이면 바로 바꾸고, 여럿이면 고르는 창
+        const next = nextPhase(pickups, new Date());
+        if (next?.rows.length === 1) usePickup(next.rows[0]);
+        else openPickupSheet();
+      } else if (e.target.closest("#gcChar")) {
         pickChar();
       } else if (chain) {
         setAt("plan.chain", Number(chain.dataset.gcChain));
@@ -180,5 +248,16 @@ export function startGacha() {
   }
   // 재화 · 픽업으로 넘어올 때 남은 날을 새로 센다
   $("wwPick").addEventListener("click", () => renderGacha());
-  document.addEventListener("ww-chars", () => renderGacha()); // 캐릭터 목록을 새로 받으면 얼굴도
+  // 캐릭터 목록이나 픽업 일정을 새로 받으면 (wuwa-view 가 알린다) 일정을 다시 읽고 얼굴도 새로
+  document.addEventListener("ww-chars", () => {
+    pickups = pickupsOf(store.load("wuwaPickups", null));
+    renderGacha();
+  });
+  $("pkList").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-pk]");
+    const row = b && pickups.find((p) => rowKey(p) === b.dataset.pk);
+    if (!row) return;
+    closeSheet();
+    usePickup(row);
+  });
 }

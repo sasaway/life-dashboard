@@ -30,12 +30,15 @@ const MAX_COUNT = 9_999_999;
 //   paid: { monthly, monthlyDay, pass, passAstrite, passChar, passDate, topup },  ← 과금: 켬/끔과 값, passDate = 패스 산 날
 //   plan: { date,                                        ← 픽업 날짜 "2026-10-14" (없으면 "")
 //           char, charName, chain, owned, weapon,        ← v2.5 공명자(번호 · 이름), 목표 체인 0~6, 가진 체인(-1 = 없음), 전무 켬/끔
-//           stack, guaranteed, wStack } }                ← 캐릭 픽업 스택 0~79 · 확정 켬/끔, 무기 픽업 스택
+//           stack, guaranteed, wStack,                   ← 캐릭 픽업 스택 0~79 · 확정 켬/끔, 무기 픽업 스택
+//           charBy, dateBy, autoKey, seenKey } }         ← v2.7 픽업 일정: 공명자·날짜를 누가 넣었나 ("" · "auto" Claude 일정 · "manual" 직접),
+//                                                           채운 픽업 줄, 직접 고칠 때 본 일정 (js/pickups.js)
 export const defaultGacha = () => ({
   have: { astrite: 0, char: 0, weap: 0 },
   free: { daily: DAILY_ASTRITE, astrite: 0, char: 0 },
   paid: { monthly: false, monthlyDay: MONTHLY_PER_DAY, pass: false, passAstrite: PASS_ASTRITE, passChar: PASS_CHAR, passDate: "", topup: 0 },
-  plan: { date: "", char: "", charName: "", chain: 0, owned: -1, weapon: false, stack: 0, guaranteed: false, wStack: 0 },
+  plan: { date: "", char: "", charName: "", chain: 0, owned: -1, weapon: false, stack: 0, guaranteed: false, wStack: 0,
+    charBy: "", dateBy: "", autoKey: "", seenKey: "" },
 });
 
 // 저장된 값에 빠진 칸이 있으면 기본값으로 채운다 (나중에 칸이 늘어도 옛 저장이 그대로 열린다)
@@ -44,6 +47,11 @@ export function normalizeGacha(saved) {
   if (!saved || typeof saved !== "object") return base;
   const out = {};
   for (const [group, fields] of Object.entries(base)) out[group] = { ...fields, ...(saved[group] ?? {}) };
+  // v2.6 까지 적어 둔 공명자·날짜는 은월이 직접 넣은 것 → 픽업 일정(v2.7)이 덮어쓰지 않게 '직접' 으로 옮긴다
+  if (saved.plan && !("charBy" in saved.plan)) {
+    if (out.plan.char) out.plan.charBy = "manual";
+    if (out.plan.date) out.plan.dateBy = "manual";
+  }
   return out;
 }
 
