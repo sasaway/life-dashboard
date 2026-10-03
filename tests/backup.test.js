@@ -6,7 +6,7 @@ import {
 import { syncMealLog } from "../js/meals.js";
 import { emptyHobbyLog, noteDay, noteWeek } from "../js/hobby-log.js";
 import { DEFAULT_SETTINGS } from "../js/schedule.js";
-import { normalizeGacha } from "../js/gacha.js";
+import { normalizeGacha, income } from "../js/gacha.js";
 
 // localStorage 흉내 (key · length 까지)
 function fakeStorage(entries = {}) {
@@ -166,4 +166,29 @@ test("v2.7 픽업 일정(wuwaPickups)과 가챠 계획의 '직접' 표시도 백
   restoreItems(later, readBackupText(text).backup.items);
   assert.deepEqual(JSON.parse(later.getItem("ld:wuwaPickups")), wuwaPickups);
   assert.deepEqual(normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha"))).plan, wuwaGacha.plan);
+});
+
+test("v2.8 과금 상품(wuwaGacha.paid): 새 모양은 백업 → 되살리기로 그대로, 옛 모양(v2.7 백업)은 되살린 뒤 열면 숫자가 그대로", async () => {
+  // 새 모양: 기본 상품 + 루나이트 단계 + 직접 추가 상품
+  const fresh = normalizeGacha({ plan: { date: "2026-10-21" } });
+  fresh.paid.items.phaseChar = { ...fresh.paid.items.phaseChar, count: 2, price: 12000, name: "구도자의 \"찬란한\" 컬렉션" };
+  fresh.paid.items.topup.tiers[5] = { count: 1, first: true };
+  fresh.paid.custom.push({ id: "c-1", name: "3.7 기념 패키지", lunite: 0, astrite: 1600, charPulls: 0, weaponPulls: 0, cycle: "once", price: 33000, count: 1 });
+  const phone = fakeStorage({ "ld:wuwaGacha": JSON.stringify(fresh) });
+  const text = JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v2.8 과금 상품 · 10월 4일" }));
+  const later = fakeStorage({});
+  restoreItems(later, readBackupText(text).backup.items);
+  assert.deepEqual(JSON.parse(later.getItem("ld:wuwaGacha")), fresh);
+  assert.deepEqual(normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha"))), fresh, "다시 열어도 그대로");
+  // 옛 모양: v2.7 폰에서 만든 백업
+  const old = { have: { astrite: 16000, char: 0, weap: 0 }, free: { daily: 60, astrite: 0, char: 0 },
+    paid: { monthly: true, monthlyDay: 90, pass: true, passAstrite: 680, passChar: 2, passDate: "2026-09-20", topup: 500 }, plan: { date: "2026-10-14" } };
+  const oldPhone = fakeStorage({ "ld:wuwaGacha": JSON.stringify(old) });
+  const oldText = JSON.stringify(await makeBackup({ storage: oldPhone, photos: [], appVersion: "v2.7 픽업 일정 · 10월 3일" }));
+  const newPhone = fakeStorage({});
+  restoreItems(newPhone, readBackupText(oldText).backup.items);
+  assert.deepEqual(JSON.parse(newPhone.getItem("ld:wuwaGacha")), old, "백업은 옛 모양 그대로 돌아온다");
+  const opened = normalizeGacha(JSON.parse(newPhone.getItem("ld:wuwaGacha")));
+  assert.deepEqual(income(opened, 14).paid, { astrite: 90 * 14 + 680 + 500, char: 2, weap: 0 });
+  assert.equal(opened.paid.custom[0].name, "직접 충전");
 });

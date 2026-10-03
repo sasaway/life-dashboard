@@ -53,7 +53,7 @@ test("저장 칸이 비었거나 옛 모양이어도 기본값으로 채워 연�
   const old = normalizeGacha({ have: { astrite: 500 }, plan: { date: "2026-10-14" } });
   assert.deepEqual(old.have, { astrite: 500, char: 0, weap: 0 });
   assert.equal(old.free.daily, 60);
-  assert.equal(old.paid.passAstrite, 680);
+  assert.equal(old.paid.items.pass.astrite, 680);
   assert.equal(old.plan.date, "2026-10-14");
 });
 
@@ -75,7 +75,7 @@ test("재화 합계: 무과금만 / 과금 포함", () => {
 test("월정액은 최대 30일까지만, 끄면 0", () => {
   const g = normalizeGacha({ paid: { monthly: true } });
   assert.equal(income(g, 45).paid.astrite, 90 * 30);
-  assert.equal(income(g, 45).monthlyDays, 30);
+  assert.equal(income(g, 10).paid.astrite, 90 * 10);
   assert.equal(income(normalizeGacha({}), 45).paid.astrite, 0);
 });
 

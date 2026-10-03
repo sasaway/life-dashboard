@@ -65,6 +65,19 @@ export function nextPhase(list, now) {
   return ongoing[0] ?? coming[0] ?? null;
 }
 
+// 과금 상품의 '픽업 날까지 최대 n개' 힌트용 (v2.8): 지금부터 픽업 날(date)까지 걸치는 페이즈 · 버전 수. 일정이 없으면 null.
+// 지금은 늘 어떤 페이즈 안이니, 시트에 진행 중인 페이즈가 안 적혀 있으면 하나를 더 센다
+export function phasesUntil(list, now, date) {
+  const end = parseWhen(`${date} 23:59`);
+  if (!list.length || !end) return null;
+  const live = livePickups(list, now).filter((p) => p.from <= end);
+  const ongoing = live.some((p) => p.from <= now);
+  return {
+    phases: new Set(live.map((p) => `${p.version}|${p.phase}`)).size + (ongoing ? 0 : 1),
+    versions: Math.max(1, new Set(live.map((p) => p.version)).size),
+  };
+}
+
 // 계획에 넣을 날짜: 이미 진행 중인 픽업이면 끝나는 날, 아직 안 시작했으면 시작하는 날
 export const planDate = (p, now) => ymd(isOngoing(p, now) ? p.to : p.from);
 

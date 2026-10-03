@@ -254,15 +254,14 @@
         </section>
         <section class="card" aria-labelledby="gcPaidH">
           <div class="card-h"><h2 id="gcPaidH">과금으로 받을 것</h2><small>대략</small></div>
-          <ul class="money-rows">
-            <li class="gc-row"><span class="name">월정액<span class="sub num" id="gcMonthlyCalc"></span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.monthlyDay" placeholder="0" aria-label="월정액 하루 별소"><button class="pin" data-gt="paid.monthly" aria-pressed="false" aria-label="월정액 켜기">끔</button></li>
-            <li class="gc-row"><span class="name">유료 패스<span class="sub">별소 · 바로</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.passAstrite" placeholder="0" aria-label="유료 패스 별소"><button class="pin" data-gt="paid.pass" aria-pressed="false" aria-label="유료 패스 켜기">끔</button>
-              <span class="gc-sub">캐릭뽑 · 3주 뒤</span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.passChar" placeholder="0" aria-label="유료 패스 캐릭뽑">
-              <label class="gc-sub gc-pass" for="gcPassDate" hidden>산 날</label><input class="field mono gc-date gc-pass" id="gcPassDate" type="date" data-g="paid.passDate" aria-describedby="gcPassCalc" hidden>
-              <span class="gc-note num gc-pass" id="gcPassCalc" hidden></span></li>
-            <li><span class="name">직접 충전<span class="sub">별소</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="paid.topup" placeholder="0" aria-label="직접 충전할 별소"></li>
-          </ul>
-          <p class="mini">게임 안 값이 다르면 고쳐 줘. 켠 것만 합계에 들어가.</p>
+          <ul class="gc-shop" id="gcShop"></ul>
+          <p class="empty" id="gcShopEmpty" hidden>픽업 날까지 살 상품이 아직 없어. '상품 더 보기'에서 골라 줘.</p>
+          <div class="btns gc-shop-btns">
+            <button class="btn btn-text" id="gcShopMore" aria-controls="gcShop" hidden></button>
+            <button class="btn btn-ghost" id="gcShopAdd">+ 상품 직접 추가</button>
+          </div>
+          <ul class="gc-sum gc-paid-sum" id="gcPaidSum"></ul>
+          <p class="mini">개수는 픽업 날까지 살 만큼 적어. 이름을 누르면 내용물을 고칠 수 있어. 앱에서는 계산만 하고, 결제는 게임에서 해.</p>
         </section>
         <section class="card" aria-labelledby="gcSumH">
           <div class="card-h"><h2 id="gcSumH">픽업 날까지 모이는 것</h2><small class="mono" id="gcSumD"></small></div>
@@ -551,6 +550,41 @@
     </div>
     <button class="btn btn-ghost pick-recipe" id="pickRecipe">이 요리 레시피 보기</button>
     <ul class="picks" id="pickList"></ul>
+  </div>
+</div>
+
+<!-- 가챠 재화: 과금 상품 고치기 · 상품 직접 추가 (v2.8) -->
+<div class="sheet-wrap" id="gcItemSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="gcItemTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <div><h2 id="gcItemTitle">상품 직접 추가</h2><p class="date" id="gcItemNote"></p></div>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <form class="gc gc-form" id="gcItemForm" autocomplete="off" novalidate>
+      <label class="gc-form-name" for="giName">이름</label>
+      <input class="field" id="giName" maxlength="30" placeholder="예: 3.7 기념 패키지">
+      <div id="giTierBox" hidden>
+        <ul class="money-rows" id="giTiers"></ul>
+        <p class="gc-tier-sum num" id="giTierSum"></p>
+      </div>
+      <ul class="money-rows">
+        <li id="giLuniteRow"><label class="name" for="giLunite">루나이트<span class="sub">별소와 1:1</span></label><input class="field mono won" id="giLunite" inputmode="numeric" pattern="[0-9]*" maxlength="7" placeholder="0"></li>
+        <li id="giAstriteRow"><label class="name" for="giAstrite">별소</label><input class="field mono won" id="giAstrite" inputmode="numeric" pattern="[0-9]*" maxlength="7" placeholder="0"></li>
+        <li id="giPerDayRow"><label class="name" for="giPerDay">하루 별소<span class="sub">30일 동안</span></label><input class="field mono won" id="giPerDay" inputmode="numeric" pattern="[0-9]*" maxlength="7" placeholder="0"></li>
+        <li id="giCharRow"><label class="name" for="giChar">캐릭뽑</label><input class="field mono won" id="giChar" inputmode="numeric" pattern="[0-9]*" maxlength="7" placeholder="0"></li>
+        <li id="giWeapRow"><label class="name" for="giWeap">무기뽑</label><input class="field mono won" id="giWeap" inputmode="numeric" pattern="[0-9]*" maxlength="7" placeholder="0"></li>
+        <li id="giCycleRow"><label class="name" for="giCycle">주기<span class="sub">얼마나 자주 살 수 있나</span></label><select class="field gc-select" id="giCycle"></select></li>
+        <li id="giDateRow"><label class="name" for="giDate">산 날</label><input class="field mono gc-date" id="giDate" type="date"></li>
+        <li id="giPriceRow"><label class="name" for="giPrice">가격(원)<span class="sub">한 개 · 비워도 돼</span></label><input class="field mono won" id="giPrice" inputmode="numeric" pattern="[0-9]*" maxlength="7" placeholder="0"></li>
+      </ul>
+      <p class="msg" id="giMsg" role="alert"></p>
+      <div class="btns">
+        <button class="btn btn-primary" type="submit">저장</button>
+        <button class="btn btn-text" type="button" id="giReset" hidden>기본값으로</button>
+        <button class="btn btn-text" type="button" id="giDelete" hidden>삭제</button>
+      </div>
+    </form>
   </div>
 </div>
 

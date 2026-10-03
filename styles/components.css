@@ -551,12 +551,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 
 /* ---------- 명조 가챠 계산기 (v2.4): 재화 · 픽업. 숫자 칸 줄은 돈 화면 .money-rows 를 그대로 쓴다 ---------- */
 .gc .money-rows .field.won{width:104px}
-.money-rows li.gc-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px;row-gap:6px}
-.gc-row .gc-sub{grid-column:1;text-align:right;font-size:var(--fs-tiny);color:var(--faint)}
 .gc .name,.gc .mini{word-break:keep-all}
-.gc-row .gc-date{grid-column:2/-1;width:100%}
-.gc-row .gc-note{grid-column:1/-1;font-size:var(--fs-tiny);color:var(--sub);text-align:right}
-.gc-row .pin{min-width:48px}
 .gc-hint{font-size:var(--fs-tiny);color:var(--faint);line-height:1.5}
 .gc-sum{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .gc-sum li{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
@@ -577,6 +572,34 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gc-plus svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
 .money-rows li.gc-block{flex-direction:column;align-items:stretch}
 .gc-select{width:112px;flex:none}
+/* 과금 상품 (v2.8): 상품 줄 = 이름·알약 | 개수 − / + , 내용물·힌트 | 가격 칸 */
+.gc-shop{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.gc-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 10px;padding:10px 0;border-top:1px solid var(--line)}
+.gc-item:first-child{border-top:0;padding-top:0}
+.gc-item-name{display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:var(--touch);padding:0;border:0;background:none;text-align:left;color:var(--ink);font:inherit;word-break:keep-all;overflow-wrap:anywhere}
+.gc-item-name b{font-weight:600}
+.gc-item-marks{display:flex;flex-wrap:wrap;gap:4px;line-height:1.5}
+.gc-item-name .mark{margin:0}
+#gcItemSheet .sheet-h .btn,#pkSheet .sheet-h .btn{flex:none}
+.gc-item-sub{font-size:var(--fs-tiny);color:var(--sub);word-break:keep-all;overflow-wrap:anywhere}
+.gc-item-hint{display:block;color:var(--faint)}
+.gc-item-price{display:flex;align-items:center;gap:4px;font-size:var(--fs-tiny);color:var(--sub)}
+.gc .gc-item-price .field.won{width:88px}
+.gc-item-won{font-size:var(--fs-small);color:var(--sub);text-align:right}
+.gc-item-pick{min-height:var(--touch);white-space:nowrap}
+.gc-step{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface)}
+.gc-step button{width:38px;height:var(--touch);border:0;background:none;color:var(--ink);font-size:18px;line-height:1}
+.gc-step button:disabled{color:var(--line)}
+.gc-step .mono{min-width:24px;text-align:center;font-weight:600}
+.gc-shop-btns{justify-content:space-between;margin:4px 0 10px}
+.gc-shop-btns .btn{min-height:var(--touch)}
+.gc-paid-sum{padding-top:10px;border-top:1px solid var(--line)}
+.gc-paid-sum .gc-pulls .mono{font-size:var(--fs-label)}
+.gc-form{display:flex;flex-direction:column;gap:8px}
+.gc-form-name{font-size:var(--fs-small);font-weight:600}
+.gc-tier{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 10px}
+.gc-tier .pin{justify-self:end;min-width:76px}
+.gc-tier-sum{margin:6px 0 0;text-align:right;font-size:var(--fs-small);font-weight:600}
 /* 픽업 일정 (v2.7): '다음 픽업' 한 줄 · 새 일정 안내 · 고르는 창 · '직접' / '예정' 표시 */
 .gc .sub>span:empty+.mark{margin-left:0}
 .gc .mark,.pk-row .mark,.hs-pk .mark{margin-left:6px;white-space:nowrap;font-size:11px;font-weight:400;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}

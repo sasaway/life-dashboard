@@ -1,15 +1,17 @@
 // 명조 가챠 기댓값 계산기 화면: 명조 위 전환 [오늘 · 파티표 · 재화 · 픽업] 의 '재화'(v2.4) · '픽업'(v2.5).
+// '과금으로 받을 것' 카드의 상품 목록은 gacha-shop-view.js (v2.8).
 // 입력 칸은 index.html 에 한 번만 있고, 숫자가 바뀌면 계산 글자만 다시 쓴다 (치는 도중에 칸이 다시 그려지지 않게).
 // 공명자 고르기는 파티표의 고르기 창을 5성만으로 연다 (wuwa-view.js openGachaPicker).
 import { store } from "./store.js";
 import {
-  normalizeGacha, count, pullsOf, daysUntil, dLabel, income, passCharDay, passCharIn, FREE_HINT, MONTHLY_MAX_DAYS,
+  normalizeGacha, count, pullsOf, daysUntil, dLabel, income, FREE_HINT,
   CHAINS, chainLabel, expectation, astriteNeeded, verdict,
 } from "./gacha.js";
+import { startShop, renderShop } from "./gacha-shop-view.js";
 import { openGachaPicker, findChar, charByName, face, elTag } from "./wuwa-view.js";
 import {
   pickupsOf, nextPhase, livePickups, autoFill, applyPickup, markByHand, hasNewPickup, byHand, rowKey, phaseLabel, rangeLabel,
-  isTentative, isRerun, isOngoing,
+  isTentative, isRerun, isOngoing, phasesUntil,
 } from "./pickups.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import { ICON } from "./icons.js";
@@ -46,7 +48,6 @@ function paintToggle(b) {
   b.textContent = on ? "켬" : "끔";
 }
 
-const md = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`;
 const bundle = (x) => `별소 ${num(x.astrite)} · 캐릭뽑 ${num(x.char)} · 무기뽑 ${num(x.weap)}`;
 
 // 픽업 일정으로 공명자·날짜를 채운다 (직접 고친 계획은 그대로). 바뀌었으면 저장하고 날짜 칸도 맞춘다
@@ -66,23 +67,14 @@ export function renderGacha() {
   if (real && real.id !== g.plan.char) setPlan({ ...g.plan, char: real.id, charName: real.name });
   const days = daysUntil(g.plan.date, now);
   const has = days !== null && days >= 0;
-  const r = income(g, days);
+  const r = income(g, days, has ? (phasesUntil(pickups, now, g.plan.date) ?? {}) : {});
   const left = has ? dLabel(days) : "";
 
   $("gcHavePulls").textContent = `${num(pullsOf(g.have))}연`;
   $("gcFreeDays").textContent = has ? `남은 ${days}일` : "";
   $("gcDailyCalc").textContent = `하루 별소${has ? ` × ${days}일 = ${num(g.free.daily * days)}` : ""}`;
-  $("gcMonthlyCalc").textContent = `하루 별소${has
-    ? ` × ${r.monthlyDays}일${days > MONTHLY_MAX_DAYS ? ` (최대 ${MONTHLY_MAX_DAYS}일)` : ""} = ${num(g.paid.monthlyDay * r.monthlyDays)}`
-    : ""}`;
   $("gcFreeHint").textContent = FREE_HINT;
-  // 유료 패스: 켜면 산 날 칸이 보이고, 캐릭뽑이 픽업 전에 오는지 알려 준다
-  document.querySelectorAll(".gc-pass").forEach((el) => { el.hidden = !g.paid.pass; });
-  const charDay = passCharDay(g);
-  $("gcPassCalc").textContent = !charDay ? "산 날을 적으면 캐릭뽑이 언제 오는지 계산돼"
-    : !has ? `캐릭뽑은 ${md(charDay)}부터 · 픽업 날짜를 정하면 합계에 넣을지 정해져`
-    : passCharIn(g) ? `캐릭뽑은 ${md(charDay)}부터 · 픽업 전이라 합계에 넣어`
-    : `캐릭뽑은 ${md(charDay)}부터 · 픽업 뒤라 합계에서 빼`;
+  renderShop(r, has, days); // 과금 상품 줄 · 과금 합계 (v2.8)
 
   $("gcSumD").textContent = left;
   $("gcNoDate").hidden = has;
@@ -188,8 +180,14 @@ function pickChar() {
 }
 
 export function startGacha() {
-  // v2.4 에 유료 패스를 켜 둔 폰: 산 날이 없으니 오늘로 (v2.4.1)
-  if (g.paid.pass && !g.paid.passDate) { setAt("paid.passDate", ymd(new Date())); save(); }
+  // 패스를 넣어 뒀는데 산 날이 없는 폰 (v2.4 에 켠 것): 오늘로
+  const pass = g.paid.items.pass;
+  if (pass.count && !pass.date) { g = { ...g, paid: { ...g.paid, items: { ...g.paid.items, pass: { ...pass, date: ymd(new Date()) } } } }; save(); }
+  startShop({
+    paid: () => g.paid,
+    planDate: () => g.plan.date,
+    change: (paid) => { g = { ...g, paid }; save(); renderGacha(); },
+  });
   fillInputs();
   renderGacha();
 
@@ -232,11 +230,6 @@ export function startGacha() {
         renderGacha();
       } else if (t) {
         setAt(t.dataset.gt, !getAt(t.dataset.gt));
-        // 유료 패스를 켜면 산 날 = 오늘 (고칠 수 있음), 끄면 비운다
-        if (t.dataset.gt === "paid.pass") {
-          setAt("paid.passDate", g.paid.pass ? ymd(new Date()) : "");
-          $("gcPassDate").value = g.paid.passDate;
-        }
         paintToggle(t);
         save();
         renderGacha();
