@@ -282,10 +282,9 @@
             <button data-mode="auto" aria-pressed="false">픽업 일정대로</button>
             <button data-mode="manual" aria-pressed="false">직접 고르기</button>
           </div>
-          <button class="gc-next" id="gcNext" hidden></button>
           <p class="gc-new" id="gcNew" hidden><span>새 픽업 일정이 있어</span><button class="btn btn-text" id="gcNewGo">바꾸기</button></p>
           <ul class="money-rows">
-            <li><label class="name" for="gcDate">픽업 날짜<span class="sub" id="gcDateSub"></span></label>
+            <li><label class="name" for="gcDate">픽업 날짜<span class="sub"><span id="gcDateSub"></span><span class="mark" id="gcDateSoon" hidden>예정</span></span></label>
               <input class="field mono gc-date" id="gcDate" type="date" data-g="plan.date" aria-describedby="gcDateSub"></li>
             <li><button class="gc-char" id="gcChar" aria-label="픽업할 공명자 고르기"></button></li>
             <li class="gc-block"><span class="name">목표 체인<span class="sub" id="gcCopies"></span></span>

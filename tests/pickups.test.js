@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   FETCH_EVERY, emptyPickups, shouldFetch, readPickupReply, parseWhen, pickupsOf, pickupNames, nextPhase, planDate, livePickups,
-  rowKey, signature, phaseLabel, applyPickup, autoFill, markByHand, hasNewPickup, byHand, toManual, toAuto, isTentative, isRerun,
+  rowKey, signature, rangeLabel, applyPickup, autoFill, markByHand, hasNewPickup, byHand, toManual, toAuto, isTentative, isRerun,
 } from "../js/pickups.js";
 import { withUpcoming, findByName, pickupPlaceholder, adoptRealIds, isPlaceholder } from "../js/wuwa.js";
 import { defaultGacha, normalizeGacha } from "../js/gacha.js";
@@ -59,7 +59,7 @@ test("다음 픽업: 진행 중인 페이즈가 먼저, 없으면 가장 먼저 
   assert.equal(nextPhase(list, at(11, 20)).rows.length, 2, "한 페이즈 두 명");
   assert.equal(nextPhase(list, at(12, 25)), null, "다 끝났으면 없다");
   assert.equal(livePickups(list, at(11, 20)).length, 2);
-  assert.equal(phaseLabel(nextPhase(list, at(10, 22))), "3.7 · 2페이즈 · 쇄명 · 10/21~11/11");
+  assert.equal(rangeLabel(list[1]), "10/21~11/11");
   assert.equal(isTentative(list[2]), true);
   assert.equal(isRerun(list[2]), true);
   assert.equal(isTentative(list[0]), false);

@@ -12,7 +12,7 @@ import { $, esc } from "./dom.js";
 
 let api;            // { paid(): 지금 과금 값, planDate(): 픽업 날짜, change(paid): 저장하고 다시 그린다 }
 let open = false;   // '상품 더 보기' 를 펼쳤나 (앱을 다시 열면 접힌다)
-let editing = null; // 고치기 창: { kind: "new" | "custom" | "base", id, tiers(루나이트 충전 단계 초안) }
+let editing = null; // 고치기 창: { kind: "new" | "custom" | "base", id, tiers(충전 단계 초안) }
 
 const num = (n) => n.toLocaleString("ko-KR");
 const md = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`;

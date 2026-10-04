@@ -88,8 +88,6 @@ export const signature = (group) => (group
 
 const md = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
 export const rangeLabel = (p) => `${md(p.from)}~${md(p.to)}`;
-// '3.7 · 2페이즈 · 쇄명 · 10/21~11/11'
-export const phaseLabel = (g) => [g.version, g.phase, g.rows.map((p) => p.char).join(", "), rangeLabel(g)].filter(Boolean).join(" · ");
 
 const BY_HAND = "manual";
 export const byHand = (plan) => plan.charBy === BY_HAND || plan.dateBy === BY_HAND;

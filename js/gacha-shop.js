@@ -26,7 +26,7 @@ export const PASS_MAX = 1;         // 패스는 지금 버전 것 하나만 계�
 //  - phaseChar · phaseCharBig · phaseWeapon: $9.99 · $29.99 · $9.99, 페이즈마다 1번 (game8 3.4 · topuplive · slyraf). 원화는 두 곳에서 안 맞춰져 빈칸
 //  - monthly 월간 지원 팩: 별소 500 + 캐릭뽑 5 + 무기뽑 5, $19.99 (game8 · topuplive · slyraf). '매달 1일 초기화' 는 slyraf 한 곳뿐
 export const SHOP = [
-  { id: "topup", name: "루나이트 충전", cycle: "any" },
+  { id: "topup", name: "충전", cycle: "any" },
   { id: "sub", name: "월정액", cycle: "monthly", lunite: 300, perDay: 90, price: 5900 },
   { id: "pass", name: "패스", cycle: "version", astrite: 680, charPulls: 5, price: 12000 },
   { id: "phaseChar", name: "캐릭뽑 팩", cycle: "phase", astrite: 400, charPulls: 5, limit: 1 },
@@ -64,8 +64,8 @@ export function defaultItem(def) {
 export const defaultPaid = () => ({ items: Object.fromEntries(SHOP.map((d) => [d.id, defaultItem(d)])), custom: [] });
 
 const isDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d ?? "");
-// v2.8 의 기본 이름 (핫픽스 v2.8.1 에서 '페이즈' 를 뺌). 폰에 이 이름 그대로 저장돼 있으면 새 기본 이름으로, 은월이 고친 이름은 그대로
-const OLD_NAMES = ["페이즈 캐릭뽑 팩", "페이즈 캐릭뽑 팩 (큰 것)", "페이즈 무기뽑 팩"];
+// 옛 기본 이름 (핫픽스 v2.8.1 에서 '페이즈' 를, v2.8.2 에서 '루나이트' 를 뺌). 폰에 이 이름 그대로 저장돼 있으면 새 기본 이름으로, 은월이 고친 이름은 그대로
+const OLD_NAMES = ["페이즈 캐릭뽑 팩", "페이즈 캐릭뽑 팩 (큰 것)", "페이즈 무기뽑 팩", "루나이트 충전"];
 const cleanName = (v, fallback) => {
   const name = String(v ?? "").trim().slice(0, 30);
   return !name || OLD_NAMES.includes(name) ? fallback : name;

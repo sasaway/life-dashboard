@@ -610,11 +610,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 /* 픽업 일정 (v2.7): '다음 픽업' 한 줄 · 새 일정 안내 · 고르는 창 · '직접' / '예정' 표시 */
 .gc .sub>span:empty+.mark{margin-left:0}
 .gc .mark,.pk-row .mark,.hs-pk .mark{margin-left:6px;white-space:nowrap;font-size:11px;font-weight:400;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
-.gc-next{display:flex;align-items:center;gap:8px;width:100%;min-height:var(--touch-nav);margin-bottom:6px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--bg);text-align:left;color:var(--ink)}
-.gc-next-k{flex:none;font-size:var(--fs-tiny);color:var(--sub)}
-.gc-next-v{flex:1;min-width:0;font-size:var(--fs-small);font-weight:600;word-break:keep-all;overflow-wrap:anywhere}
-.gc-next-by{display:block;font-size:var(--fs-tiny);font-weight:400;color:var(--sub)}
-.gc-next svg{flex:none;width:16px;height:16px;stroke:var(--faint);fill:none;stroke-width:2}
 .gc-new{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px;font-size:var(--fs-small);color:var(--sub)}
 .gc-new .btn{min-height:var(--touch)}
 .pk-row{display:flex;align-items:center;gap:10px}

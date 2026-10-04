@@ -7,12 +7,12 @@ import {
   DAILY, PLAYSTYLES, SORTIE_TYPES, GEAR_FIELDS, DEFAULT_GEAR, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo,
   removeTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame, isBlankFrame,
   addOther, removeOther, sortieView, invasionView, alertView, timeLeft,
+  liveDue, liveAtLabel,
 } from "./warframe.js";
 import { $, esc, X_SVG } from "./dom.js";
 import { markSyncDirty } from "./hobby-sync-view.js";
 
 const LIVE_URL = "https://api.warframestat.us/pc/"; // 공식 worldState 는 브라우저에서 못 읽어서(CORS) 이걸 쓴다
-const LIVE_MAX_AGE = 10 * 60e3; // 워프레임 쪽을 보고 있으면 10분마다 새로 받는다
 
 let checks = store.load("wfChecks", {});
 let todos = store.load("wfTodos", []);
@@ -86,7 +86,7 @@ function renderLive() {
   const now = new Date();
   $("wfLiveMsg").textContent = loading ? "받는 중…"
     : liveFailed ? (live.at ? `새로 못 받았어. ${ago(live.at)} 정보야.` : "현황을 못 받았어. 인터넷이 되면 '새로 받기' 를 눌러 줘.")
-    : live.at ? `${ago(live.at)} 받음` : "";
+    : live.at ? `${ago(live.at)} 받음 · 매일 ${liveAtLabel} 에 새로 받아` : "";
   if (!live.at) { $("wfLive").innerHTML = ""; return; }
 
   const s = sortieView(live.sortie, now);
@@ -108,7 +108,7 @@ function renderLive() {
 }
 
 async function loadLive(force = false) {
-  if (loading || (!force && Date.now() - live.at < LIVE_MAX_AGE)) return;
+  if (loading || (!force && !liveDue(live.at, new Date()))) return; // 하루 한 번, 아침 브리핑 시각에 (그 사이엔 '새로 받기')
   loading = true;
   renderLive();
   const get = (part) => fetch(`${LIVE_URL}${part}`).then((r) => {
@@ -200,9 +200,7 @@ export function renderWarframe() {
   renderTodos();
   if (wfOpen()) {
     renderLive(); // 출격 남은 시간·'n분 전' 을 분마다 맞춘다
-    const s = live.sortie;
-    const sortieOver = s && new Date(s.expiry) <= new Date() && Date.now() - live.at > 60e3;
-    loadLive(sortieOver); // 10분이 지났거나 출격이 바뀌었으면 새로 받는다
+    loadLive();   // 아침 브리핑 시각이 지났으면 새로 받는다
   }
 }
 

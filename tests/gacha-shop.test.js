@@ -239,6 +239,12 @@ test("내용물 요약 글자", () => {
 
 test("상품 이름에서 '페이즈' 를 뺀다 (v2.8.1): 폰에 옛 기본 이름이 저장돼 있으면 새 이름으로, 은월이 고친 이름은 그대로", () => {
   assert.deepEqual(["phaseChar", "phaseCharBig", "phaseWeapon"].map((id) => shopDef(id).name), ["캐릭뽑 팩", "캐릭뽑 팩 (큰 것)", "무기뽑 팩"]);
+  // v2.8.2: '루나이트 충전' → '충전' (단계에서 고른 개수는 그대로)
+  assert.equal(shopDef("topup").name, "충전");
+  const old = defaultPaid();
+  old.items.topup = { name: "루나이트 충전", tiers: old.items.topup.tiers.map((t, i) => (i === 5 ? { count: 1, first: true } : t)) };
+  const moved = normalizePaid(old);
+  assert.deepEqual([moved.items.topup.name, topupLunite(moved.items.topup)], ["충전", 12960]);
   const saved = defaultPaid();
   saved.items.phaseChar = { ...saved.items.phaseChar, name: "페이즈 캐릭뽑 팩", count: 2, price: 12000 };
   saved.items.phaseCharBig = { ...saved.items.phaseCharBig, name: "페이즈 캐릭뽑 팩 (큰 것)" };
