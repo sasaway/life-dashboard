@@ -3,6 +3,8 @@
 //  - from ~ until(캘린더에 적힌 마지막 알바 날) 안에서 알바가 없는 날 = 쉬는 날
 //  - 그 밖의 날은 예전처럼 격주 규칙
 
+import { SHIFT_IDS } from "./schedule.js";
+
 // 심부름꾼 주소 모양: https://script.google.com/macros/s/(긴 글자)/exec
 export const isHelperUrl = (u) => /^https:\/\/script\.google\.com\/macros\/(u\/\d+\/)?s\/[\w-]+\/exec$/.test(String(u).trim());
 
@@ -17,7 +19,7 @@ export function readReply(json, now = Date.now()) {
   }
   const shifts = {};
   for (const [day, shift] of Object.entries(json.shifts)) {
-    if (DAY.test(day) && (shift === "open" || shift === "close")) shifts[day] = shift;
+    if (DAY.test(day) && SHIFT_IDS.includes(shift)) shifts[day] = shift; // open · mid · close
   }
   const days = Object.keys(shifts).sort();
   return { cal: { from: json.from, until: days.at(-1) ?? null, shifts, at: now } };

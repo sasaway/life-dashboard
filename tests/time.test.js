@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { greeting, dateLabel, workdaysLabel } from "../js/time.js";
+import { greeting, dateLabel } from "../js/time.js";
 
 test("인사말은 시간대 경계에서 바뀐다", () => {
   assert.equal(greeting(0), "편안한 밤");
@@ -18,8 +18,3 @@ test("날짜 글자는 요일, 월, 일 순서다", () => {
   assert.equal(dateLabel(new Date(2026, 8, 27)), "일요일, 9월 27일");
 });
 
-test("알바 하는 요일은 매일 · 없음 · 월요일부터 이어 쓴다", () => {
-  assert.equal(workdaysLabel([true, true, true, true, true, true, true]), "매일");
-  assert.equal(workdaysLabel([false, false, false, false, false, false, false]), "없음");
-  assert.equal(workdaysLabel([true, true, false, true, false, true, false]), "월·수·금·일");
-});

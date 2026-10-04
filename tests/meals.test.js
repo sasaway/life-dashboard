@@ -12,7 +12,7 @@ const slots = (n) => Array.from({ length: n }, (_, i) => ({ key: `s${i}` }));
 const names = (plan) => plan.map((m) => m.dish.id);
 
 test("메인 요리는 Notion 의 네 가지 (자동 돌림의 라면은 안성탕면)", () => {
-  assert.deepEqual(DISHES.map((d) => d.name), ["냉동 대패 짜글이", "계란 볶음밥", "라면 (안성탕면)", "닭가슴살 + 햇반"]);
+  assert.deepEqual(DISHES.map((d) => d.name), ["김치 대패 짜글이", "계란 볶음밥", "라면 (안성탕면)", "닭가슴살 + 햇반"]);
 });
 
 test("고르기 창: 라면을 안성탕면·짜파게티로 나누고, 맨 아래 '안 먹음 · 외식'", () => {
@@ -196,4 +196,12 @@ test("추천은 2개까지만, 가장 최근에 가져온 재료 것부터", () 
   ], today);
   assert.equal(r.length, 2);
   assert.deepEqual(ideaNames(r), ["김치찌개", "두부조림"]);
+});
+
+test("중간반 날 (v2.8.1): 집 끼니는 10:00 점심, 알바 중 끼니는 저녁 닭가슴살 + 햇반 (먹는 차례는 점심 다음)", () => {
+  const s = { ...DEFAULT_SETTINGS, dayShifts: ["mid", "mid", "mid", "mid", "mid", "mid", "mid"] };
+  const wed = new Date(2026, 9, 7);
+  assert.deepEqual(homeMeals(wed, s).map((m) => [m.label, m.start]), [["점심", "10:00"]]);
+  assert.deepEqual([workMeal(wed, s).label, workMeal(wed, s).dish.id, workMeal(wed, s).first], ["저녁", "chicken", false]);
+  assert.deepEqual(dayMeals(wed, s).map((m) => [m.label, Boolean(m.work)]), [["점심", false], ["저녁", true]]);
 });

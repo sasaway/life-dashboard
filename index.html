@@ -252,8 +252,8 @@
           </ul>
           <p class="mini gc-hint" id="gcFreeHint"></p>
         </section>
-        <section class="card" aria-labelledby="gcPaidH">
-          <div class="card-h"><h2 id="gcPaidH">과금으로 받을 것</h2><small>대략</small></div>
+        <section class="card gc-paid" aria-labelledby="gcPaidH">
+          <div class="card-h"><h2 id="gcPaidH">과금으로 받을 것<span class="mark">유료</span></h2><small>대략</small></div>
           <ul class="gc-shop" id="gcShop"></ul>
           <p class="empty" id="gcShopEmpty" hidden>픽업 날까지 살 상품이 아직 없어. '상품 더 보기'에서 골라 줘.</p>
           <div class="btns gc-shop-btns">
@@ -278,10 +278,14 @@
         <p class="msg gc-msg" role="status"></p>
         <section class="card" aria-labelledby="gcPlanH">
           <div class="card-h"><h2 id="gcPlanH">다음 픽업 계획</h2><small class="mono" id="gcPlanD"></small></div>
+          <div class="seg gc-mode" id="gcMode" role="group" aria-label="공명자와 날짜를 정하는 법" hidden>
+            <button data-mode="auto" aria-pressed="false">픽업 일정대로</button>
+            <button data-mode="manual" aria-pressed="false">직접 고르기</button>
+          </div>
           <button class="gc-next" id="gcNext" hidden></button>
           <p class="gc-new" id="gcNew" hidden><span>새 픽업 일정이 있어</span><button class="btn btn-text" id="gcNewGo">바꾸기</button></p>
           <ul class="money-rows">
-            <li><label class="name" for="gcDate">픽업 날짜<span class="sub"><span id="gcDateSub"></span><span class="mark" id="gcDateBy" hidden>직접</span></span></label>
+            <li><label class="name" for="gcDate">픽업 날짜<span class="sub" id="gcDateSub"></span></label>
               <input class="field mono gc-date" id="gcDate" type="date" data-g="plan.date" aria-describedby="gcDateSub"></li>
             <li><button class="gc-char" id="gcChar" aria-label="픽업할 공명자 고르기"></button></li>
             <li class="gc-block"><span class="name">목표 체인<span class="sub" id="gcCopies"></span></span>
@@ -293,6 +297,7 @@
               </select></li>
             <li><span class="name">전용 무기(전무)<span class="sub">무기 픽업도 뽑기</span></span><button class="pin" data-gt="plan.weapon" aria-pressed="false" aria-label="전무 뽑기">끔</button></li>
           </ul>
+          <p class="mini" id="gcModeHint" hidden></p>
           <p class="mini">날짜는 폰 시계(한국 시간)로 세. 자정이 지나면 하루 줄어.</p>
         </section>
         <section class="card" aria-labelledby="gcStackH">
@@ -392,25 +397,18 @@
       </section>
     </div>
     <div class="set-page" id="set-shift" hidden>
-      <section class="card" aria-label="이번 주 알바">
-        <div class="card-h"><small>한 주씩 번갈아 가</small></div>
-        <div class="seg" id="shiftPick">
-          <button data-shift="open" aria-pressed="false">오픈반 <span class="mono">08:30</span></button>
-          <button data-shift="close" aria-pressed="false">마감반 <span class="mono">15:00</span></button>
-        </div>
-      </section>
-    </div>
-    <div class="set-page" id="set-days" hidden>
-      <section class="card" aria-label="알바 하는 요일">
-        <div class="card-h"><small>끄면 그날은 쉬는 날</small></div>
-        <div class="days" id="workdays"></div>
+      <section class="card" aria-label="요일별 알바">
+        <div class="card-h"><small>매주 같게 반복돼</small></div>
+        <ul class="day-shifts" id="dayShifts"></ul>
+        <p class="mini">오픈 <span class="mono">08:30~15:30</span> · 중간 <span class="mono">12:00~19:00</span> · 마감 <span class="mono">15:00~22:00</span><br>캘린더에 알바가 적힌 날은 캘린더가 먼저야.</p>
       </section>
     </div>
     <div class="set-page" id="set-rows" hidden>
       <section class="card" aria-label="일과표 고치기">
-        <div class="seg" id="editPick">
-          <button data-shift="open" aria-pressed="false">오픈반 주</button>
-          <button data-shift="close" aria-pressed="false">마감반 주</button>
+        <div class="seg three" id="editPick">
+          <button data-shift="open" aria-pressed="false">오픈반</button>
+          <button data-shift="mid" aria-pressed="false">중간반</button>
+          <button data-shift="close" aria-pressed="false">마감반</button>
         </div>
         <ol class="edit-rows" id="editRows"></ol>
         <p class="msg" id="editMsg" role="status"></p>

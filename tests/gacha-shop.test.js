@@ -19,9 +19,9 @@ test("기본 상품 7종: 종류 · 주기 · 내용물 (확인한 값)", () => 
   const p = defaultPaid();
   assert.deepEqual(p.items.sub, { name: "월정액", count: 0, price: 5900, lunite: 300, perDay: 90 });
   assert.deepEqual(p.items.pass, { name: "패스", count: 0, price: 12000, astrite: 680, charPulls: 5, date: "" });
-  assert.deepEqual(p.items.phaseChar, { name: "페이즈 캐릭뽑 팩", count: 0, price: 0, astrite: 400, charPulls: 5, weaponPulls: 0 });
-  assert.deepEqual(p.items.phaseCharBig, { name: "페이즈 캐릭뽑 팩 (큰 것)", count: 0, price: 0, astrite: 500, charPulls: 15, weaponPulls: 0 });
-  assert.deepEqual(p.items.phaseWeapon, { name: "페이즈 무기뽑 팩", count: 0, price: 0, astrite: 400, charPulls: 0, weaponPulls: 5 });
+  assert.deepEqual(p.items.phaseChar, { name: "캐릭뽑 팩", count: 0, price: 0, astrite: 400, charPulls: 5, weaponPulls: 0 });
+  assert.deepEqual(p.items.phaseCharBig, { name: "캐릭뽑 팩 (큰 것)", count: 0, price: 0, astrite: 500, charPulls: 15, weaponPulls: 0 });
+  assert.deepEqual(p.items.phaseWeapon, { name: "무기뽑 팩", count: 0, price: 0, astrite: 400, charPulls: 0, weaponPulls: 5 });
   assert.deepEqual(p.items.monthly, { name: "월간 지원 팩", count: 0, price: 0, astrite: 500, charPulls: 5, weaponPulls: 5 });
   assert.deepEqual(TOPUP_TIERS.map((t) => [t.base, t.bonus]), [[60, 0], [300, 30], [980, 110], [1980, 260], [3280, 600], [6480, 1600]]);
   assert.ok(shopDef("monthly").unsure, "확인이 덜 된 것은 표시가 있다");
@@ -200,7 +200,7 @@ test("빈칸 · 음수 · 깨진 저장: 기본값으로 열고, 숫자가 아�
   assert.deepEqual(normalizePaid({}), defaultPaid());
   const p = normalizePaid({ items: { phaseChar: { count: -3, price: "abc", astrite: "", name: "  " }, pass: { count: 500, date: "어제" },
     topup: { tiers: [{ count: 2, first: 1 }, null] } }, custom: [{ id: "a", name: "x" }, "엉뚱", { id: "b", name: "y", astrite: 10, count: -1 }] });
-  assert.deepEqual(p.items.phaseChar, { name: "페이즈 캐릭뽑 팩", count: 0, price: 0, astrite: 0, charPulls: 5, weaponPulls: 0 });
+  assert.deepEqual(p.items.phaseChar, { name: "캐릭뽑 팩", count: 0, price: 0, astrite: 0, charPulls: 5, weaponPulls: 0 });
   assert.deepEqual([p.items.pass.count, p.items.pass.date], [99, ""]);
   assert.deepEqual(p.items.topup.tiers.slice(0, 2), [{ count: 2, first: true }, { count: 0, first: false }]);
   assert.equal(p.items.topup.tiers.length, 6);
@@ -235,4 +235,17 @@ test("내용물 요약 글자", () => {
   const c = cleanCustom({ id: "c", name: "x", lunite: 1000, weaponPulls: 3 });
   assert.equal(contentLabel(c, c), "루나이트 1,000 · 무기뽑 3");
   assert.equal(daysUntil("2026-10-21", new Date(2026, 9, 4)), 17);
+});
+
+test("상품 이름에서 '페이즈' 를 뺀다 (v2.8.1): 폰에 옛 기본 이름이 저장돼 있으면 새 이름으로, 은월이 고친 이름은 그대로", () => {
+  assert.deepEqual(["phaseChar", "phaseCharBig", "phaseWeapon"].map((id) => shopDef(id).name), ["캐릭뽑 팩", "캐릭뽑 팩 (큰 것)", "무기뽑 팩"]);
+  const saved = defaultPaid();
+  saved.items.phaseChar = { ...saved.items.phaseChar, name: "페이즈 캐릭뽑 팩", count: 2, price: 12000 };
+  saved.items.phaseCharBig = { ...saved.items.phaseCharBig, name: "페이즈 캐릭뽑 팩 (큰 것)" };
+  saved.items.phaseWeapon = { ...saved.items.phaseWeapon, name: "구도자의 단조 컬렉션" };
+  const p = normalizePaid(saved);
+  assert.deepEqual([p.items.phaseChar.name, p.items.phaseChar.count, p.items.phaseChar.price], ["캐릭뽑 팩", 2, 12000], "이름만 바뀌고 개수·가격은 그대로");
+  assert.equal(p.items.phaseCharBig.name, "캐릭뽑 팩 (큰 것)");
+  assert.equal(p.items.phaseWeapon.name, "구도자의 단조 컬렉션");
+  assert.equal(CYCLE_LABEL[shopDef("phaseChar").cycle], "페이즈마다", "주기 알약은 그대로");
 });

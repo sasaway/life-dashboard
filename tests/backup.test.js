@@ -192,3 +192,14 @@ test("v2.8 과금 상품(wuwaGacha.paid): 새 모양은 백업 → 되살리기�
   assert.deepEqual(income(opened, 14).paid, { astrite: 90 * 14 + 680 + 500, char: 2, weap: 0 });
   assert.equal(opened.paid.custom[0].name, "직접 충전");
 });
+
+test("핫픽스 v2.8.1 의 요일별 알바(schedule.dayShifts)와 중간반 일과표도 백업 → 되살리기로 그대로 돌아온다", async () => {
+  const schedule = { ...DEFAULT_SETTINGS, dayShifts: ["off", "open", "open", "mid", "close", "close", "off"], closeReset: "2.5.1" };
+  const phone = fakeStorage({ "ld:schedule": JSON.stringify(schedule) });
+  const text = JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v2.8.1 핫픽스 · 10월 4일" }));
+  const later = fakeStorage({});
+  restoreItems(later, readBackupText(text).backup.items);
+  const back = JSON.parse(later.getItem("ld:schedule"));
+  assert.deepEqual(back, JSON.parse(JSON.stringify(schedule)));
+  assert.deepEqual(back.templates.mid.map((x) => x.start).slice(4, 7), ["11:00", "12:00", "19:00"]);
+});

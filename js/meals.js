@@ -6,7 +6,7 @@ import { proteinOf, PROTEIN_GOAL } from "./recipes.js";
 // 메인 요리. 새 요리는 여기에 한 줄 더하면 돌림에 들어간다.
 // work: 알바 중에 먹는 요리 — 집 끼니 자동 돌림에서는 뺀다 (칸을 눌러 직접 고르는 건 된다)
 export const DISHES = [
-  { id: "jja", name: "냉동 대패 짜글이", short: "짜글이", makesTwo: true },
+  { id: "jja", name: "김치 대패 짜글이", short: "짜글이", makesTwo: true },
   { id: "rice", name: "계란 볶음밥", short: "계란 볶음밥" },
   { id: "ramen", name: "라면 (안성탕면)", short: "안성탕면" }, // 자동 돌림의 라면은 안성탕면
   { id: "chicken", name: "닭가슴살 + 햇반", short: "닭가슴살 + 햇반", work: true },
@@ -32,7 +32,7 @@ export function homeMeals(date, settings) {
     .map((x) => ({ key: `${day} ${x.name}`, day, label: x.name, start: x.start }));
 }
 
-// 알바 중에 먹는 끼니: 오픈반은 점심(13~14시 사이 시작, 40분), 마감반은 저녁(시각은 Notion 에 없음)
+// 알바 중에 먹는 끼니: 오픈반은 점심(13~14시 사이 시작, 40분), 중간반·마감반은 저녁(시각은 Notion 에 없음)
 export function workMeal(date, settings) {
   const plan = dayPlan(date, settings);
   if (!plan.working) return null;

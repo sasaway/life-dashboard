@@ -1,8 +1,7 @@
 // 설정 창: 항목 목록 → 눌러서 그 항목 화면으로 (v1.9).
 // 항목 화면 안의 입력칸·버튼은 원래 파일(schedule-view · calendar-view 등)이 그대로 맡고, 여기서는 목록과 오가는 것만 한다.
 import { ICON } from "./icons.js";
-import { SHIFTS, shiftFor } from "./schedule.js";
-import { workdaysLabel } from "./time.js";
+import { SHIFTS, dayPlan } from "./schedule.js";
 import { getScheduleSettings, openScheduleSettings } from "./schedule-view.js";
 import { calendarOn, openCalendarSettings } from "./calendar-view.js";
 import { hobbySyncState, openHobbySyncSettings } from "./hobby-sync-view.js";
@@ -17,8 +16,7 @@ const GROUPS = [
     { id: "lib", label: "라이브러리", icon: "bookOpen", state: () => `${libraryCount()}개` },
   ] },
   { title: "알바", items: [
-    { id: "shift", label: "이번 주 알바", icon: "repeat", state: () => SHIFTS[shiftFor(new Date(), getScheduleSettings())].label },
-    { id: "days", label: "알바 하는 요일", icon: "calendarDays", state: () => workdaysLabel(getScheduleSettings().workdays) },
+    { id: "shift", label: "요일별 알바", icon: "calendarDays", state: todayShift },
     { id: "rows", label: "일과표 고치기", icon: "listOrdered", state: () => "" },
   ] },
   { title: "연결", items: [
@@ -30,6 +28,11 @@ const GROUPS = [
   ] },
 ];
 const ITEMS = GROUPS.flatMap((g) => g.items);
+// 설정 목록 줄의 짧은 상태: '오늘 오픈반' / '오늘 쉬는 날' (캘린더에 알바가 적힌 날은 캘린더대로)
+function todayShift() {
+  const plan = dayPlan(new Date(), getScheduleSettings());
+  return `오늘 ${plan.working ? SHIFTS[plan.shift].label : "쉬는 날"}`;
+}
 
 let page = null;    // 보고 있는 항목 (null = 목록)
 let listScroll = 0; // 항목에 들어가기 전 목록을 어디까지 내렸는지

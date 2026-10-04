@@ -118,6 +118,11 @@ export function markByHand(plan, what, list, now) {
   return { ...plan, [`${what}By`]: BY_HAND, autoKey: "", seenKey: signature(nextPhase(list, now)) };
 }
 
+// 정하는 법을 고른다 (핫픽스 v2.8.1): '직접 고르기' = 공명자·날짜 둘 다 직접 (값은 그대로, 일정이 바뀌어도 안 바뀐다),
+// '픽업 일정대로' = 직접 표시를 풀어서 다음 그릴 때 autoFill 이 채우게 한다
+export const toManual = (plan, list, now) => ({ ...plan, charBy: BY_HAND, dateBy: BY_HAND, autoKey: "", seenKey: signature(nextPhase(list, now)) });
+export const toAuto = (plan) => ({ ...plan, charBy: "", dateBy: "", autoKey: "" });
+
 // '새 픽업 일정이 있어 · 바꾸기' 안내를 띄울까: 직접 고친 계획이고, 그 뒤에 '다음 픽업' 이 달라졌고, 지금 계획과도 다를 때
 export function hasNewPickup(plan, list, now, resolve) {
   const next = nextPhase(list, now);

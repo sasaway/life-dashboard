@@ -3,8 +3,11 @@
 
 export const SHIFTS = {
   open: { label: "오픈반", start: "08:30", end: "15:30" },
+  mid: { label: "중간반", start: "12:00", end: "19:00" }, // 핫픽스 v2.8.1 (은월 2026-10-04)
   close: { label: "마감반", start: "15:00", end: "22:00" },
 };
+export const SHIFT_IDS = Object.keys(SHIFTS);
+export const OFF = "off"; // 쉬는 날
 
 const b = (start, kind, name, note = "") => ({ start, kind, name, note });
 
@@ -23,6 +26,21 @@ export const DEFAULT_TEMPLATES = {
     b("18:30", "meal", "저녁"),
     b("19:30", "hobby", "취미", "명조 · 워프레임"),
     b("21:30", "chores", "가사"),
+    b("22:00", "rest", "휴식"),
+    b("22:30", "review", "리뷰", "오늘 4가지 질문"),
+    b("23:00", "sleep", "취침"),
+  ],
+  // 중간반 (12:00~19:00): 아침은 마감반처럼 취미 · 가사, 알바 끝나고 30분 쉬고 운동 (은월 선택 'B안', 2026-10-04)
+  mid: [
+    b("06:00", "rest", "휴식"),
+    b("07:30", "hobby", "취미", "명조 · 워프레임"),
+    b("09:30", "chores", "가사"),
+    b("10:00", "meal", "점심"),
+    b("11:00", "prep", "출근 준비"),
+    b("12:00", "work", "알바 · 중간반", "저녁 · 닭가슴살 + 햇반"),
+    b("19:00", "rest", "휴식", "알바 끝나고 30분"),
+    b("19:30", "exercise", "운동", "이동 포함 2시간"),
+    b("21:30", "shower", "샤워"),
     b("22:00", "rest", "휴식"),
     b("22:30", "review", "리뷰", "오늘 4가지 질문"),
     b("23:00", "sleep", "취침"),
@@ -90,6 +108,7 @@ export function alignCloseOnce(settings, now) {
 // 쉬는 날 알바 대신 집에서 먹는 끼니
 const DAY_OFF_MEAL = {
   open: b("12:00", "meal", "점심"),
+  mid: b("18:00", "meal", "저녁"),
   close: b("18:00", "meal", "저녁"),
 };
 
@@ -136,9 +155,31 @@ export function shiftFor(date, settings) {
   return same ? settings.anchorShift : settings.anchorShift === "open" ? "close" : "open";
 }
 
-// '이번 주는 ○○반' 으로 기준을 다시 잡는다
-export function setThisWeek(settings, date, shift) {
-  return { ...settings, anchorMonday: ymd(mondayOf(date)), anchorShift: shift };
+// ---------- 요일별 알바 (핫픽스 v2.8.1, 은월 2026-10-04) ----------
+// settings.dayShifts = [일, 월, 화, 수, 목, 금, 토] 마다 "open" · "mid" · "close" · "off"(쉬는 날). 매주 같게 반복된다.
+// 예전의 '한 주씩 번갈아 가기'(anchorMonday · anchorShift) 와 '알바 하는 요일'(workdays) 을 대신한다.
+const validDay = (v) => v === OFF || SHIFT_IDS.includes(v);
+export const hasDayShifts = (settings) => Array.isArray(settings.dayShifts) && settings.dayShifts.length === 7 && settings.dayShifts.every(validDay);
+
+// 옛 설정을 요일별로 옮긴다: 알바 하는 요일은 지금 주의 반(격주 규칙)으로, 꺼 둔 요일은 쉬는 날로. 옛 칸은 지우지 않는다
+export function withDayShifts(settings, now) {
+  if (hasDayShifts(settings)) return settings;
+  const shift = shiftFor(now, settings);
+  return { ...settings, dayShifts: settings.workdays.map((on) => (on ? shift : OFF)) };
+}
+
+export function setDayShift(settings, day, value) {
+  if (!validDay(value)) return settings;
+  return { ...settings, dayShifts: settings.dayShifts.map((v, i) => (i === Number(day) ? value : v)) };
+}
+
+// 쉬는 날에 쓸 일과표: 그 요일에서 거슬러 올라가 가장 가까운 알바 날의 반 (한 주가 다 쉬는 날이면 오픈반)
+function restBase(dayShifts, day) {
+  for (let i = 1; i <= 7; i++) {
+    const v = dayShifts[(day - i + 7) % 7];
+    if (v !== OFF) return v;
+  }
+  return "open";
 }
 
 // 이어진 휴식 칸은 하나로 합친다. 합친 칸은 길이가 달라지니 설명('알바 끝나고 30분' 등)을 뗀다
@@ -185,11 +226,16 @@ export function calShift(date, cal) {
 }
 
 // 그 날의 일과표. 캘린더에 알바가 있으면 그걸 먼저 따른다.
+// 캘린더에 없는 날은 요일별 알바(dayShifts)를 따른다. dayShifts 가 없는 옛 설정은 격주 규칙 · 알바 하는 요일 그대로 (앱은 열 때 옮긴다)
 export function dayPlan(date, settings) {
   const c = calShift(date, settings.cal);
-  const shift = c === "open" || c === "close" ? c : shiftFor(date, settings);
-  const working = c ? c !== "off" : settings.workdays[date.getDay()];
-  let blocks = settings.templates[shift];
+  const day = date.getDay();
+  const byDay = hasDayShifts(settings);
+  const own = byDay ? settings.dayShifts[day] : settings.workdays[day] ? shiftFor(date, settings) : OFF;
+  const base = own !== OFF ? own : byDay ? restBase(settings.dayShifts, day) : shiftFor(date, settings);
+  const shift = SHIFTS[c] ? c : base;
+  const working = c ? c !== OFF : own !== OFF;
+  let blocks = settings.templates[shift] ?? DEFAULT_TEMPLATES[shift];
   if (!working) blocks = toDayOff(blocks, shift);
   if (date.getDay() === 0) blocks = noExercise(blocks);
   return { shift, working, blocks, fromCal: Boolean(c) };

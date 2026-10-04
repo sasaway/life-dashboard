@@ -69,9 +69,13 @@
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
 
 /* ---------- 요일 켜고 끄기 ---------- */
-.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.day{min-height:var(--touch);border-radius:var(--r-btn);border:1px solid var(--line);background:var(--surface);color:var(--faint);font-weight:600;font-size:var(--fs-small)}
-.day[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;color:var(--ink)}
+/* 설정 › 요일별 알바: 요일 이름 + 네 칸 전환 (오픈 · 중간 · 마감 · 쉼) */
+#set-shift .mini{word-break:keep-all}
+.day-shifts{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.day-shift{display:flex;align-items:center;gap:8px}
+.day-shift .day-name{flex:none;width:18px;text-align:center;font-weight:600;color:var(--sub)}
+.day-shift .seg{flex:1;min-width:0}
+.day-shift .seg button{font-size:var(--fs-small);padding:0}
 
 /* ---------- 입력칸 · 16px 이상이어야 아이폰이 화면을 확대하지 않는다 ---------- */
 .field{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-btn);min-height:var(--touch);padding:6px 10px;width:100%;min-width:0}
@@ -593,7 +597,10 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gc-step .mono{min-width:24px;text-align:center;font-weight:600}
 .gc-shop-btns{justify-content:space-between;margin:4px 0 10px}
 .gc-shop-btns .btn{min-height:var(--touch)}
-.gc-paid-sum{padding-top:10px;border-top:1px solid var(--line)}
+.gc-paid-sum{margin-top:18px;padding:12px;border-radius:var(--r-btn);background:var(--bg)}
+/* 과금 카드는 머리 줄에 바탕 띠 + '유료' 알약으로 무과금 카드와 구별한다 (핫픽스 v2.8.1) */
+.gc-paid .card-h{margin:calc(var(--pad-card)*-1) calc(var(--pad-card)*-1) 12px;padding:10px var(--pad-card);background:var(--bg);border-bottom:1px solid var(--line);border-radius:var(--r-card) var(--r-card) 0 0}
+.gc-mode{margin-bottom:8px}
 .gc-paid-sum .gc-pulls .mono{font-size:var(--fs-label)}
 .gc-form{display:flex;flex-direction:column;gap:8px}
 .gc-form-name{font-size:var(--fs-small);font-weight:600}

@@ -10,7 +10,7 @@ import {
 import { startShop, renderShop } from "./gacha-shop-view.js";
 import { openGachaPicker, findChar, charByName, face, elTag } from "./wuwa-view.js";
 import {
-  pickupsOf, nextPhase, livePickups, autoFill, applyPickup, markByHand, hasNewPickup, byHand, rowKey, phaseLabel, rangeLabel,
+  pickupsOf, nextPhase, livePickups, autoFill, applyPickup, markByHand, hasNewPickup, byHand, toManual, toAuto, rowKey, phaseLabel, rangeLabel,
   isTentative, isRerun, isOngoing, phasesUntil,
 } from "./pickups.js";
 import { openSheet, closeSheet } from "./sheet.js";
@@ -101,8 +101,15 @@ function renderNext() {
   const next = nextPhase(pickups, now);
   $("gcNext").hidden = !next;
   $("gcNew").hidden = !hasNewPickup(g.plan, pickups, now, charByName);
-  // '직접' 표시는 픽업 일정을 받아 쓰는 폰에서만 (일정이 없으면 전부 직접이라 뜻이 없다)
-  $("gcDateBy").hidden = !(pickups.length && g.plan.dateBy === "manual");
+  // 정하는 법 고르기 (핫픽스 v2.8.1): 픽업 일정을 받아 쓰는 폰에서만 보인다. '픽업 일정대로' 면 날짜 칸은 잠근다
+  const manual = byHand(g.plan);
+  $("gcMode").hidden = !pickups.length;
+  $("gcMode").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.mode === "manual") === manual)));
+  $("gcDate").disabled = pickups.length > 0 && !manual;
+  $("gcModeHint").hidden = !pickups.length;
+  $("gcModeHint").textContent = manual
+    ? "직접 고르기: 달력에서 날짜를, 목록에서 공명자를 골라. 픽업 일정이 바뀌어도 그대로 둬."
+    : "픽업 일정대로: 받은 일정에서 공명자와 날짜를 채워. 진행 중인 픽업은 끝나는 날, 아직 안 시작한 픽업은 시작하는 날이야.";
   if (!next) return;
   const mine = !byHand(g.plan) && next.rows.some((p) => rowKey(p) === g.plan.autoKey);
   const tail = mine ? "Claude가 채움" : next.rows.length > 1 && !byHand(g.plan) ? "눌러서 골라 줘" : "";
@@ -136,7 +143,7 @@ function renderPlan(r, days) {
   const name = c?.name ?? p.charName;
   $("gcChar").innerHTML = p.char
     ? `${c ? face(c, 40) : `<span class="face noimg" style="width:40px;height:40px"></span>`}
-       <span class="who"><b>${esc(name)}${pickups.length && p.charBy === "manual" ? mark("직접") : ""}</b><span class="sub">${c ? elTag(c.element) : ""}</span></span><span class="gc-char-go">바꾸기</span>`
+       <span class="who"><b>${esc(name)}</b><span class="sub">${c ? elTag(c.element) : ""}</span></span><span class="gc-char-go">바꾸기</span>`
     : `<span class="gc-plus">${ICON.plus}</span><span class="who"><b>공명자 고르기</b><span class="sub">5성만 보여</span></span>`;
   $("gcChains").innerHTML = CHAINS.map((n) =>
     `<button class="fchip" data-gc-chain="${n}" aria-pressed="${p.chain === n}" aria-label="목표 ${chainLabel(n)}"><span>${n === 0 ? "명함" : n}</span></button>`).join("");
@@ -170,7 +177,18 @@ function byMe(what) {
   g = { ...g, plan: markByHand(g.plan, what, pickups, new Date()) };
 }
 
+// 정하는 법을 바꾼다. '픽업 일정대로' 인데 다음 픽업에 공명자가 여럿이라 못 채웠으면 고르는 창을 연다
+function setMode(mode) {
+  const now = new Date();
+  if (mode === "manual") { setPlan(toManual(g.plan, pickups, now)); return renderGacha(); }
+  setPlan(toAuto(g.plan));
+  renderGacha(); // 여기서 일정대로 채운다
+  if (!livePickups(pickups, now).some((p) => rowKey(p) === g.plan.autoKey)) openPickupSheet();
+}
+
 function pickChar() {
+  // '픽업 일정대로' 면 공명자도 일정에서 고른다
+  if (pickups.length && !byHand(g.plan)) return openPickupSheet();
   openGachaPicker({
     current: g.plan.char,
     currentName: g.plan.charName,
@@ -215,7 +233,10 @@ export function startGacha() {
       const t = e.target.closest("[data-gt]");
       const go = e.target.closest("[data-ww-go]");
       const chain = e.target.closest("[data-gc-chain]");
-      if (e.target.closest("#gcNext")) {
+      const mode = e.target.closest("#gcMode [data-mode]");
+      if (mode) {
+        setMode(mode.dataset.mode);
+      } else if (e.target.closest("#gcNext")) {
         openPickupSheet();
       } else if (e.target.closest("#gcNewGo")) {
         // 다음 픽업에 공명자가 한 명이면 바로 바꾸고, 여럿이면 고르는 창

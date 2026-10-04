@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  DEFAULT_SETTINGS, DEFAULT_TEMPLATES, SHIFTS, toMin, shiftFor, setThisWeek,
+  DEFAULT_SETTINGS, DEFAULT_TEMPLATES, SHIFTS, SHIFT_IDS, OFF, toMin, shiftFor, withDayShifts, setDayShift, hasDayShifts,
   dayPlan, currentIndex, nowInfo, leftLabel, checkTemplate, sortBlocks, upgradeTemplates,
 } from "../js/schedule.js";
 import { alignCloseOnce, CLOSE_RESET } from "../js/schedule.js";
@@ -17,7 +17,7 @@ function spans(blocks) {
 const find = (blocks, kind) => spans(blocks).filter((x) => x.kind === kind);
 
 // ---------- Notion 규칙 ----------
-for (const shift of ["open", "close"]) {
+for (const shift of ["open", "mid", "close"]) {
   const blocks = DEFAULT_TEMPLATES[shift];
   const label = SHIFTS[shift].label;
 
@@ -147,12 +147,86 @@ test("2026-09-21 주는 마감반, 다음 주는 오픈반, 그 전 주도 오�
   assert.equal(shiftFor(new Date(2026, 9, 5), DEFAULT_SETTINGS), "close");
 });
 
-test("'이번 주는 오픈반' 으로 바꾸면 이번 주와 다다음 주가 오픈반이 된다", () => {
-  const s = setThisWeek(DEFAULT_SETTINGS, new Date(2026, 8, 24), "open");
-  assert.equal(s.anchorMonday, "2026-09-21");
-  assert.equal(shiftFor(new Date(2026, 8, 25), s), "open");
-  assert.equal(shiftFor(new Date(2026, 9, 1), s), "close");
-  assert.equal(shiftFor(new Date(2026, 9, 8), s), "open");
+// ---------- 요일별 알바 · 중간반 (핫픽스 v2.8.1) ----------
+const names = (plan) => plan.blocks.map((x) => `${x.start} ${x.name}`);
+//                      일      월      화     수     목       금       토
+const week = (...d) => ({ ...DEFAULT_SETTINGS, dayShifts: d });
+const mixed = week(OFF, "open", "open", "mid", "close", "close", OFF);
+
+test("반은 세 가지: 오픈반 08:30~15:30 · 중간반 12:00~19:00 · 마감반 15:00~22:00", () => {
+  assert.deepEqual(SHIFT_IDS, ["open", "mid", "close"]);
+  assert.deepEqual(SHIFT_IDS.map((id) => `${SHIFTS[id].label} ${SHIFTS[id].start}~${SHIFTS[id].end}`),
+    ["오픈반 08:30~15:30", "중간반 12:00~19:00", "마감반 15:00~22:00"]);
+});
+
+test("중간반 일과표 (은월 선택 B안): 아침에 취미·가사, 10:00 점심, 알바 끝나고 30분 쉬고 운동", () => {
+  assert.deepEqual(DEFAULT_TEMPLATES.mid.map((x) => `${x.start} ${x.name}`), [
+    "06:00 휴식", "07:30 취미", "09:30 가사", "10:00 점심", "11:00 출근 준비", "12:00 알바 · 중간반",
+    "19:00 휴식", "19:30 운동", "21:30 샤워", "22:00 휴식", "22:30 리뷰", "23:00 취침",
+  ]);
+  const [work] = find(DEFAULT_TEMPLATES.mid, "work");
+  assert.equal(work.note, "저녁 · 닭가슴살 + 햇반");
+  const all = spans(DEFAULT_TEMPLATES.mid);
+  const i = all.findIndex((x) => x.kind === "work");
+  assert.deepEqual([all[i + 1].kind, all[i + 1].len, all[i + 2].kind], ["rest", 30, "exercise"]);
+});
+
+test("요일별 알바: 요일마다 정한 반이 매주 같게 반복된다 (한 주씩 번갈아 가지 않는다)", () => {
+  // 2026-10-05 (월) ~ 10-11 (일), 그리고 다음 주
+  const shiftOf = (m, d) => { const p = dayPlan(new Date(2026, m - 1, d), mixed); return p.working ? p.shift : OFF; };
+  assert.deepEqual([5, 6, 7, 8, 9, 10, 11].map((d) => shiftOf(10, d)), ["open", "open", "mid", "close", "close", OFF, OFF]);
+  assert.deepEqual([12, 13, 14, 15, 16, 17, 18].map((d) => shiftOf(10, d)), ["open", "open", "mid", "close", "close", OFF, OFF], "다음 주도 같다");
+  assert.equal(dayPlan(new Date(2026, 9, 7), mixed).blocks, DEFAULT_TEMPLATES.mid, "수요일은 중간반 일과표 그대로");
+  assert.equal(dayPlan(new Date(2026, 9, 5), mixed).fromCal, false);
+});
+
+test("요일별 알바 · 쉬는 날: 거슬러 올라가 가장 가까운 알바 날의 일과표에서 알바를 뺀다", () => {
+  const sat = dayPlan(new Date(2026, 9, 10), mixed); // 토요일 쉼 → 금요일 마감반 기준
+  assert.deepEqual([sat.working, sat.shift], [false, "close"]);
+  assert.ok(names(sat).includes("18:00 저녁"));
+  assert.ok(!sat.blocks.some((x) => x.kind === "work" || x.kind === "prep"));
+  const sun = dayPlan(new Date(2026, 9, 11), mixed); // 일요일 쉼 → 토요일도 쉼 → 금요일 마감반
+  assert.equal(sun.shift, "close");
+  assert.ok(!names(sun).some((n) => n.includes("운동")), "일요일은 운동도 쉰다");
+  const midOff = dayPlan(new Date(2026, 9, 8), week(OFF, OFF, OFF, "mid", OFF, OFF, OFF)); // 목요일 쉼 → 수요일 중간반 기준
+  assert.deepEqual(names(midOff), ["06:00 휴식", "07:30 취미", "09:30 가사", "10:00 점심", "11:00 휴식", "18:00 저녁", "19:00 휴식", "19:30 운동", "21:30 샤워", "22:00 휴식", "22:30 리뷰", "23:00 취침"]);
+  const allOff = dayPlan(new Date(2026, 9, 6), week(OFF, OFF, OFF, OFF, OFF, OFF, OFF));
+  assert.deepEqual([allOff.working, allOff.shift], [false, "open"], "한 주가 다 쉬는 날이면 오픈반 일과표 기준");
+});
+
+test("캘린더에 알바가 적힌 날은 캘린더가 먼저 (중간반도), 받은 기간 안인데 없으면 쉬는 날", () => {
+  const cal = { from: "2026-10-05", until: "2026-10-09", shifts: { "2026-10-05": "mid", "2026-10-09": "open" } };
+  const s = { ...mixed, cal };
+  const mon = dayPlan(new Date(2026, 9, 5), s); // 요일별은 오픈반이지만 캘린더는 중간반
+  assert.deepEqual([mon.shift, mon.working, mon.fromCal], ["mid", true, true]);
+  const tue = dayPlan(new Date(2026, 9, 6), s); // 캘린더 기간 안인데 알바 없음 → 쉬는 날 (일과표는 요일별의 오픈반 기준)
+  assert.deepEqual([tue.shift, tue.working, tue.fromCal], ["open", false, true]);
+  const next = dayPlan(new Date(2026, 9, 14), s); // 캘린더 기간 밖 → 요일별 (수요일 중간반)
+  assert.deepEqual([next.shift, next.working, next.fromCal], ["mid", true, false]);
+});
+
+test("옛 설정 옮기기: 알바 하는 요일은 지금 주의 반으로, 꺼 둔 요일은 쉬는 날로. 옛 칸은 지우지 않는다", () => {
+  const old = { ...DEFAULT_SETTINGS, workdays: [false, true, true, true, true, true, false] }; // 일·토 끔
+  assert.equal(hasDayShifts(old), false);
+  const inClose = withDayShifts(old, new Date(2026, 8, 24)); // 9/21 주 = 마감반
+  assert.deepEqual(inClose.dayShifts, [OFF, "close", "close", "close", "close", "close", OFF]);
+  const inOpen = withDayShifts(old, new Date(2026, 9, 1));   // 9/28 주 = 오픈반
+  assert.deepEqual(inOpen.dayShifts, [OFF, "open", "open", "open", "open", "open", OFF]);
+  assert.deepEqual([inOpen.anchorMonday, inOpen.anchorShift, inOpen.workdays], [old.anchorMonday, old.anchorShift, old.workdays]);
+  // 옮긴 그 주의 일과는 옮기기 전과 같다
+  for (let d = 28; d <= 30; d++) {
+    const day = new Date(2026, 8, d);
+    assert.deepEqual(dayPlan(day, withDayShifts(old, day)).blocks, dayPlan(day, old).blocks);
+  }
+  assert.equal(withDayShifts(inOpen, new Date(2026, 9, 8)), inOpen, "한 번 옮기면 다시 안 바꾼다");
+  assert.equal(hasDayShifts({ ...old, dayShifts: ["open", "night"] }), false, "모양이 이상하면 다시 옮긴다");
+});
+
+test("요일 하나 고치기: 그 요일만 바뀌고, 모르는 값은 무시한다", () => {
+  const s = setDayShift(mixed, 3, "close");
+  assert.deepEqual(s.dayShifts, [OFF, "open", "open", "close", "close", "close", OFF]);
+  assert.equal(setDayShift(mixed, "0", "mid").dayShifts[0], "mid", "버튼에서 오는 글자 번호도 받는다");
+  assert.equal(setDayShift(mixed, 3, "night"), mixed);
 });
 
 // ---------- 쉬는 날 ----------

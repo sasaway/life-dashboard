@@ -20,6 +20,7 @@ test("심부름꾼 주소는 script.google.com/macros/s/…/exec 만 받는다",
 });
 
 test("답 확인: 알바 날·마지막 날을 남기고, 이상한 값은 버린다", () => {
+  assert.equal(readReply({ ...reply, shifts: { "2026-11-23": "mid" } }, 1).cal.shifts["2026-11-23"], "mid", "중간반도 받는다 (v2.8.1)");
   const { cal } = readReply({ ...reply, shifts: { ...reply.shifts, "2026-11-27": "night", "어제": "open" } }, 123);
   assert.equal(shiftCount(cal), 7);
   assert.deepEqual([cal.from, cal.until, cal.at], ["2026-11-07", "2026-11-22", 123]);

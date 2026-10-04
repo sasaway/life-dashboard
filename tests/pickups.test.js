@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   FETCH_EVERY, emptyPickups, shouldFetch, readPickupReply, parseWhen, pickupsOf, pickupNames, nextPhase, planDate, livePickups,
-  rowKey, signature, phaseLabel, applyPickup, autoFill, markByHand, hasNewPickup, byHand, isTentative, isRerun,
+  rowKey, signature, phaseLabel, applyPickup, autoFill, markByHand, hasNewPickup, byHand, toManual, toAuto, isTentative, isRerun,
 } from "../js/pickups.js";
 import { withUpcoming, findByName, pickupPlaceholder, adoptRealIds, isPlaceholder } from "../js/wuwa.js";
 import { defaultGacha, normalizeGacha } from "../js/gacha.js";
@@ -190,4 +190,22 @@ test("일정이 바뀌었는지: 공명자·시작·끝이 같으면 같은 일�
   assert.notEqual(signature(g1), signature(nextPhase(pickupsOf(saved(C1)), at(11, 1))));
   assert.equal(signature(null), "");
   assert.equal(rowKey(pickupsOf(saved(C2))[0]), "3.8|1페이즈|새공명자");
+});
+
+test("정하는 법 고르기 (v2.8.1): '직접 고르기' 는 값은 그대로 두고 일정을 안 따른다, '픽업 일정대로' 는 다시 일정을 따른다", () => {
+  const s = saved(A, B);
+  const list = pickupsOf(s);
+  const auto = autoFill(plan(), list, at(10, 3), resolver(s));
+  const mine = toManual(auto, list, at(10, 3));
+  assert.deepEqual([mine.char, mine.date, mine.charBy, mine.dateBy, mine.autoKey], [auto.char, auto.date, "manual", "manual", ""]);
+  assert.equal(byHand(mine), true);
+  assert.equal(autoFill({ ...mine, date: "2026-12-25" }, list, at(10, 22), resolver(s)).date, "2026-12-25", "일정이 바뀌어도 그대로");
+  assert.equal(hasNewPickup(mine, list, at(10, 3), resolver(s)), false, "막 고른 때에는 안내 없음");
+  const back = toAuto({ ...mine, date: "2026-12-25", char: "1407", charName: "카르티시아" });
+  assert.equal(byHand(back), false);
+  const filled = autoFill(back, list, at(10, 3), resolver(s));
+  assert.deepEqual([filled.charName, filled.date, filled.charBy, filled.dateBy], ["여우의 별자리", "2026-10-21", "auto", "auto"]);
+  // 다음 픽업에 공명자가 여럿이면 일정대로로 바꿔도 값은 그대로 (고르는 창에서 고른다)
+  const two = pickupsOf(saved(C1, C2));
+  assert.deepEqual(autoFill(back, two, at(11, 1), resolver(saved(C1, C2))), back);
 });

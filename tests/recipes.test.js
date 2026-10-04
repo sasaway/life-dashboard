@@ -41,7 +41,7 @@ test("불을 쓰는 단계에는 시간이 있어 타이머가 달린다 (Notion
   assert.equal(hasTimer({ heat: "off", sec: 0 }), false);
 });
 
-test("짜글이: 1분링 한 알 + 물 350ml, 두 끼 분량, 영상의 불 세기와 시간", () => {
+test("김치 대패 짜글이: 김치가 양념을 대신해 1분링 한 알 + 설탕만, 물 350ml, 두 끼 분량", () => {
   const jja = RECIPES.find((r) => r.id === "jja");
   const ing = Object.fromEntries(jja.ingredients);
   assert.match(ing["백설 육수에는 1분링"], /^1알/);
@@ -49,7 +49,12 @@ test("짜글이: 1분링 한 알 + 물 350ml, 두 끼 분량, 영상의 불 세�
   assert.equal(ing["냉동 대패삼겹"], "250g");
   assert.match(jja.serves, /2끼/);
   const timed = jja.steps.filter(hasTimer).map((st) => [HEATS[st.heat].label, st.sec]);
-  assert.deepEqual(timed, [["중불", 240], ["중불", 120], ["약불", 90], ["센불", 180], ["센불", 60], ["중불", 540]]);
+  assert.deepEqual(timed, [["중불", 240], ["중불", 180], ["센불", 180], ["센불", 60], ["중불", 480]]);
+  assert.equal(jja.name, "김치 대패 짜글이");
+  assert.match(ing["익은 김치"], /^200g/);
+  assert.match(ing["익은 김치"], /깍두기/);
+  for (const gone of ["맛술", "진간장", "고추장", "다진 마늘", "후추", "감자", "애호박"]) assert.ok(!(gone in ing), `${gone} 은 뺐다`);
+  assert.equal(jja.protein, 25, "고기·두부가 그대로라 단백질도 그대로");
 });
 
 test("짜파게티는 봉지 조리법(물 600ml, 5분, 물 8스푼)", () => {

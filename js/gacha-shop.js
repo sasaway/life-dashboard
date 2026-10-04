@@ -29,9 +29,9 @@ export const SHOP = [
   { id: "topup", name: "루나이트 충전", cycle: "any" },
   { id: "sub", name: "월정액", cycle: "monthly", lunite: 300, perDay: 90, price: 5900 },
   { id: "pass", name: "패스", cycle: "version", astrite: 680, charPulls: 5, price: 12000 },
-  { id: "phaseChar", name: "페이즈 캐릭뽑 팩", cycle: "phase", astrite: 400, charPulls: 5, limit: 1 },
-  { id: "phaseCharBig", name: "페이즈 캐릭뽑 팩 (큰 것)", cycle: "phase", astrite: 500, charPulls: 15, limit: 1 },
-  { id: "phaseWeapon", name: "페이즈 무기뽑 팩", cycle: "phase", astrite: 400, weaponPulls: 5, limit: 1 },
+  { id: "phaseChar", name: "캐릭뽑 팩", cycle: "phase", astrite: 400, charPulls: 5, limit: 1 },
+  { id: "phaseCharBig", name: "캐릭뽑 팩 (큰 것)", cycle: "phase", astrite: 500, charPulls: 15, limit: 1 },
+  { id: "phaseWeapon", name: "무기뽑 팩", cycle: "phase", astrite: 400, weaponPulls: 5, limit: 1 },
   { id: "monthly", name: "월간 지원 팩", cycle: "monthly", astrite: 500, charPulls: 5, weaponPulls: 5, limit: 1,
     unsure: "매달 1일에 다시 살 수 있다는 건 출처가 한 곳뿐이야. 게임 안 상점에서 확인해 줘." },
 ];
@@ -64,7 +64,12 @@ export function defaultItem(def) {
 export const defaultPaid = () => ({ items: Object.fromEntries(SHOP.map((d) => [d.id, defaultItem(d)])), custom: [] });
 
 const isDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d ?? "");
-const cleanName = (v, fallback) => String(v ?? "").trim().slice(0, 30) || fallback;
+// v2.8 의 기본 이름 (핫픽스 v2.8.1 에서 '페이즈' 를 뺌). 폰에 이 이름 그대로 저장돼 있으면 새 기본 이름으로, 은월이 고친 이름은 그대로
+const OLD_NAMES = ["페이즈 캐릭뽑 팩", "페이즈 캐릭뽑 팩 (큰 것)", "페이즈 무기뽑 팩"];
+const cleanName = (v, fallback) => {
+  const name = String(v ?? "").trim().slice(0, 30);
+  return !name || OLD_NAMES.includes(name) ? fallback : name;
+};
 
 function cleanItem(def, saved) {
   const base = defaultItem(def);

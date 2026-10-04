@@ -1,8 +1,8 @@
 // 일과표 화면: 메인의 '지금' 카드와 오늘 일정, 설정 창의 일과표 편집.
 import { store } from "./store.js";
 import {
-  DEFAULT_SETTINGS, SHIFTS, dayPlan, nowInfo, leftLabel, setThisWeek,
-  shiftFor, checkTemplate, sortBlocks, toMin, upgradeTemplates, alignCloseOnce, CLOSE_RESET,
+  DEFAULT_SETTINGS, SHIFTS, SHIFT_IDS, OFF, dayPlan, nowInfo, leftLabel, withDayShifts, setDayShift,
+  checkTemplate, sortBlocks, toMin, upgradeTemplates, alignCloseOnce, CLOSE_RESET,
 } from "./schedule.js";
 import { $, esc } from "./dom.js";
 
@@ -12,11 +12,12 @@ const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]; // 월요일부터 보여 준다
 
 function loadSettings() {
   const saved = store.load(KEY, null);
-  if (!saved) return { ...DEFAULT_SETTINGS, closeReset: CLOSE_RESET }; // 처음 쓰는 폰은 이미 기본값
+  if (!saved) return withDayShifts({ ...DEFAULT_SETTINGS, closeReset: CLOSE_RESET }, new Date()); // 처음 쓰는 폰은 이미 기본값
   // 옛 기본 일과표가 그대로 저장돼 있으면 새 기본값으로 (직접 고친 건 그대로)
   const templates = upgradeTemplates({ ...DEFAULT_SETTINGS.templates, ...saved.templates }); // 빠진 반이 있으면 기본값으로
   // 핫픽스 v2.5.1: 마감반을 한 번 기본값으로 (예전 것은 oldClose 에 보관)
-  const next = alignCloseOnce({ ...DEFAULT_SETTINGS, ...saved, templates }, new Date());
+  // 핫픽스 v2.8.1: '한 주씩 번갈아' · '알바 하는 요일' 을 요일별 알바로 옮긴다 (지금 주의 반 그대로, 꺼 둔 요일은 쉬는 날)
+  const next = withDayShifts(alignCloseOnce({ ...DEFAULT_SETTINGS, ...saved, templates }, new Date()), new Date());
   if (JSON.stringify(next) !== JSON.stringify({ ...DEFAULT_SETTINGS, ...saved })) store.save(KEY, next);
   return next;
 }
@@ -50,7 +51,7 @@ export function renderToday() {
   $("nowLeft").textContent = leftLabel(info.leftMin);
 
   const label = plan.working ? SHIFTS[plan.shift].label : "쉬는 날";
-  $("shiftTag").textContent = plan.fromCal ? `${label} · 캘린더` : plan.working ? `${label} 주` : label;
+  $("shiftTag").textContent = plan.fromCal ? `${label} · 캘린더` : label;
   const beforeDay = nowMin < toMin(plan.blocks[0].start); // 새벽: 오늘 칸은 아직 시작 전
   $("sched").innerHTML = plan.blocks.map((x, i) => {
     const cls = i === info.index ? "cur" : i < info.index && !beforeDay ? "past" : "";
@@ -61,19 +62,15 @@ export function renderToday() {
   }).join("");
 }
 
-// ---------- 설정: 이번 주 알바 ----------
-function renderShiftPicker() {
-  const cur = shiftFor(new Date(), settings);
-  document.querySelectorAll("#shiftPick button").forEach((btn) => {
-    btn.setAttribute("aria-pressed", String(btn.dataset.shift === cur));
-  });
-}
-
-// ---------- 설정: 알바 하는 요일 ----------
-function renderWorkdays() {
-  $("workdays").innerHTML = WEEK_ORDER.map((day) =>
-    `<button class="day" data-day="${day}" aria-pressed="${settings.workdays[day]}">${DAY_NAMES[day]}</button>`,
-  ).join("");
+// ---------- 설정: 요일별 알바 (월~일마다 오픈반 · 중간반 · 마감반 · 쉬는 날, 매주 같게) ----------
+const DAY_CHOICES = [...SHIFT_IDS.map((id) => [id, SHIFTS[id].label.replace("반", "")]), [OFF, "쉼"]];
+const choiceLabel = (v) => (v === OFF ? "쉬는 날" : SHIFTS[v].label);
+function renderDayShifts() {
+  $("dayShifts").innerHTML = WEEK_ORDER.map((day) => `<li class="day-shift">
+    <span class="day-name">${DAY_NAMES[day]}</span>
+    <div class="seg four" role="group" aria-label="${DAY_NAMES[day]}요일 알바">${DAY_CHOICES.map(([v, text]) =>
+      `<button data-day="${day}" data-shift="${v}" aria-pressed="${settings.dayShifts[day] === v}" aria-label="${DAY_NAMES[day]}요일 ${choiceLabel(v)}">${text}</button>`).join("")}</div>
+  </li>`).join("");
 }
 
 // ---------- 설정: 일과표 편집 ----------
@@ -114,20 +111,11 @@ function saveEdit() {
 export function startSchedule() {
   renderToday();
 
-  $("shiftPick").addEventListener("click", (e) => {
+  $("dayShifts").addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-shift]");
     if (!btn) return;
-    saveSettings(setThisWeek(settings, new Date(), btn.dataset.shift));
-    renderShiftPicker();
-  });
-
-  $("workdays").addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-day]");
-    if (!btn) return;
-    const workdays = [...settings.workdays];
-    workdays[btn.dataset.day] = !workdays[btn.dataset.day];
-    saveSettings({ ...settings, workdays });
-    renderWorkdays();
+    saveSettings(setDayShift(settings, btn.dataset.day, btn.dataset.shift));
+    renderDayShifts();
   });
 
   $("editPick").addEventListener("click", (e) => {
@@ -159,7 +147,6 @@ export function startSchedule() {
 
 // 설정 창을 열 때마다 최신 값으로 그린다
 export function openScheduleSettings() {
-  renderShiftPicker();
-  renderWorkdays();
-  startEdit(shiftFor(new Date(), settings));
+  renderDayShifts();
+  startEdit(dayPlan(new Date(), settings).shift);
 }
