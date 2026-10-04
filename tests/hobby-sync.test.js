@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { gearRows, otherRows, partyRows, payload, replyError, EMPTY_SLOT, SENT_TABS } from "../js/hobby-sync.js";
+import { gearRows, otherRows, partyRows, payload, replyError, EMPTY_SLOT, SENT_TABS, TAB_GROUPS } from "../js/hobby-sync.js";
 import { DEFAULT_SETTINGS } from "../js/schedule.js";
 
 const gear = {
@@ -39,13 +39,13 @@ test("코스트 2 공명자가 두 파티에 있으면 두 줄 다, 육성 체�
   assert.deepEqual(rows, [["A", "1", "벨리나", "O", "", "", "", ""], ["B", "2", "벨리나", "O", "", "", "", ""]]);
 });
 
-test("주소나 암호 글자가 없으면 보내지 않는다 · 있으면 아홉 탭과 암호만 보낸다", () => {
+test("주소나 암호 글자가 없으면 보내지 않는다 · 있으면 열한 탭과 암호만 보낸다", () => {
   const data = { gear, parties: [], builds: {}, chars, settings: DEFAULT_SETTINGS, workoutLog: {}, mealLog: {}, reviews: {}, weekReviews: {}, hobbyLog: {}, todos: [] };
   const now = new Date(2026, 9, 3, 20, 0);
   assert.equal(payload({ url: "", token: "t" }, data, now), null);
   assert.equal(payload({ url: "https://script.google.com/macros/s/x/exec", token: "" }, data, now), null);
   const body = JSON.parse(payload({ url: "https://script.google.com/macros/s/x/exec", token: "t" }, data, now));
-  assert.deepEqual(Object.keys(body), ["token", "warframe", "others", "wuwa", "today", "recent", "meals", "workouts", "hobby", "reviews"]);
+  assert.deepEqual(Object.keys(body), ["token", "warframe", "others", "wuwa", "today", "recent", "meals", "workouts", "hobby", "reviews", "plan", "next7"]);
   assert.equal(body.token, "t");
   assert.equal(body.warframe.length, 2);
 });
@@ -59,6 +59,7 @@ test("심부름꾼의 탭 목록과 앱이 보내는 것이 같다 (이름 · �
   }));
   assert.deepEqual(tabs.map((t) => t.name), SENT_TABS);
   assert.ok(!SENT_TABS.includes("픽업 일정"));
+  assert.deepEqual(TAB_GROUPS.map((g) => `${g.name} ${g.tabs.length}`), ["취미 3", "기록 6", "일정 2"], "설정 화면의 세 묶음");
   const data = {
     gear, parties: [{ id: "p", name: "x", slots: ["1102", null, null] }], builds: {}, chars, settings: DEFAULT_SETTINGS,
     workoutLog: { "2026-10-03": { legpress: 2 } }, mealLog: { "2026-10-03": [{ label: "저녁", dish: "jja" }] },

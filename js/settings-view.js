@@ -2,7 +2,7 @@
 // 항목 화면 안의 입력칸·버튼은 원래 파일(schedule-view · calendar-view 등)이 그대로 맡고, 여기서는 목록과 오가는 것만 한다.
 import { ICON } from "./icons.js";
 import { SHIFTS, dayPlan } from "./schedule.js";
-import { getScheduleSettings, openScheduleSettings } from "./schedule-view.js";
+import { getScheduleSettings, openScheduleSettings, leaveEdit } from "./schedule-view.js";
 import { calendarOn, openCalendarSettings } from "./calendar-view.js";
 import { hobbySyncState, openHobbySyncSettings } from "./hobby-sync-view.js";
 import { libraryCount } from "./library-view.js";
@@ -67,7 +67,8 @@ function goTo(id) {
   document.dispatchEvent(new CustomEvent("settings-page", { detail: id })); // 그 화면이 최신 값으로 다시 그린다
 }
 
-function goBack() {
+async function goBack() {
+  if (page === "rows" && !(await leaveEdit())) return; // 저장 안 한 일과표가 있으면 묻는다
   const from = page;
   renderList(); // 항목 화면에서 바꾼 상태(연결됨 등)를 목록에 바로
   $("setList").classList.add("back");

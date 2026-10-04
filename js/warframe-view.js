@@ -154,7 +154,7 @@ function renderGear() {
   renderHub();
 }
 
-// 저장할 때마다 취미 시트에도 (연결했으면)
+// 저장할 때마다 기록 시트에도 (연결했으면)
 const saveGear = () => { store.save("wfGear", gear); markSyncDirty(); };
 const editingFrame = () => gear.frames.find((x) => x.id === editing);
 const field = (k, label, f) =>

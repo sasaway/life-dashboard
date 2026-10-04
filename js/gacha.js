@@ -1,13 +1,12 @@
 // 명조 가챠 기댓값 계산기 (v2.4 재화 · v2.5 픽업). Notion '가챠 기댓값 계산기' (2026-09-29 23:00). 계산만 — 화면은 gacha-view.js.
 // 재화 이름은 줄여 부른다: 별의소리 = 별소 / 금빛 파도의 무늬 = 캐릭뽑 / 울린 조수의 무늬 = 무기뽑
 import { parseDate } from "./schedule.js";
-import { defaultPaid, normalizePaid, paidIncome, passCharDate, passCharCounts } from "./gacha-shop.js";
+import { defaultPaid, normalizePaid, paidIncome } from "./gacha-shop.js";
 
 // ---------- 가챠 규칙 (여기 한 곳에만 둔다) ----------
-// 공식 수치: 게임 안 '획득 확률 안내' (1연 160 별소, 5성 기본 0.8%, 80연째 5성 확정, 캐릭 픽업 50%·놓치면 다음 5성 확정,
+// 공식 수치: 게임 안 '획득 확률 안내' (1연 160 별소, 5성 기본 0.8% — 계산에는 안 쓴다, 80연째 5성 확정, 캐릭 픽업 50%·놓치면 다음 5성 확정,
 //            무기 픽업은 5성이면 늘 픽업 무기, 스택·확정 상태는 다음 같은 종류 픽업으로 이어진다)
 export const PULL_COST = 160;
-export const BASE_RATE = 0.008;
 export const HARD_PITY = 80;
 // 커뮤니티 통계 (종합 확률 약 1.8%): 5성 한 번에 평균 약 56연. 공식 수치가 아니라 화면에는 '대략' 으로 쓴다.
 // 66연쯤부터 오른다는 '소프트 천장' 은 공식 수치가 없어서 확률 곡선은 만들지 않는다 (사용자 결정: % 대신 판정만)
@@ -74,9 +73,6 @@ export function daysUntil(date, now) {
   return Math.round((parseDate(date) - today) / 864e5);
 }
 
-// 패스 캐릭뽑: 산 날 + 3주. 그 날이 픽업 날(당일 포함) 전이면 합계에 넣는다 (계산은 gacha-shop.js)
-export const passCharDay = (g) => passCharDate(g.paid.items.pass);
-export const passCharIn = (g) => passCharCounts(g.paid.items.pass, g.plan.date);
 export const dLabel = (days) => (days > 0 ? `D-${days}` : days === 0 ? "D-day" : "지났어");
 
 // ---------- 픽업 날까지 모이는 재화 ----------

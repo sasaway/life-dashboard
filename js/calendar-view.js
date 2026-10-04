@@ -69,7 +69,7 @@ export function startCalendar() {
     url = "";
     store.save(URL_KEY, "");
     setCalendar(null);
-    renderCalendar("연결을 끊었어. 이제 격주 규칙으로 돌아가.");
+    renderCalendar("연결을 끊었어. 이제 요일별 알바대로 가.");
   });
   syncCalendar();
   document.addEventListener("visibilitychange", () => {

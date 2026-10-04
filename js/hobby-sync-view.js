@@ -1,10 +1,12 @@
-// 설정 창의 '기록 시트 연결' (v1.8 취미 시트 → v2.6 라이프 기록 → v2.7 픽업 일정 받기).
+// 설정 창의 '기록 시트 연결' (v1.8 취미 시트 → v2.6 라이프 기록 → v2.7 픽업 일정 받기 → v2.9 일정 설정 · 앞으로 7일).
 // 기록을 저장하면 몇 초 모았다가 심부름꾼에게 통째로 보낸다. 앱을 열 때 날짜가 바뀌어 있으면 한 번 보낸다.
+// 일과표 · 요일별 알바를 고치거나 캘린더 알바가 바뀌어 일정 탭에 적을 줄이 달라졌을 때도 보낸다 (v2.9).
 // 못 보내면 '보낼 것 있음' 만 기억해 두고, 앱을 다시 열거나 인터넷이 돌아오면 다시 보낸다.
 // 받는 건 '픽업 일정' 탭 하나 (Claude 가 적는 탭): 앱을 열 때 · 돌아올 때, 마지막으로 받은 지 6시간이 넘었을 때만. 못 받으면 저장해 둔 걸 쓴다.
 import { store } from "./store.js";
 import { isHelperUrl } from "./calendar.js";
-import { payload, replyError, SENT_TABS } from "./hobby-sync.js";
+import { payload, replyError, TAB_GROUPS } from "./hobby-sync.js";
+import { scheduleSnapshot } from "./schedule-sync.js";
 import { DEFAULT_GEAR, migrateGear } from "./warframe.js";
 import { withUpcoming } from "./wuwa.js";
 import { pad } from "./schedule.js";
@@ -23,6 +25,9 @@ let changes = 0; // 보내는 사이에 또 저장했는지 알려고 센다
 let pk = { ...emptyPickups(), ...store.load("wuwaPickups", {}) }; // 받은 픽업 일정 (v2.7)
 let pkBusy = false;
 let pkError = "";
+let editing = false; // 연결된 뒤 '주소·암호 바꾸기' 를 눌러 칸을 펼쳤는지
+let schedSig = ""; // 마지막으로 본 일정 탭 줄 (일정 설정 · 앞으로 7일) — 달라졌는지 견주려고
+const schedNow = () => JSON.stringify(scheduleSnapshot({ settings: getScheduleSettings(), overrides: store.load("mealOverrides", {}) }, new Date()));
 
 const save = () => store.save(KEY, conf);
 export const hobbySyncOn = () => Boolean(conf.url && conf.token);
@@ -41,13 +46,17 @@ export const hobbySyncState = () => (!hobbySyncOn() ? "안 됨"
 // msg = 연결 카드에 띄울 말 (주소가 다를 때 등). 보낸 결과는 'Claude 가 읽는 기록' 카드에
 function render(msg = "") {
   const on = hobbySyncOn();
+  const form = !on || editing; // 연결된 뒤에는 주소·암호 칸을 접어 둔다 (v2.9)
   $("hsStatus").textContent = on ? "연결됨" : "연결 안 됨";
+  $("hsForm").hidden = !form;
+  $("hsSave").hidden = !form;
+  $("hsEdit").hidden = form;
   $("hsOff").hidden = !on;
   $("hsSave").textContent = on ? "바꾸고 보내기" : "연결하고 보내기";
   $("hsMsg").textContent = msg;
 
   $("hsSentAt").textContent = !on ? "" : conf.sentAt ? `마지막으로 보냄 ${timeLabel(conf.sentAt)}` : "아직 보낸 적 없어";
-  $("hsTabs").textContent = SENT_TABS.join(" · ");
+  $("hsTabs").innerHTML = TAB_GROUPS.map((g) => `<li><b>${g.name}</b><span>${g.tabs.join(" · ")}</span></li>`).join("");
   $("hsSync").hidden = !on;
   $("hsSendMsg").textContent = !on ? "연결하면 기록을 저장할 때마다 보내."
     : busy ? "보내는 중…"
@@ -119,6 +128,7 @@ function readAll() {
     builds: store.load("wuwaBuilds", {}),
     chars: withUpcoming(chars, pickupNames(pk)),
     settings: getScheduleSettings(),
+    overrides: store.load("mealOverrides", {}),
     workoutLog: store.load("workoutLog", {}),
     mealLog: store.load("mealLog", {}),
     reviews: store.load("reviews", {}),
@@ -133,6 +143,7 @@ async function send() {
   const now = new Date();
   const body = payload(conf, readAll(), now);
   if (!body || busy || !conf.dirty) return;
+  schedSig = schedNow(); // 이번에 보내는 일정 줄 (식단 칸을 바꿔 보낸 뒤 캘린더를 다시 받아도 또 보내지 않게)
   if (!navigator.onLine) return render();
   busy = true;
   render();
@@ -161,13 +172,21 @@ function later() {
   timer = setTimeout(send, WAIT);
 }
 
-// 기록(장비 목록·파티표·운동 세트·식단 칸·회고·명조/워프레임 체크·할 일)을 저장한 뒤 부른다. 연결 안 했으면 아무것도 안 한다
+// 기록(장비 목록·파티표·운동 세트·식단 칸·회고·명조/워프레임 체크·할 일·일정 설정)을 저장한 뒤 부른다. 연결 안 했으면 아무것도 안 한다
 export function markSyncDirty() {
   if (!hobbySyncOn()) return;
   changes += 1;
   conf.dirty = true;
   save();
   later();
+}
+
+// 일과표 고치기 · 요일별 알바 · 캘린더 알바가 저장됐을 때. 캘린더 알바는 30분마다 새로 받아 저장하니, 일정 탭에 적을 줄이 정말 달라졌을 때만 보낸다
+function onScheduleChange() {
+  const sig = schedNow();
+  if (sig === schedSig) return;
+  schedSig = sig;
+  markSyncDirty();
 }
 
 // 앱을 열 때 · 앱으로 돌아올 때 · 인터넷이 돌아올 때: 날짜가 바뀌었으면 한 번 보내고, 전에 못 보낸 게 있으면 다시 보낸다
@@ -185,6 +204,7 @@ function fill() {
 }
 
 export function openHobbySyncSettings() {
+  editing = false;
   fill();
   render();
 }
@@ -196,9 +216,19 @@ export function startHobbySync() {
     if (!isHelperUrl(url)) return render("주소가 달라. 배포할 때 나온 '웹 앱 URL'(…/exec 로 끝남)을 붙여 넣어 줘.");
     if (!token) return render("암호 글자를 붙여 넣어 줘. setup 을 돌리면 실행 기록에 나와.");
     conf = { ...conf, url, token, dirty: true, error: "" };
+    editing = false;
     save();
     send();
     fetchPickups(true);
+  });
+  $("hsEdit").addEventListener("click", () => {
+    editing = true;
+    render();
+    $("hsUrl").focus();
+  });
+  // 이 화면에 들어올 때마다 칸을 다시 접고 저장된 값으로 (펼쳐 둔 채 나갔다 와도)
+  document.addEventListener("settings-page", (e) => {
+    if (e.detail === "hs") openHobbySyncSettings();
   });
   $("hsPkGet").addEventListener("click", () => fetchPickups(true));
   $("hsSync").addEventListener("click", () => {
@@ -208,10 +238,13 @@ export function startHobbySync() {
   });
   $("hsOff").addEventListener("click", () => {
     conf = { ...OFF };
+    editing = false;
     save();
     fill();
     render("연결을 끊었어. 시트는 그대로 남아 있어.");
   });
+  schedSig = schedNow();
+  document.addEventListener("schedule-change", onScheduleChange); // 일과표 고치기 · 요일별 알바 · 캘린더 알바
   wake();
   addEventListener("online", wake);
   document.addEventListener("visibilitychange", () => {

@@ -12,7 +12,7 @@ export const DISHES = [
   { id: "chicken", name: "닭가슴살 + 햇반", short: "닭가슴살 + 햇반", work: true },
 ];
 export const WORK_DISH = DISHES.find((d) => d.work);
-const ROTATION = DISHES.filter((d) => !d.work);
+export const ROTATION = DISHES.filter((d) => !d.work);
 // 라면의 다른 한 가지 — 칸을 눌러 직접 고를 때만 (v2.2, 주간 보고서 단백질을 맞게 세려고 나눔)
 export const CHAPA = { id: "chapa", name: "라면 (짜파게티)", short: "짜파게티" };
 // 짜글이는 두 끼 분량을 만들어 다음 끼니에 남은 것을 먹는다
@@ -33,11 +33,12 @@ export function homeMeals(date, settings) {
 }
 
 // 알바 중에 먹는 끼니: 오픈반은 점심(13~14시 사이 시작, 40분), 중간반·마감반은 저녁(시각은 Notion 에 없음)
+export const OPEN_LUNCH_NOTE = "13~14시 사이 시작 · 40분";
 export function workMeal(date, settings) {
   const plan = dayPlan(date, settings);
   if (!plan.working) return null;
   return plan.shift === "open"
-    ? { label: "점심", dish: WORK_DISH, note: "13~14시 사이 시작 · 40분", first: true }
+    ? { label: "점심", dish: WORK_DISH, note: OPEN_LUNCH_NOTE, first: true }
     : { label: "저녁", dish: WORK_DISH, note: "", first: false };
 }
 

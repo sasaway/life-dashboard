@@ -106,7 +106,7 @@ export function alignCloseOnce(settings, now) {
 }
 
 // 쉬는 날 알바 대신 집에서 먹는 끼니
-const DAY_OFF_MEAL = {
+export const DAY_OFF_MEAL = {
   open: b("12:00", "meal", "점심"),
   mid: b("18:00", "meal", "저녁"),
   close: b("18:00", "meal", "저녁"),
@@ -217,7 +217,7 @@ function noExercise(blocks) {
 }
 
 // 그 날의 일과표
-// 캘린더에서 받은 그 날의 알바: "open" · "close" · "off"(받은 기간 안인데 알바 없음) · null(모름 → 격주 규칙)
+// 캘린더에서 받은 그 날의 알바: "open" · "mid" · "close" · "off"(받은 기간 안인데 알바 없음) · null(모름 → 요일별 알바)
 export function calShift(date, cal) {
   if (!cal?.shifts) return null;
   const day = ymd(date);
@@ -240,6 +240,9 @@ export function dayPlan(date, settings) {
   if (date.getDay() === 0) blocks = noExercise(blocks);
   return { shift, working, blocks, fromCal: Boolean(c) };
 }
+
+// 칸의 끝 = 다음 칸의 시작. 마지막 칸(취침)은 다음 날 첫 칸까지
+export const endOf = (blocks, i) => (blocks[i + 1] ?? blocks[0]).start;
 
 // 그 날 어떤 칸(운동·취미·알바 등)의 "시작–끝" (없으면 null). 마지막 칸이면 minutes 만큼으로 본다.
 export function blockRange(blocks, kind, minutes = 120) {
@@ -293,6 +296,18 @@ export function checkTemplate(blocks) {
   const dup = times.find((t, i) => times.indexOf(t) !== i);
   if (dup) return `${dup} 에 칸이 두 개야.`;
   return "";
+}
+
+// 칸마다 길이(분): 시각 순서로 다음 칸까지, 마지막 칸은 다음 날 첫 칸까지. 시각을 못 읽는 칸은 null (일과표 고치기 화면, v2.9)
+export function blockLengths(blocks) {
+  const times = blocks.map((x) => (isHHMM(x.start) ? toMin(x.start) : null));
+  const sorted = times.filter((t) => t !== null).sort((p, q) => p - q);
+  return times.map((t) => (t === null ? null : (sorted.find((s) => s > t) ?? sorted[0] + 1440) - t));
+}
+// 90 → "1시간 30분", 60 → "1시간", 30 → "30분"
+export function lengthLabel(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return [h ? `${h}시간` : "", m ? `${m}분` : ""].filter(Boolean).join(" ");
 }
 
 export function sortBlocks(blocks) {

@@ -167,15 +167,15 @@ test("워프레임 추가 후 아무것도 안 적은 카드만 빈 카드로 �
   assert.equal(DEFAULT_GEAR.frames.some(isBlankFrame), false);
 });
 
-test("실시간 현황은 하루 한 번, 아침 브리핑 시각(05:51)에 새로 받는다 (v2.8.2)", () => {
-  assert.equal(liveAtLabel, "05:51");
+test("실시간 현황은 하루 한 번, 아침 브리핑 시각(05:21)에 새로 받는다 (v2.8.2 · v2.9 에서 05:51 → 05:21)", () => {
+  assert.equal(liveAtLabel, "05:21");
   const at = (d, h, m) => new Date(2026, 9, d, h, m);
   assert.equal(liveDue(0, at(4, 12, 0)), true, "받은 적이 없으면 받는다");
-  assert.equal(liveDue(at(4, 5, 50).getTime(), at(4, 5, 50)), false, "05:51 전에는 어제 것 그대로");
-  assert.equal(liveDue(at(4, 5, 50).getTime(), at(4, 5, 51)), true, "05:51 이 되면 새로");
-  assert.equal(liveDue(at(4, 5, 51).getTime(), at(4, 23, 0)), false, "그 날에는 다시 안 받는다 (10분마다 X)");
-  assert.equal(liveDue(at(4, 5, 51).getTime(), at(5, 5, 50)), false, "다음 날 05:50 까지도");
-  assert.equal(liveDue(at(4, 5, 51).getTime(), at(5, 5, 51)), true, "다음 날 05:51 에 새로");
+  assert.equal(liveDue(at(4, 5, 20).getTime(), at(4, 5, 20)), false, "05:21 전에는 어제 것 그대로");
+  assert.equal(liveDue(at(4, 5, 20).getTime(), at(4, 5, 21)), true, "05:21 이 되면 새로");
+  assert.equal(liveDue(at(4, 5, 21).getTime(), at(4, 23, 0)), false, "그 날에는 다시 안 받는다 (10분마다 X)");
+  assert.equal(liveDue(at(4, 5, 21).getTime(), at(5, 5, 20)), false, "다음 날 05:20 까지도");
+  assert.equal(liveDue(at(4, 5, 21).getTime(), at(5, 5, 21)), true, "다음 날 05:21 에 새로");
   assert.equal(liveDue(at(3, 22, 0).getTime(), at(4, 2, 0)), false, "어제 저녁에 받았으면 새벽에는 안 받는다");
-  assert.equal(liveDue(at(2, 22, 0).getTime(), at(4, 2, 0)), true, "어제 05:51 보다 앞이면 받는다");
+  assert.equal(liveDue(at(2, 22, 0).getTime(), at(4, 2, 0)), true, "어제 05:21 보다 앞이면 받는다");
 });

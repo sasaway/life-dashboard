@@ -1,7 +1,7 @@
 // 캘린더 알바 연결: 심부름꾼(구글 Apps Script)이 준 답을 확인해서 앱이 쓰는 모양으로 바꾼다.
 // 앱에 남는 것: { from, until, shifts: { "2026-11-19": "close" }, at }
 //  - from ~ until(캘린더에 적힌 마지막 알바 날) 안에서 알바가 없는 날 = 쉬는 날
-//  - 그 밖의 날은 예전처럼 격주 규칙
+//  - 그 밖의 날은 요일별 알바 (설정)
 
 import { SHIFT_IDS } from "./schedule.js";
 

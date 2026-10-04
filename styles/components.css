@@ -19,7 +19,7 @@
 /* ---------- 빈 상태 문구 ---------- */
 .empty{color:var(--faint);font-size:var(--fs-small);margin:0}
 
-/* ---------- 버튼: 모양은 시안 그대로, 누르는 자리만 40px 로 넓힌다 ---------- */
+/* ---------- 버튼: 모양은 시안 그대로, 누르는 자리만 44px(--touch) 로 넓힌다 ---------- */
 .btn{position:relative}
 .btn::after{content:"";position:absolute;inset-inline:0;inset-block:min(0px,calc((100% - var(--touch)) / 2))}
 
@@ -83,6 +83,8 @@
 .edit-rows{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
 .edit-row{display:grid;grid-template-columns:128px 1fr var(--touch);gap:8px;align-items:center}
 .edit-row .del{border-color:transparent;background:none}
+.edit-len{grid-column:1/-1;margin-top:-4px;padding-left:2px;font-size:var(--fs-tiny);color:var(--faint)}
+.edit-len:empty{display:none}
 .msg{font-size:var(--fs-small);color:var(--sub);margin:10px 0 0;min-height:1.4em}
 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
 
@@ -167,7 +169,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- 예산 '고정' 켜고 끄기 · 켜면 선택된 칸(연한 포인트) ---------- */
-.pin{flex:none;min-height:var(--touch);padding:0 10px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--surface);color:var(--faint);font-size:var(--fs-small);font-weight:600}
+.pin{flex:none;min-height:var(--touch);min-width:var(--touch);padding:0 10px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--surface);color:var(--faint);font-size:var(--fs-small);font-weight:600}
 .pin[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;color:var(--ink)}
 .money-rows .field.won{width:112px}
 .money-rows li.budget-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;column-gap:8px;row-gap:6px}
@@ -266,7 +268,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gym-week li b{color:var(--ink)}
 .gym-week li.cur{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent);color:var(--ink);font-weight:600}
 .credit a{color:var(--accent);position:relative}
-.credit a::after{content:"";position:absolute;inset:-13px -4px} /* 글줄 간격은 그대로, 누르는 자리만 40px */
+.credit a::after{content:"";position:absolute;inset:-15px -4px} /* 글줄 간격은 그대로, 누르는 자리만 44px */
 
 /* ---------- 명조 (시안 .game .checks .boss) ---------- */
 .game{display:flex;flex-direction:column;gap:12px}
@@ -280,10 +282,10 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .chk[aria-pressed="true"] .box svg{opacity:1}
 .chk[aria-pressed="true"] .lbl{color:var(--sub)}
 .chk.small{min-height:36px;padding:6px 10px;font-size:var(--fs-tiny);position:relative}
-.chk.small::after{content:"";position:absolute;inset:-3px -1px} /* 모양은 36px, 누르는 자리는 40px (테두리 1px 포함) */
-.boss{display:flex;gap:6px;align-items:center;font-size:var(--fs-small);color:var(--sub)}
+.chk.small::after{content:"";position:absolute;inset:-5px -1px} /* 모양은 36px, 누르는 자리는 44px (테두리 1px 포함) */
+.boss{display:flex;gap:18px;align-items:center;font-size:var(--fs-small);color:var(--sub)}
 .boss button{width:28px;height:28px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);position:relative}
-.boss button::after{content:"";position:absolute;inset:-6px}
+.boss button::after{content:"";position:absolute;inset:-10px} /* 모양은 28px, 누르는 자리는 44px (칸 사이를 18px 로 벌려 안 겹치게) */
 .boss button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
 .weekly-list{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .weekly-list .boss{padding:4px 2px}
@@ -356,7 +358,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .fchip{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:36px;padding:0 2px;
   border:0;border-radius:9px;background:none;font-size:var(--fs-small);font-weight:500;color:var(--sub);white-space:nowrap;
   transition:background var(--t-fast)}
-.fchip::after{content:"";position:absolute;inset:-2px 0} /* 모양은 36px, 누르는 자리는 40px */
+.fchip::after{content:"";position:absolute;inset:-4px 0} /* 모양은 36px, 누르는 자리는 44px */
 .fchip[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink);font-weight:600}
 .fchip .el-dot{width:7px;height:7px}
 @media (max-width:370px){.fchip .el-dot{display:none}}
@@ -441,7 +443,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .others{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
 .others li{display:flex;align-items:center;padding-left:12px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface);font-size:var(--fs-small)}
 .others button{position:relative;width:32px;height:32px;border:0;background:none;display:grid;place-items:center}
-.others button::after{content:"";position:absolute;inset:-4px}
+.others button::after{content:"";position:absolute;inset:-6px} /* 모양은 32px, 누르는 자리는 44px */
 .others svg{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:1.8}
 .gear-form{display:flex;flex-direction:column;gap:8px}
 .gear-form label{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:center;font-size:var(--fs-small);color:var(--sub)}
@@ -490,7 +492,9 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .hs-pk li:first-child{border-top:0;padding-top:0}
 .hs-pk li.past{color:var(--faint)}
 .hs-pk .sub{display:block;font-size:var(--fs-tiny);color:var(--faint)}
-.hs-tabs{margin:0;font-size:13px;line-height:1.6;color:var(--sub);word-break:keep-all}
+.hs-tabs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.5;color:var(--sub);word-break:keep-all}
+.hs-tabs li{display:grid;grid-template-columns:36px 1fr;gap:8px}
+.hs-tabs b{color:var(--ink);font-weight:600}
 
 /* ---------- 설정: 목록 → 눌러서 항목 화면 (v1.9) ---------- */
 #settings .sheet{height:86%} /* 목록 ↔ 항목 화면을 오가도 창 높이가 출렁이지 않게 */
@@ -566,6 +570,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gc-pulls{flex:none;font-size:var(--fs-small);color:var(--sub);white-space:nowrap}
 .gc-pulls .mono{font-size:var(--fs-hero);font-weight:600;color:var(--ink);margin-right:2px}
 .gc-date{width:156px;flex:none}
+.gc-date-text{flex:none;font-weight:600;font-size:var(--fs-body);white-space:nowrap}
 .gc-go{margin-top:8px;min-height:var(--touch)}
 /* 가챠 픽업 (v2.5): 공명자 줄 · 목표 체인 칩(속성 필터 .filter-row 그대로) · 기댓값 두 칸 */
 .gc-char{display:flex;align-items:center;gap:10px;width:100%;min-height:var(--touch-nav);padding:4px 0;border:0;background:none;text-align:left;color:var(--ink)}
@@ -592,7 +597,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gc-item-won{font-size:var(--fs-small);color:var(--sub);text-align:right}
 .gc-item-pick{min-height:var(--touch);white-space:nowrap}
 .gc-step{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--surface)}
-.gc-step button{width:38px;height:var(--touch);border:0;background:none;color:var(--ink);font-size:18px;line-height:1}
+.gc-step button{width:var(--touch);height:var(--touch);border:0;background:none;color:var(--ink);font-size:18px;line-height:1}
 .gc-step button:disabled{color:var(--line)}
 .gc-step .mono{min-width:24px;text-align:center;font-weight:600}
 .gc-shop-btns{justify-content:space-between;margin:4px 0 10px}

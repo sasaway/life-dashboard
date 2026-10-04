@@ -2,8 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   PULL_COST, HARD_PITY, AVG_PER_FIVE, defaultGacha, normalizeGacha, count, astriteOf, pullsOf, daysUntil, dLabel, income,
-  passCharDay, passCharIn,
 } from "../js/gacha.js";
+import { passCharDate, passCharCounts } from "../js/gacha-shop.js";
+
+// 옛 모양으로 저장된 패스도 옮긴 뒤 같은 답이 나오는지 (계산은 gacha-shop.js)
+const passCharDay = (g) => passCharDate(g.paid.items.pass);
+const passCharIn = (g) => passCharCounts(g.paid.items.pass, g.plan.date);
 
 test("가챠 규칙 값: 1연 160 별소, 천장 80연, 평균 약 56연", () => {
   assert.equal(PULL_COST, 160);

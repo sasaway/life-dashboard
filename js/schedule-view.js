@@ -2,13 +2,13 @@
 import { store } from "./store.js";
 import {
   DEFAULT_SETTINGS, SHIFTS, SHIFT_IDS, OFF, dayPlan, nowInfo, leftLabel, withDayShifts, setDayShift,
-  checkTemplate, sortBlocks, toMin, upgradeTemplates, alignCloseOnce, CLOSE_RESET,
+  checkTemplate, sortBlocks, toMin, upgradeTemplates, alignCloseOnce, CLOSE_RESET, blockLengths, lengthLabel,
 } from "./schedule.js";
+import { askConfirm, guardSheet, closeSheet } from "./sheet.js";
+import { DAYS as DAY_NAMES, WEEK_ORDER } from "./time.js";
 import { $, esc } from "./dom.js";
 
 const KEY = "schedule";
-const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
-const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]; // 월요일부터 보여 준다
 
 function loadSettings() {
   const saved = store.load(KEY, null);
@@ -87,6 +87,18 @@ function startEdit(shift) {
   renderRows();
 }
 
+// 저장 안 한 변경 (v2.9): 고치다가 다른 반을 누르거나 나가면 말없이 사라지던 걸 막는다
+const UNSAVED = "저장 안 한 변경이 있어.";
+const isDirty = () => JSON.stringify(draft) !== JSON.stringify(settings.templates[editing]);
+const noteDirty = () => { $("editMsg").textContent = isDirty() ? UNSAVED : ""; };
+// 일과표 고치기에서 나가도 되는지 (반 바꾸기 · '‹ 설정' · 창 닫기). 버린다고 하면 고치던 걸 되돌린다
+export async function leaveEdit() {
+  if (!isDirty()) return true;
+  if (!(await askConfirm(`${SHIFTS[editing].label} 일과표를 저장 안 했어. 고친 걸 버릴까?`, "버리기"))) return false;
+  startEdit(editing);
+  return true;
+}
+
 function renderRows() {
   $("editRows").innerHTML = draft.map((x, i) => `
     <li class="edit-row">
@@ -95,7 +107,14 @@ function renderRows() {
       <button class="icon-btn del" data-del="${i}" aria-label="${esc(x.name)} 칸 지우기">
         <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
+      <span class="edit-len num"></span>
     </li>`).join("");
+  renderLens();
+}
+// 칸마다 길이 (입력칸은 다시 그리지 않는다 — 쓰는 중에 커서가 안 튀게)
+function renderLens() {
+  const lens = blockLengths(draft);
+  $("editRows").querySelectorAll(".edit-len").forEach((el, i) => { el.textContent = lens[i] ? lengthLabel(lens[i]) : ""; });
 }
 
 function saveEdit() {
@@ -118,30 +137,41 @@ export function startSchedule() {
     renderDayShifts();
   });
 
-  $("editPick").addEventListener("click", (e) => {
+  $("editPick").addEventListener("click", async (e) => {
     const btn = e.target.closest("button[data-shift]");
-    if (btn) startEdit(btn.dataset.shift);
+    if (btn && btn.dataset.shift !== editing && (await leaveEdit())) startEdit(btn.dataset.shift);
   });
   $("editRows").addEventListener("input", (e) => {
     const { i, f } = e.target.dataset;
-    if (i !== undefined) draft[i][f] = e.target.value;
+    if (i === undefined) return;
+    draft[i][f] = e.target.value;
+    renderLens();
+    noteDirty();
   });
   $("editRows").addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-del]");
     if (!btn) return;
     draft.splice(Number(btn.dataset.del), 1);
     renderRows();
+    noteDirty();
   });
   $("addRow").addEventListener("click", () => {
     draft.push({ start: "", kind: "custom", name: "", note: "" });
     renderRows();
+    noteDirty();
     $("editRows").querySelector("li:last-child input").focus();
+  });
+  // 설정 창을 닫을 때 (닫기 · 바깥 누르기 · Esc): 저장 안 한 게 있으면 묻고, 버린다고 하면 닫는다
+  guardSheet("settings", () => {
+    if (!isDirty()) return true;
+    leaveEdit().then((ok) => { if (ok) closeSheet(); });
+    return false;
   });
   $("saveRows").addEventListener("click", saveEdit);
   $("resetRows").addEventListener("click", () => {
     draft = DEFAULT_SETTINGS.templates[editing].map((x) => ({ ...x }));
     renderRows();
-    $("editMsg").textContent = "기본값을 불러왔어. 저장을 눌러야 바뀌어.";
+    $("editMsg").textContent = isDirty() ? "기본값을 불러왔어. 저장을 눌러야 바뀌어." : "이미 기본값이야.";
   });
 }
 

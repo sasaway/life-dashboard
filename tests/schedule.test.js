@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   DEFAULT_SETTINGS, DEFAULT_TEMPLATES, SHIFTS, SHIFT_IDS, OFF, toMin, shiftFor, withDayShifts, setDayShift, hasDayShifts,
-  dayPlan, currentIndex, nowInfo, leftLabel, checkTemplate, sortBlocks, upgradeTemplates,
+  dayPlan, currentIndex, nowInfo, leftLabel, checkTemplate, sortBlocks, upgradeTemplates, blockLengths, lengthLabel, endOf,
 } from "../js/schedule.js";
 import { alignCloseOnce, CLOSE_RESET } from "../js/schedule.js";
 
@@ -331,3 +331,17 @@ test("핫픽스 v2.5.1: 기본값과 다른 마감반은 한 번만 기본값으
   assert.deepEqual(alignCloseOnce({ ...DEFAULT_SETTINGS, templates: { open: openEdited, close: edited } }, now).templates.open, openEdited);
 });
 function b2(start, kind, name, note = "") { return { start, kind, name, note }; }
+
+test("v2.9 칸 길이: 시각 순서로 다음 칸까지, 마지막 칸은 다음 날 첫 칸까지 · 못 읽는 시각은 비워 둔다", () => {
+  const open = DEFAULT_TEMPLATES.open;
+  const lens = blockLengths(open);
+  assert.deepEqual(lens.slice(0, 4), [90, 60, 420, 30]);
+  assert.equal(lens.at(-1), 420, "취침 23:00 → 다음 날 06:00");
+  assert.equal(lens.reduce((a, n) => a + n, 0), 1440, "하루를 빈틈없이 채운다");
+  // 고치는 중: 순서가 섞여 있고 새 칸은 시각이 비어 있다
+  const draft = [{ start: "22:00" }, { start: "06:00" }, { start: "" }, { start: "07:30" }];
+  assert.deepEqual(blockLengths(draft), [480, 90, null, 870]);
+  assert.deepEqual(blockLengths([{ start: "06:00" }]), [1440]);
+  assert.deepEqual([lengthLabel(90), lengthLabel(60), lengthLabel(30), lengthLabel(420)], ["1시간 30분", "1시간", "30분", "7시간"]);
+  assert.deepEqual([endOf(open, 0), endOf(open, open.length - 1)], ["07:30", "06:00"]);
+});

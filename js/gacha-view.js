@@ -15,7 +15,8 @@ import {
 } from "./pickups.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import { ICON } from "./icons.js";
-import { ymd } from "./schedule.js";
+import { ymd, parseDate } from "./schedule.js";
+import { DAYS } from "./time.js";
 import { $, esc } from "./dom.js";
 
 let g = normalizeGacha(store.load("wuwaGacha", null));
@@ -97,6 +98,12 @@ export function renderGacha() {
 // ---------- 픽업 일정 (v2.7): 정하는 법 고르기 · '새 픽업 일정이 있어' 안내 · 고르는 창 ----------
 // ('다음 픽업' 한 줄은 핫픽스 v2.8.2 에서 없앴다 — 일정대로일 때는 공명자 줄을 누르면 고르는 창이 열린다)
 const mark = (text) => `<span class="mark">${text}</span>`;
+// "2026-10-21" → "10월 21일 (수)". 아직 없으면 (공명자를 안 골랐을 때) 안내
+const dateText = (date) => {
+  if (!date) return "공명자를 고르면 정해져";
+  const d = parseDate(date);
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DAYS[d.getDay()]})`;
+};
 function renderNext() {
   const now = new Date();
   $("gcNew").hidden = !hasNewPickup(g.plan, pickups, now, charByName);
@@ -104,11 +111,15 @@ function renderNext() {
   const manual = byHand(g.plan);
   $("gcMode").hidden = !pickups.length;
   $("gcMode").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.mode === "manual") === manual)));
-  $("gcDate").disabled = pickups.length > 0 && !manual;
-  $("gcModeHint").hidden = !pickups.length;
-  $("gcModeHint").textContent = manual
-    ? "직접 고르기: 달력에서 날짜를, 목록에서 공명자를 골라. 픽업 일정이 바뀌어도 그대로 둬."
-    : "픽업 일정대로: 받은 일정에서 공명자와 날짜를 채워. 진행 중인 픽업은 끝나는 날, 아직 안 시작한 픽업은 시작하는 날이야. 다른 픽업을 고르려면 공명자 줄을 눌러.";
+  // 일정대로면 날짜는 고칠 수 없으니 입력칸 대신 글자로 보여 준다 (v2.9)
+  const locked = pickups.length > 0 && !manual;
+  $("gcDate").disabled = locked;
+  $("gcDate").hidden = locked;
+  $("gcDateText").hidden = !locked;
+  $("gcDateText").textContent = locked ? dateText(g.plan.date) : "";
+  $("gcModeHint").textContent = !pickups.length ? "날짜는 폰 시계(한국 시간)로 세. 자정이 지나면 하루 줄어."
+    : manual ? "달력에서 날짜를, 목록에서 공명자를 골라. 픽업 일정이 바뀌어도 그대로 둬."
+    : "받은 일정대로 채워 (진행 중이면 끝나는 날, 시작 전이면 시작하는 날). 다른 픽업은 공명자 줄을 눌러.";
   // 따라가는 픽업이 아직 '예정' 이면 날짜 옆에 작게 알린다
   const mine = manual ? null : livePickups(pickups, now).find((p) => rowKey(p) === g.plan.autoKey);
   $("gcDateSoon").hidden = !(mine && isTentative(mine));

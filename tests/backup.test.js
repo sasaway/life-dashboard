@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync, readdirSync } from "node:fs";
 import {
   x9Of, versionTag, makeBackup, readBackupText, checkBackup, restoreItems, photosOf, fileName, sizeLabel,
 } from "../js/backup.js";
@@ -202,4 +203,25 @@ test("핫픽스 v2.8.1 의 요일별 알바(schedule.dayShifts)와 중간반 일
   const back = JSON.parse(later.getItem("ld:schedule"));
   assert.deepEqual(back, JSON.parse(JSON.stringify(schedule)));
   assert.deepEqual(back.templates.mid.map((x) => x.start).slice(4, 7), ["11:00", "12:00", "19:00"]);
+});
+
+// x.9 규칙 (v2.9): v1.9 뒤로 생긴 저장 칸이 자동 백업에 빠짐없이 들어가는지 — 칸 이름을 손으로 적지 않고 코드에서 모은다
+test("v2.9 자동 백업: 앱이 저장하는 칸이 하나도 빠지지 않고 백업 → 되살리기로 그대로 돌아온다", async () => {
+  const dir = new URL("../js/", import.meta.url);
+  const src = readdirSync(dir).map((f) => readFileSync(new URL(f, dir), "utf8")).join("\n");
+  const keys = [...new Set([...src.matchAll(/store\.save\("(\w+)"/g), ...src.matchAll(/^const (?:URL_)?KEY = "(\w+)"/gm)].map((m) => m[1]))].sort();
+  // v1.9 뒤로 생긴 칸 (v2.2 mealLog · hobbyLog, v2.3 weekReviews, v2.4 wuwaGacha, v2.7 wuwaPickups) 과 요일별 알바가 든 schedule, 연결 설정
+  for (const k of ["mealLog", "hobbyLog", "weekReviews", "wuwaGacha", "wuwaPickups", "wfLive", "mealOverrides", "schedule", "hobbySync", "calUrl"]) assert.ok(keys.includes(k), `${k} 를 코드에서 찾았다`);
+  const phone = fakeStorage(Object.fromEntries(keys.map((k, i) => [`ld:${k}`, JSON.stringify({ k, i, text: "한글 \"따옴표\"" })])));
+  phone.setItem("ld:schedule", JSON.stringify({ ...DEFAULT_SETTINGS, dayShifts: ["off", "open", "open", "mid", "close", "close", "off"] }));
+  const version = readFileSync(new URL("version.js", dir), "utf8").match(/APP_VERSION = "([^"]+)"/)[1];
+  assert.equal(x9Of(version), "2.9", "v2.9 로 처음 켜질 때 자동 백업이 돈다");
+  const backup = await makeBackup({ storage: phone, photos: PHOTOS, appVersion: version });
+  assert.equal(backup.counts.items, keys.length);
+  const out = readBackupText(JSON.stringify(backup));
+  assert.equal(out.error, undefined);
+  const later = fakeStorage({ "ld:schedule": "{}", "ld:나중에생긴칸": "1" });
+  restoreItems(later, out.backup.items);
+  assert.deepEqual(later.dump(), phone.dump());
+  assert.equal(photosOf(out.backup).length, PHOTOS.length);
 });

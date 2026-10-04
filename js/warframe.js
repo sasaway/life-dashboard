@@ -29,11 +29,11 @@ export function dailyCount(state, now) {
 }
 
 // ---------- 실시간 현황을 받는 때 (핫픽스 v2.8.2, 은월 2026-10-04) ----------
-// 아침 브리핑(Claude 예약 작업, 매일 05:51 한국 시간)과 같은 시각에 하루 한 번. 그 사이에는 '새로 받기' 로만 받는다.
+// 아침 브리핑(Claude 예약 작업, 매일 05:21 한국 시간 — v2.9 에서 05:51 → 05:21)과 같은 시각에 하루 한 번. 그 사이에는 '새로 받기' 로만 받는다.
 // 브리핑 시각을 바꾸면 여기도 같이 고친다
-export const LIVE_AT = { hour: 5, min: 51 };
+export const LIVE_AT = { hour: 5, min: 21 };
 export const liveAtLabel = `${String(LIVE_AT.hour).padStart(2, "0")}:${String(LIVE_AT.min).padStart(2, "0")}`;
-// 마지막으로 받은 시각(at, ms)이 가장 최근의 05:51 보다 앞이면 새로 받을 때다 (받은 적이 없어도)
+// 마지막으로 받은 시각(at, ms)이 가장 최근의 05:21 보다 앞이면 새로 받을 때다 (받은 적이 없어도)
 export function liveDue(at, now) {
   const mark = new Date(now.getFullYear(), now.getMonth(), now.getDate(), LIVE_AT.hour, LIVE_AT.min);
   if (now < mark) mark.setDate(mark.getDate() - 1);
