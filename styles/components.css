@@ -184,7 +184,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .meal-list b{font-weight:600}
 .meal-note{display:block;font-size:var(--fs-tiny);color:var(--faint);font-weight:400}
 /* 이번 주 식단표: 오늘 줄은 일정표의 진행 중 칸과 같은 모양 (시안 .sched li.cur) */
-.week-hint{margin:-6px 0 8px}
 .week-meals{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 .week-meals>li{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:start;padding:10px;border-radius:10px;border:1px solid transparent}
 .week-meals .wd{display:flex;flex-direction:column;line-height:1.25;padding-top:4px}
@@ -431,7 +430,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .credit{font-size:var(--fs-tiny)}
 
 /* 워프레임: 장비 목록 */
-.gear-hint{margin:-6px 0 8px}
 .gear{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .gear-row{width:100%;text-align:left;display:flex;flex-direction:column;gap:6px;padding:10px 12px;min-height:var(--touch);border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
 .gear-row.wish{border-style:dashed}

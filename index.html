@@ -61,7 +61,7 @@
       </div>
     </section>
     <section class="card" aria-label="오늘 식단">
-      <div class="card-h"><h2>식단</h2><small>오늘</small></div>
+      <div class="card-h"><h2>식단</h2></div>
       <ul class="meal-list" id="mealMain"></ul>
     </section>
     <!-- 카드 어디를 눌러도 자기계발 탭(운동)으로 -->
@@ -72,7 +72,7 @@
       <p class="mini" id="gymMainNote"></p>
     </section>
     <section class="card" aria-label="사야 할 것">
-      <div class="card-h"><h2>사야 할 것</h2><small>별표만 보기</small></div>
+      <div class="card-h"><h2>사야 할 것</h2></div>
       <ul class="buy" id="buyMain"></ul>
       <p class="empty" id="buyMainEmpty" hidden></p>
     </section>
@@ -102,18 +102,17 @@
     <div class="stack" id="meal-page-week">
     <section class="card" aria-label="이번 주 식단">
       <div class="card-h"><h2>이번 주 식단</h2><small class="num" id="mealWeekRange"></small></div>
-      <p class="mini week-hint">메뉴를 누르면 바꿀 수 있어.</p>
       <ol class="week-meals" id="mealWeek"></ol>
     </section>
     </div>
 
     <div class="stack" id="meal-page-recipes" hidden>
     <section class="card" aria-label="레시피">
-      <div class="card-h"><h2>레시피</h2><small>불 쓰는 단계엔 타이머</small></div>
+      <div class="card-h"><h2>레시피</h2></div>
       <ul class="recipe-list" id="recipeList"></ul>
     </section>
     <section class="card" aria-label="산 재료로 새로 해 볼 요리">
-      <div class="card-h"><h2>산 재료로 새로 해 볼 요리</h2><small>최근 2주</small></div>
+      <div class="card-h"><h2>산 재료로 새로 해 볼 요리</h2></div>
       <ul class="ideas" id="mealTips"></ul>
       <p class="empty" id="mealTipsEmpty">최근 2주에 가져온 재료로 추천할 요리가 없어. 일상생활 › 돈 › '사야 할 것' 에서 '가져옴' 을 누르면 여기 떠.</p>
     </section>
@@ -133,7 +132,7 @@
         <div class="card-h"><h2 id="budgetTitle">이번 달 예산</h2></div>
         <div class="stat mono"><span id="budgetTotal">0</span><span>원</span></div>
         <p class="mini" id="budgetOff"></p>
-        <p class="mini">'고정' 을 켠 항목만 다음 달 예산으로 넘어가. 할인·적립을 적으면 결산은 실질 예산과 비교해.</p>
+        <p class="mini">'고정' 을 켠 항목만 다음 달로 넘어가.</p>
       </section>
       <p class="msg" id="budgetMsg" role="status"></p>
       <div class="stack" id="budgetCats"></div>
@@ -184,7 +183,7 @@
     </section>
     <div class="stack" id="gymGroups"></div>
     <section class="card" aria-label="요일별 메뉴">
-      <div class="card-h"><h2>요일별 메뉴</h2><small>같은 근육이 하루씩 쉬게</small></div>
+      <div class="card-h"><h2>요일별 메뉴</h2></div>
       <ol class="gym-week" id="gymWeek"></ol>
     </section>
     <p class="msg credit" id="gymCredit"></p>
@@ -227,13 +226,11 @@
         <div class="game-h"><b>명조 · 오늘</b><span class="mono" id="wwDailyCount"></span></div>
         <div class="meter"><i id="wwDailyBar"></i></div>
         <div class="checks" id="wwDaily"></div>
-        <p class="mini">매일 새벽 5시에 비워져.</p>
       </section>
       <section class="card game" id="wwWeekCard" aria-label="명조 이번 주">
         <div class="game-h"><b>명조 · 이번 주</b><span class="mono" id="wwWeeklyCount"></span></div>
         <div class="meter"><i id="wwWeeklyBar"></i></div>
         <div class="weekly-list" id="wwWeekly"></div>
-        <p class="mini">월요일 새벽 5시에 비워져.</p>
       </section>
       </div>
 
@@ -274,7 +271,7 @@
           <p class="mini gc-hint" id="gcFreeHint"></p>
         </section>
         <section class="card gc-paid" aria-labelledby="gcPaidH">
-          <div class="card-h"><h2 id="gcPaidH">과금으로 받을 것<span class="mark">유료</span></h2><small>대략</small></div>
+          <div class="card-h"><h2 id="gcPaidH">과금으로 받을 것<span class="mark">유료</span></h2></div>
           <ul class="gc-shop" id="gcShop"></ul>
           <p class="empty" id="gcShopEmpty" hidden>픽업 날까지 살 상품이 아직 없어. '상품 더 보기'에서 골라 줘.</p>
           <div class="btns gc-shop-btns">
@@ -282,7 +279,7 @@
             <button class="btn btn-ghost" id="gcShopAdd">+ 상품 직접 추가</button>
           </div>
           <ul class="gc-sum gc-paid-sum" id="gcPaidSum"></ul>
-          <p class="mini">개수는 픽업 날까지 살 만큼 적어. 이름을 누르면 내용물을 고칠 수 있어. 앱에서는 계산만 하고, 결제는 게임에서 해.</p>
+          <p class="mini">개수는 픽업 날까지 살 만큼 적어. 결제는 게임에서 해.</p>
         </section>
       </div>
 
@@ -317,7 +314,6 @@
             <li><span class="name">확정<span class="sub">지난 5성이 픽뚫이었으면 켬</span></span><button class="pin" data-gt="plan.guaranteed" aria-pressed="false" aria-label="캐릭 픽업 확정 상태">끔</button></li>
             <li><span class="name">무기 픽업<span class="sub">몇 연째 (0~79)</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" data-g="plan.wStack" data-max="79" placeholder="0" aria-label="무기 픽업 스택, 0부터 79"></li>
           </ul>
-          <p class="mini">스택과 확정은 다음 같은 종류 픽업으로 이어져.</p>
         </section>
         <section class="card" aria-labelledby="gcExpH">
           <div class="card-h"><h2 id="gcExpH">기댓값</h2><small class="mono" id="gcExpD"></small></div>
@@ -340,7 +336,6 @@
         <div class="game-h"><b>워프레임 · 오늘</b><span class="mono" id="wfDailyCount"></span></div>
         <div class="meter"><i id="wfDailyBar"></i></div>
         <div class="checks" id="wfDaily"></div>
-        <p class="mini">매일 새벽 1시(출격이 바뀌는 시각)에 비워져.</p>
       </section>
       <section class="card" aria-label="오늘 할 일">
         <div class="card-h"><h2>오늘 할 일</h2><small class="num" id="wfTodoLeft"></small></div>
@@ -362,7 +357,6 @@
       <div class="stack" id="wf-page-gear" hidden>
       <section class="card" aria-label="장비 목록">
         <div class="card-h"><h2>장비 목록</h2><button class="btn btn-text" id="wfAddRow">워프레임 추가</button></div>
-        <p class="mini gear-hint">워프레임을 누르면 고칠 수 있어.</p>
         <ul class="gear" id="wfGear"></ul>
         <h3 class="gear-sub">그 외 육성 무기</h3>
         <ul class="others" id="wfOthers"></ul>
@@ -680,7 +674,7 @@
     </div>
     <ul class="char-grid" id="charGrid"></ul>
     <p class="empty" id="charEmpty" hidden>조건에 맞는 공명자가 없어.</p>
-    <p class="msg" id="charHelp">흐린 공명자는 다른 칸에 있어. 누르면 이 칸으로 옮겨 와. ×2 는 종말 매트릭스 코스트 2 라 두 파티에 넣을 수 있어. · 공명자 정보: encore.moe</p>
+    <p class="msg" id="charHelp">흐린 공명자는 누르면 이 칸으로 옮겨 와. ×2 는 두 파티에 넣을 수 있어. · 공명자 정보: encore.moe</p>
   </div>
 </div>
 

@@ -54,7 +54,7 @@ function renderGym() {
   $("gymProgress").innerHTML = plan.key ? `${p.done}<span> / ${p.total} 세트</span>` : "";
   $("gymBar").style.width = `${p.pct}%`;
   $("gymBar").parentElement.hidden = !plan.key;
-  $("gymHint").textContent = plan.key ? `칸을 누르면 한 세트 · ${REST_BETWEEN_SETS}` : "일요일은 운동을 쉬어. 푹 쉬고 월요일에 보자.";
+  $("gymHint").textContent = plan.key ? REST_BETWEEN_SETS : "일요일은 운동을 쉬어. 푹 쉬고 월요일에 보자.";
 
   $("gymGroups").innerHTML = plan.groups.map((g) => `
     <h3 class="group-title">${esc(g.title)}</h3>
