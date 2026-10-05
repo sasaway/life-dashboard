@@ -1,4 +1,4 @@
-// 돈 탭: [예산 · 지난달 결산 · 사야 할 것] 전환, 예산 편집, 결산과 통계.
+// 일상생활 › 돈: [예산 · 지난달 결산 · 사야 할 것] 전환, 예산 편집, 결산과 통계.
 import { store } from "./store.js";
 import {
   CATEGORIES, parseWon, formatWon, addBudgetItem, setBudgetAmount, removeBudgetItem, sumBy,

@@ -1,4 +1,4 @@
-// 식단 화면: 식단 탭(오늘·이번 주·산 재료 추천), 메인 카드, 요리 고르기 창.
+// 식단 화면: 일상생활 › 식단(오늘·이번 주·산 재료 추천), 메인 카드, 요리 고르기 창.
 import { store } from "./store.js";
 import { openSheet, closeSheet } from "./sheet.js";
 import { getScheduleSettings } from "./schedule-view.js";
@@ -41,7 +41,7 @@ export function renderMealMain() {
   $("mealMain").innerHTML = inOrder(home, work, t.work?.first).join("");
 }
 
-// ---------- 식단 탭 ----------
+// ---------- 일상생활 › 식단 ----------
 // 알바 중 끼니는 늘 같아서 고르는 칸이 아니라 작은 한 줄
 const workNote = (w) =>
   `<span class="work-note">${esc(w.label)} · 알바 중 · ${esc(w.dish.short)}${w.note ? ` (${esc(w.note)})` : ""}</span>`;
@@ -96,7 +96,7 @@ export function renderAll() {
   renderMealTab();
 }
 
-// 식단 탭 위 전환: [이번 주 식단 · 레시피] (돈 탭과 같은 모양)
+// 식단 위 전환: [이번 주 식단 · 레시피] (돈과 같은 모양)
 function showMealPage(page) {
   document.querySelectorAll("#mealPick button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.page === page)));
   $("meal-page-week").hidden = page !== "week";

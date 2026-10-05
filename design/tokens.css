@@ -107,6 +107,6 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* ---------- 하단 탭 ---------- */
 .tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
-.tabs nav{max-width:440px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tabs nav{max-width:440px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
 .tab{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:var(--fs-tab);color:var(--faint)}
 .tab[aria-current="page"]{color:var(--accent);font-weight:600}

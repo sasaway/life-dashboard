@@ -41,7 +41,7 @@ function exerciseCard(id, day) {
   </article>`;
 }
 
-// ---------- 운동 탭 ----------
+// ---------- 자기계발 탭 › 운동 ----------
 function renderGym() {
   const now = new Date();
   const day = ymd(now);

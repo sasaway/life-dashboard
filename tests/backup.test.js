@@ -214,7 +214,7 @@ test("v2.9 자동 백업: 앱이 저장하는 칸이 하나도 빠지지 않고 
   for (const k of ["mealLog", "hobbyLog", "weekReviews", "wuwaGacha", "wuwaPickups", "wfLive", "mealOverrides", "schedule", "hobbySync", "calUrl"]) assert.ok(keys.includes(k), `${k} 를 코드에서 찾았다`);
   const phone = fakeStorage(Object.fromEntries(keys.map((k, i) => [`ld:${k}`, JSON.stringify({ k, i, text: "한글 \"따옴표\"" })])));
   phone.setItem("ld:schedule", JSON.stringify({ ...DEFAULT_SETTINGS, dayShifts: ["off", "open", "open", "mid", "close", "close", "off"] }));
-  const version = readFileSync(new URL("version.js", dir), "utf8").match(/APP_VERSION = "([^"]+)"/)[1];
+  const version = "v2.9 일정 보내기 · 정리 · 10월 4일"; // 그때 화면에 보이던 버전 글자
   assert.equal(x9Of(version), "2.9", "v2.9 로 처음 켜질 때 자동 백업이 돈다");
   const backup = await makeBackup({ storage: phone, photos: PHOTOS, appVersion: version });
   assert.equal(backup.counts.items, keys.length);

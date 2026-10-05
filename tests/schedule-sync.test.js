@@ -116,7 +116,7 @@ test("앞으로 7일 · 직접 바꾼 식단 칸과 '안 먹음 · 외식' 이 �
   const menu = (day, label) => rowsOf(rows, day).find((r) => r[6] === label)[8];
   assert.equal(menu("2026-10-05", "저녁"), "짜파게티");
   assert.equal(menu("2026-10-06", "저녁"), "안 먹음 · 외식");
-  // 식단 탭의 이번 주 식단표와 한 칸도 다르지 않다 (10/5 주)
+  // 식단(일상생활 탭)의 이번 주 식단표와 한 칸도 다르지 않다 (10/5 주)
   const week = planWeek(parseDate("2026-10-05"), settings, overrides);
   for (const d of week.filter((x) => x.day <= "2026-10-10")) {
     assert.deepEqual(rowsOf(rows, d.day).filter((r) => r[4] && r[8]).map((r) => [r[6], r[8]]), d.meals.map((m) => [m.label, m.dish.short]), d.day);

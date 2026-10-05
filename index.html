@@ -64,9 +64,9 @@
       <div class="card-h"><h2>식단</h2><small>오늘</small></div>
       <ul class="meal-list" id="mealMain"></ul>
     </section>
-    <!-- 카드 어디를 눌러도 운동 탭으로 -->
+    <!-- 카드 어디를 눌러도 자기계발 탭(운동)으로 -->
     <section class="card go-card" aria-label="오늘 운동">
-      <div class="card-h"><h2><button class="go-link" data-go="gym" aria-label="운동 탭 열기">운동</button></h2><span class="go-end"><small class="num" id="gymMainTime"></small><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+      <div class="card-h"><h2><button class="go-link" data-go="grow" aria-label="자기계발 탭의 운동 열기">운동</button></h2><span class="go-end"><small class="num" id="gymMainTime"></small><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
       <p class="main-line" id="gymMainLabel"></p>
       <div class="meter"><i id="gymMainBar"></i></div>
       <p class="mini" id="gymMainNote"></p>
@@ -83,9 +83,17 @@
     </section>
   </section>
 
+  <!-- 일상생활 = 식단 + 돈 (v3.0, Notion '일상생활'). 맨 위에서 고르고, 안쪽은 예전 식단 탭 · 돈 탭 그대로 (id 도 그대로) -->
+  <section class="screen" id="screen-life" aria-label="일상생활" hidden>
+    <header class="top pick-top"><h1>일상생활</h1>
+      <div class="seg" id="lifePick" role="group" aria-label="일상생활에서 볼 것">
+        <button data-life="meal" aria-pressed="true">식단</button>
+        <button data-life="money" aria-pressed="false">돈</button>
+      </div>
+    </header>
+
   <!-- 식단 -->
-  <section class="screen" id="screen-meal" aria-label="식단" hidden>
-    <header class="top"><h1>식단</h1></header>
+  <div class="sub-page" id="screen-meal" role="group" aria-label="식단">
     <div class="seg" id="mealPick">
       <button data-page="week" aria-pressed="true">이번 주 식단</button>
       <button data-page="recipes" aria-pressed="false">레시피</button>
@@ -107,31 +115,13 @@
     <section class="card" aria-label="산 재료로 새로 해 볼 요리">
       <div class="card-h"><h2>산 재료로 새로 해 볼 요리</h2><small>최근 2주</small></div>
       <ul class="ideas" id="mealTips"></ul>
-      <p class="empty" id="mealTipsEmpty">최근 2주에 가져온 재료로 추천할 요리가 없어. 돈 탭 '사야 할 것' 에서 '가져옴' 을 누르면 여기 떠.</p>
+      <p class="empty" id="mealTipsEmpty">최근 2주에 가져온 재료로 추천할 요리가 없어. 일상생활 › 돈 › '사야 할 것' 에서 '가져옴' 을 누르면 여기 떠.</p>
     </section>
     </div>
-  </section>
-
-  <!-- 운동 -->
-  <section class="screen" id="screen-gym" aria-label="운동" hidden>
-    <header class="top"><h1>운동</h1></header>
-    <section class="card" aria-label="오늘 운동 요약">
-      <div class="card-h"><h2 id="gymTitle">오늘</h2><small class="num" id="gymTime"></small></div>
-      <div class="stat mono" id="gymProgress"></div>
-      <div class="meter"><i id="gymBar"></i></div>
-      <p class="mini" id="gymHint"></p>
-    </section>
-    <div class="stack" id="gymGroups"></div>
-    <section class="card" aria-label="요일별 메뉴">
-      <div class="card-h"><h2>요일별 메뉴</h2><small>같은 근육이 하루씩 쉬게</small></div>
-      <ol class="gym-week" id="gymWeek"></ol>
-    </section>
-    <p class="msg credit" id="gymCredit"></p>
-  </section>
+  </div>
 
   <!-- 돈 -->
-  <section class="screen" id="screen-money" aria-label="돈" hidden>
-    <header class="top"><h1>돈</h1></header>
+  <div class="sub-page" id="screen-money" role="group" aria-label="돈" hidden>
     <div class="seg three" id="moneyPick">
       <button data-page="budget" aria-pressed="true">예산</button>
       <button data-page="settle" aria-pressed="false">지난달 결산</button>
@@ -177,6 +167,28 @@
       <p class="empty" id="buyAllEmpty">다 샀어. 목록이 비었어.</p>
     </section>
     </div>
+  
+  </div>
+  </section>
+
+  <!-- 자기계발 (v3.0, Notion '자기계발'). 지금은 운동뿐 — 독서가 들어오면 그때 위에 고르는 칸을 둔다 -->
+  <section class="screen" id="screen-grow" aria-label="자기계발" hidden>
+    <header class="top"><h1>자기계발</h1></header>
+  <div class="sub-page" id="screen-gym" role="group" aria-labelledby="gymPartH">
+    <h2 class="part-h" id="gymPartH">운동</h2>
+    <section class="card" aria-label="오늘 운동 요약">
+      <div class="card-h"><h2 id="gymTitle">오늘</h2><small class="num" id="gymTime"></small></div>
+      <div class="stat mono" id="gymProgress"></div>
+      <div class="meter"><i id="gymBar"></i></div>
+      <p class="mini" id="gymHint"></p>
+    </section>
+    <div class="stack" id="gymGroups"></div>
+    <section class="card" aria-label="요일별 메뉴">
+      <div class="card-h"><h2>요일별 메뉴</h2><small>같은 근육이 하루씩 쉬게</small></div>
+      <ol class="gym-week" id="gymWeek"></ol>
+    </section>
+    <p class="msg credit" id="gymCredit"></p>
+  </div>
   </section>
 
   <!-- 취미: 게임마다 카드 한 장 (제목 · 진행도) + 그 게임의 화면으로 바로 가는 버튼 (Notion '취미') -->
@@ -365,12 +377,11 @@
   </section>
 </main>
 
-<!-- 하단 탭 (아이콘은 시안 그대로) -->
+<!-- 하단 탭 네 개 (v3.0): 메인 · 일상생활(식단 + 돈) · 자기계발(운동) · 취미. 일상생활 아이콘은 Lucide utensils, 나머지는 시안 그대로 -->
 <div class="tabs"><nav aria-label="하단 탭">
   <button class="tab" data-screen="main" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>메인</button>
-  <button class="tab" data-screen="meal"><svg viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2.5 5-2 8h2v10"/></svg>식단</button>
-  <button class="tab" data-screen="gym"><svg viewBox="0 0 24 24"><path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12"/></svg>운동</button>
-  <button class="tab" data-screen="money"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>돈</button>
+  <button class="tab" data-screen="life"><svg viewBox="0 0 24 24"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>일상생활</button>
+  <button class="tab" data-screen="grow"><svg viewBox="0 0 24 24"><path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12"/></svg>자기계발</button>
   <button class="tab" data-screen="hobby"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="4"/><path d="M8 10v4M6 12h4M15.5 11h.01M17.5 13h.01"/></svg>취미</button>
 </nav></div>
 

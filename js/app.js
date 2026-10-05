@@ -59,6 +59,15 @@ function showScreen(name) {
     else t.removeAttribute("aria-current");
   });
   if (name === "hobby") showHobby("hub"); // 취미 탭을 누르면 늘 게임 카드부터
+  if (name === "life") showLife("meal");  // 일상생활 탭을 누르면 늘 식단부터
+  window.scrollTo(0, 0);
+}
+
+// 일상생활: 맨 위 [식단 · 돈] (v3.0). 안쪽 화면은 예전 식단 탭 · 돈 탭 그대로 (id screen-meal · screen-money)
+function showLife(page) {
+  document.querySelectorAll("#lifePick button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.life === page)));
+  $("screen-meal").hidden = page !== "meal";
+  $("screen-money").hidden = page !== "money";
   window.scrollTo(0, 0);
 }
 
@@ -76,9 +85,13 @@ function startTabs() {
   document.querySelectorAll(".tab").forEach((t) => {
     t.addEventListener("click", () => showScreen(t.dataset.screen));
   });
-  // 메인 운동 카드를 누르면 운동 탭으로
+  // 메인 운동 카드를 누르면 자기계발 탭(운동)으로
   $("screen-main").addEventListener("click", (e) => {
-    if (e.target.closest("[data-go]")?.dataset.go === "gym") showScreen("gym");
+    if (e.target.closest("[data-go]")?.dataset.go === "grow") showScreen("grow");
+  });
+  $("lifePick").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-life]");
+    if (b) showLife(b.dataset.life);
   });
   $("screen-hobby").addEventListener("click", (e) => {
     const b = e.target.closest("[data-hobby]");

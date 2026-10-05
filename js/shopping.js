@@ -38,5 +38,5 @@ export const starred = (list) => list.filter((x) => x.star);
 
 // 메인 카드의 빈 목록 문구
 export function mainEmptyText(list) {
-  return list.length ? "별표 붙인 게 없어. 돈 탭에서 붙일 수 있어." : "다 샀어. 목록이 비었어.";
+  return list.length ? "별표 붙인 게 없어. 일상생활 › 돈에서 붙일 수 있어." : "다 샀어. 목록이 비었어.";
 }

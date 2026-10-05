@@ -1,4 +1,4 @@
-// 사야 할 것 화면: 메인 카드(별표만)와 돈 탭 목록.
+// 사야 할 것 화면: 메인 카드(별표만)와 일상생활 › 돈 목록.
 import { store } from "./store.js";
 import { addItem, toggleStar, bring, removeItem, starred, mainEmptyText } from "./shopping.js";
 import { ymd } from "./schedule.js";
@@ -23,7 +23,7 @@ function render() {
   $("buyMainEmpty").textContent = mainEmptyText(list);
   $("buyMainEmpty").hidden = top.length > 0;
 
-  // 돈 탭: 전부
+  // 일상생활 › 돈: 전부
   $("buyAll").innerHTML = list.map((x) => `
     <li>
       <button class="star-btn" data-star="${esc(x.id)}" aria-pressed="${x.star}" aria-label="${esc(x.name)} 별표">${x.star ? "★" : "☆"}</button>
