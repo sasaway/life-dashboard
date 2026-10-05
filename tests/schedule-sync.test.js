@@ -29,7 +29,8 @@ test("일정 설정 · 일과표: 반마다 칸마다 한 줄, 끝은 다음 칸
   assert.equal(rows.length, DEFAULT_TEMPLATES.open.length + DEFAULT_TEMPLATES.mid.length + DEFAULT_TEMPLATES.close.length);
   assert.deepEqual(rows[2], ["일과표", "오픈반", "08:30", "15:30", "알바 · 오픈반", "점심 · 13~14시 사이 · 40분"]);
   assert.deepEqual(rows.filter((r) => r[1] === "오픈반").at(-1), ["일과표", "오픈반", "23:00", "06:00", "취침", ""]);
-  assert.deepEqual(rows.find((r) => r[1] === "중간반" && r[4] === "운동"), ["일과표", "중간반", "19:30", "21:30", "운동", "이동 포함 2시간"]);
+  assert.deepEqual(rows.find((r) => r[1] === "중간반" && r[4] === "운동"), ["일과표", "중간반", "19:30", "21:00", "운동", "이동 포함 1시간 30분"]);
+  assert.deepEqual(rows.find((r) => r[1] === "오픈반" && r[4] === "취미").slice(2, 4), ["19:00", "21:00"], "취미 2시간 (핫픽스 v3.0.1)");
   assert.deepEqual([...new Set(rows.map((r) => r[1]))], ["오픈반", "중간반", "마감반"]);
 });
 
@@ -37,11 +38,11 @@ test("일정 설정 · 직접 고친 일과표는 고친 시각 그대로 들어
   const open = DEFAULT_TEMPLATES.open.map((x) => (x.kind === "exercise" ? { ...x, start: "16:10", name: "운동 (헬스장)" } : x));
   const mine = { ...settings, templates: { ...DEFAULT_TEMPLATES, open } };
   const rows = settingRows(mine, sunday).filter((r) => r[0] === "일과표" && r[1] === "오픈반");
-  assert.deepEqual(rows.find((r) => r[4] === "운동 (헬스장)").slice(2, 4), ["16:10", "18:00"]);
+  assert.deepEqual(rows.find((r) => r[4] === "운동 (헬스장)").slice(2, 4), ["16:10", "17:30"]);
   assert.equal(rows.find((r) => r[5] === "알바 끝나고 30분")[3], "16:10", "앞 칸의 끝도 같이 바뀐다");
   // '앞으로 7일' 에도: 월요일(오픈반)
   const mon = rowsOf(weekRows(mine, {}, sunday), "2026-10-05");
-  assert.deepEqual(mon.find((r) => r[6] === "운동 (헬스장)").slice(4, 6), ["16:10", "18:00"]);
+  assert.deepEqual(mon.find((r) => r[6] === "운동 (헬스장)").slice(4, 6), ["16:10", "17:30"]);
 });
 
 test("일정 설정 · 규칙: 쉬는 날 · 일요일 · 캘린더 · 끼니 규칙이 글로 들어간다 (코드의 값 그대로)", () => {
@@ -77,14 +78,17 @@ test("앞으로 7일 · 오픈반 날: 메인 일과표 칸 그대로 + 알바 �
   const i = mon.findIndex((r) => r[6] === "알바 · 오픈반");
   assert.deepEqual(mon[i].slice(4), ["08:30", "15:30", "알바 · 오픈반", "점심 · 13~14시 사이 · 40분", ""]);
   assert.deepEqual(mon[i + 1].slice(4), ["", "", "알바 중 점심", "13~14시 사이 시작 · 40분", "닭가슴살 + 햇반"], "시각은 정해진 게 없어 빈칸");
-  assert.deepEqual(mon.find((r) => r[6] === "저녁").slice(4), ["18:30", "19:30", "저녁", "", "짜글이"]);
+  assert.deepEqual(mon.find((r) => r[6] === "저녁").slice(4), ["18:00", "19:00", "저녁", "", "짜글이"]);
+  assert.deepEqual(mon.find((r) => r[6] === "운동").slice(4, 8), ["16:00", "17:30", "운동", "이동 포함 1시간 30분"]);
   assert.deepEqual(mon.at(-1).slice(4, 7), ["23:00", "06:00", "취침"]);
 });
 
 test("앞으로 7일 · 중간반 · 마감반 날: '알바 중 저녁' 줄, 집 점심 메뉴", () => {
   const rows = weekRows(settings, {}, sunday);
   const wed = rowsOf(rows, "2026-10-07");
-  assert.deepEqual(names(wed).slice(3, 8), ["10:00 점심", "11:00 출근 준비", "12:00 알바 · 중간반", "알바 중 저녁", "19:00 휴식"]);
+  const lunch = wed.findIndex((r) => r[6] === "점심");
+  assert.deepEqual(names(wed).slice(lunch, lunch + 5), ["10:00 점심", "11:00 출근 준비", "12:00 알바 · 중간반", "알바 중 저녁", "19:00 휴식"]);
+  assert.deepEqual(names(wed).slice(0, lunch), ["06:00 휴식", "07:00 취미", "09:00 가사", "09:30 휴식"]);
   assert.equal(wed.find((r) => r[6] === "알바 중 저녁")[8], "닭가슴살 + 햇반");
   assert.equal(wed.find((r) => r[6] === "점심")[8], "계란 볶음밥");
   const thu = rowsOf(rows, "2026-10-08");
@@ -95,7 +99,7 @@ test("앞으로 7일 · 중간반 · 마감반 날: '알바 중 저녁' 줄, 집
 test("앞으로 7일 · 쉬는 날: 알바 · 출근 준비가 휴식으로, 집에서 두 끼 · 알바 중 끼니 줄은 없다", () => {
   const sat = rowsOf(weekRows(settings, {}, sunday), "2026-10-10"); // 토요일 휴무 → 금요일(마감반) 일과
   assert.ok(!sat.some((r) => /알바|출근 준비/.test(r[6])));
-  assert.deepEqual(sat.filter((r) => r[8]).map((r) => [r[4], r[6]]), [["12:30", "점심"], ["18:00", "저녁"]]);
+  assert.deepEqual(sat.filter((r) => r[8]).map((r) => [r[4], r[6]]), [["12:00", "점심"], ["18:00", "저녁"]]);
   assert.ok(sat.some((r) => r[6] === "운동"), "쉬는 날에도 운동은 한다");
 });
 

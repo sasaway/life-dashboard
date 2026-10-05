@@ -11,7 +11,7 @@ import { DEFAULT_GEAR, migrateGear } from "./warframe.js";
 import { withUpcoming } from "./wuwa.js";
 import { pad } from "./schedule.js";
 import { reviewDay } from "./review.js";
-import { getScheduleSettings } from "./schedule-view.js";
+import { getScheduleSettings, scheduleMigrated } from "./schedule-view.js";
 import { emptyPickups, shouldFetch, readPickupReply, pickupsOf, pickupNames, isTentative, isRerun } from "./pickups.js";
 import { $, esc } from "./dom.js";
 
@@ -244,6 +244,7 @@ export function startHobbySync() {
     render("연결을 끊었어. 시트는 그대로 남아 있어.");
   });
   schedSig = schedNow();
+  if (scheduleMigrated()) markSyncDirty(); // 앱이 일과표를 새 기본값으로 옮겼으면 오늘 이미 보냈어도 일정 탭을 한 번 더 보낸다
   document.addEventListener("schedule-change", onScheduleChange); // 일과표 고치기 · 요일별 알바 · 캘린더 알바
   wake();
   addEventListener("online", wake);

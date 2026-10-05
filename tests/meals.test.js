@@ -72,7 +72,7 @@ test("고른 걸 되돌리면 자동으로 돌아간다", () => {
 // 2026-09-21 주 = 마감반 (점심만 집), 다음 주 = 오픈반 (저녁만 집)
 test("집 끼니는 일과표 식사 칸에서: 마감반 주는 점심, 오픈반 주는 저녁", () => {
   assert.deepEqual(homeMeals(new Date(2026, 8, 25), DEFAULT_SETTINGS).map((m) => [m.key, m.start]),
-    [["2026-09-25 점심", "12:30"]]);
+    [["2026-09-25 점심", "12:00"]]); // 10:00 운동 1시간 30분 + 샤워 30분 뒤 (핫픽스 v3.0.1)
   assert.deepEqual(homeMeals(new Date(2026, 8, 29), DEFAULT_SETTINGS).map((m) => m.label), ["저녁"]);
   // 마감반은 알바 중 저녁(시각 없음) · 집 점심 다음, 오픈반은 알바 중 점심 13~14시 사이 40분 · 집 저녁보다 먼저
   assert.deepEqual(workMeal(new Date(2026, 8, 25), DEFAULT_SETTINGS),

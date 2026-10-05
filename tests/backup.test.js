@@ -202,7 +202,8 @@ test("핫픽스 v2.8.1 의 요일별 알바(schedule.dayShifts)와 중간반 일
   restoreItems(later, readBackupText(text).backup.items);
   const back = JSON.parse(later.getItem("ld:schedule"));
   assert.deepEqual(back, JSON.parse(JSON.stringify(schedule)));
-  assert.deepEqual(back.templates.mid.map((x) => x.start).slice(4, 7), ["11:00", "12:00", "19:00"]);
+  const at = back.templates.mid.findIndex((x) => x.kind === "prep");
+  assert.deepEqual(back.templates.mid.map((x) => x.start).slice(at, at + 3), ["11:00", "12:00", "19:00"]);
 });
 
 // x.9 규칙 (v2.9): v1.9 뒤로 생긴 저장 칸이 자동 백업에 빠짐없이 들어가는지 — 칸 이름을 손으로 적지 않고 코드에서 모은다

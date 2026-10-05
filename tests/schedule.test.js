@@ -39,10 +39,11 @@ for (const shift of ["open", "mid", "close"]) {
     assert.equal(prep.e, toMin(SHIFTS[shift].start));
   });
 
-  test(`${label} 주: 운동 2시간 바로 뒤에 샤워 30분`, () => {
+  test(`${label} 주: 운동은 이동 포함 1시간 30분, 바로 뒤에 샤워 30분 (핫픽스 v3.0.1)`, () => {
     const all = spans(blocks);
     const i = all.findIndex((x) => x.kind === "exercise");
-    assert.equal(all[i].len, 120);
+    assert.equal(all[i].len, 90);
+    assert.equal(all[i].note, "이동 포함 1시간 30분");
     assert.equal(all[i + 1].kind, "shower");
     assert.equal(all[i + 1].len, 30);
   });
@@ -69,15 +70,25 @@ for (const shift of ["open", "mid", "close"]) {
   });
 }
 
-test("취미 시간은 두 주가 같거나 12시간 차이다", () => {
-  const a = find(DEFAULT_TEMPLATES.open, "hobby")[0].s;
-  const c = find(DEFAULT_TEMPLATES.close, "hobby")[0].s;
+test("취미 시간은 세 반이 같거나 12시간 차이다", () => {
+  const [a, m, c] = ["open", "mid", "close"].map((shift) => find(DEFAULT_TEMPLATES[shift], "hobby")[0].s);
   assert.ok(a === c || Math.abs(a - c) === 720);
+  assert.ok(a === m || Math.abs(a - m) === 720);
 });
 
-test("저녁 취미는 인터넷이 몰리는 8시 전에 시작한다 — 저녁 1시간을 지키느라 19:30, 12시간 차이로 07:30 (v2.1 사용자 선택)", () => {
-  assert.equal(find(DEFAULT_TEMPLATES.open, "hobby")[0].start, "19:30");
-  assert.equal(find(DEFAULT_TEMPLATES.close, "hobby")[0].start, "07:30");
+// 핫픽스 v3.0.1 (은월 'A안'): 운동이 30분 줄어 생긴 자리만큼 취미를 30분 당긴다. 알바 뒤 30분 휴식 · 저녁 1시간은 지킨다
+test("저녁 취미는 인터넷이 몰리는 8시 전에 시작한다 — 오픈반 19:00, 12시간 차이로 마감반 · 중간반 07:00", () => {
+  assert.equal(find(DEFAULT_TEMPLATES.open, "hobby")[0].start, "19:00");
+  assert.equal(find(DEFAULT_TEMPLATES.close, "hobby")[0].start, "07:00");
+  assert.equal(find(DEFAULT_TEMPLATES.mid, "hobby")[0].start, "07:00");
+  assert.ok(find(DEFAULT_TEMPLATES.open, "hobby")[0].s < toMin("20:00"));
+});
+
+test("오픈반 주: 규칙을 다 지키면 취미는 19:00 이 가장 이르다 (알바 15:30 끝 + 휴식 30분 + 운동 1시간 30분 + 샤워 30분 + 저녁 1시간)", () => {
+  const all = spans(DEFAULT_TEMPLATES.open);
+  const i = all.findIndex((x) => x.kind === "work");
+  assert.deepEqual(all.slice(i + 1, i + 6).map((x) => [x.kind, x.len]), [["rest", 30], ["exercise", 90], ["shower", 30], ["meal", 60], ["hobby", 120]]);
+  assert.equal(toMin(SHIFTS.open.end) + 30 + 90 + 30 + 60, toMin("19:00"));
 });
 
 test("오픈반 주: 알바가 끝나면 30분 쉬고 운동 (Notion 09-28)", () => {
@@ -87,7 +98,7 @@ test("오픈반 주: 알바가 끝나면 30분 쉬고 운동 (Notion 09-28)", ()
 });
 
 test("가사는 이른 아침(08시 전)·늦은 저녁(22시 뒤)에 넣지 않는다 (Notion 09-28, 21:30 까지는 괜찮음)", () => {
-  for (const shift of ["open", "close"]) {
+  for (const shift of ["open", "mid", "close"]) {
     const [c] = find(DEFAULT_TEMPLATES[shift], "chores");
     assert.ok(c.s >= toMin("08:00") && c.e <= toMin("22:00"), `${shift} ${c.start}`);
   }
@@ -122,6 +133,41 @@ test("v2.0 까지의 기본 일과표(취미 19:00 / 07:00)도 새 기본값으�
   const up = upgradeTemplates({ open: toBlocks(v23.open), close: toBlocks(v23.close) });
   assert.equal(up.open, DEFAULT_TEMPLATES.open);
   assert.equal(up.close, DEFAULT_TEMPLATES.close);
+});
+
+// 핫픽스 v3.0.1: v2.1 ~ v3.0 기본값(운동 2시간, 취미 19:30 / 07:30)이 폰에 그대로 있으면 새 기본값으로. 중간반(v2.8.1 ~ v3.0)도
+const V30 = {
+  open: "06:00 rest 휴식|07:30 prep 출근 준비|08:30 work 알바 · 오픈반/점심 · 13~14시 사이 · 40분|15:30 rest 휴식/알바 끝나고 30분|16:00 exercise 운동/이동 포함 2시간|18:00 shower 샤워|18:30 meal 저녁|19:30 hobby 취미/명조 · 워프레임|21:30 chores 가사|22:00 rest 휴식|22:30 review 리뷰/오늘 4가지 질문|23:00 sleep 취침",
+  mid: "06:00 rest 휴식|07:30 hobby 취미/명조 · 워프레임|09:30 chores 가사|10:00 meal 점심|11:00 prep 출근 준비|12:00 work 알바 · 중간반/저녁 · 닭가슴살 + 햇반|19:00 rest 휴식/알바 끝나고 30분|19:30 exercise 운동/이동 포함 2시간|21:30 shower 샤워|22:00 rest 휴식|22:30 review 리뷰/오늘 4가지 질문|23:00 sleep 취침",
+  close: "06:00 rest 휴식|07:30 hobby 취미/명조 · 워프레임|09:30 chores 가사|10:00 exercise 운동/이동 포함 2시간|12:00 shower 샤워|12:30 meal 점심|13:30 rest 휴식|14:00 prep 출근 준비|15:00 work 알바 · 마감반/저녁 · 닭가슴살 + 햇반|22:00 rest 휴식|22:30 review 리뷰/오늘 4가지 질문|23:00 sleep 취침",
+};
+const v30Blocks = (shift) => V30[shift].split("|").map((x) => {
+  const [head, note = ""] = x.split("/");
+  const [start, kind, ...name] = head.split(" ");
+  return { start, kind, name: name.join(" "), note };
+});
+
+test("핫픽스 v3.0.1: v3.0 까지의 기본 일과표(세 반)가 폰에 그대로 있으면 새 기본값으로 바뀐다", () => {
+  const phone = { open: v30Blocks("open"), mid: v30Blocks("mid"), close: v30Blocks("close") };
+  // 옛 기본값이 정말 그때 규칙이었는지: 운동 2시간, 취미 19:30 / 07:30
+  assert.equal(find(phone.open, "exercise")[0].len, 120);
+  assert.deepEqual(["open", "mid", "close"].map((k) => find(phone[k], "hobby")[0].start), ["19:30", "07:30", "07:30"]);
+  const up = upgradeTemplates(phone);
+  for (const shift of ["open", "mid", "close"]) assert.equal(up[shift], DEFAULT_TEMPLATES[shift], shift);
+  // 한 번 더 돌려도 같다
+  const again = upgradeTemplates(up);
+  for (const shift of ["open", "mid", "close"]) assert.equal(again[shift], DEFAULT_TEMPLATES[shift], `${shift} 다시`);
+  assert.deepEqual(upgradeTemplates(JSON.parse(JSON.stringify(DEFAULT_TEMPLATES))), DEFAULT_TEMPLATES, "저장됐다 읽힌 새 기본값도 그대로");
+});
+
+test("핫픽스 v3.0.1: 직접 고친 일과표는 한 칸만 달라도 그대로 둔다 (세 반 모두)", () => {
+  for (const shift of ["open", "mid", "close"]) {
+    const mine = v30Blocks(shift).map((x) => (x.kind === "exercise" ? { ...x, name: "운동 (헬스장)" } : x));
+    const later = v30Blocks(shift).map((x) => (x.kind === "sleep" ? { ...x, start: "23:30" } : x));
+    assert.equal(upgradeTemplates({ [shift]: mine })[shift], mine, `${shift} 이름을 고친 것`);
+    assert.equal(upgradeTemplates({ [shift]: later })[shift], later, `${shift} 시각을 고친 것`);
+    assert.equal(find(upgradeTemplates({ [shift]: mine })[shift], "exercise")[0].note, "이동 포함 2시간", "고친 일과표의 설명도 건드리지 않는다");
+  }
 });
 
 test("직접 고친 일과표는 시각을 그대로 두고, 알바 칸의 옛 설명 '식대' 만 새 설명으로", () => {
@@ -161,8 +207,8 @@ test("반은 세 가지: 오픈반 08:30~15:30 · 중간반 12:00~19:00 · 마�
 
 test("중간반 일과표 (은월 선택 B안): 아침에 취미·가사, 10:00 점심, 알바 끝나고 30분 쉬고 운동", () => {
   assert.deepEqual(DEFAULT_TEMPLATES.mid.map((x) => `${x.start} ${x.name}`), [
-    "06:00 휴식", "07:30 취미", "09:30 가사", "10:00 점심", "11:00 출근 준비", "12:00 알바 · 중간반",
-    "19:00 휴식", "19:30 운동", "21:30 샤워", "22:00 휴식", "22:30 리뷰", "23:00 취침",
+    "06:00 휴식", "07:00 취미", "09:00 가사", "09:30 휴식", "10:00 점심", "11:00 출근 준비", "12:00 알바 · 중간반",
+    "19:00 휴식", "19:30 운동", "21:00 샤워", "21:30 휴식", "22:30 리뷰", "23:00 취침",
   ]);
   const [work] = find(DEFAULT_TEMPLATES.mid, "work");
   assert.equal(work.note, "저녁 · 닭가슴살 + 햇반");
@@ -189,7 +235,7 @@ test("요일별 알바 · 쉬는 날: 거슬러 올라가 가장 가까운 알�
   assert.equal(sun.shift, "close");
   assert.ok(!names(sun).some((n) => n.includes("운동")), "일요일은 운동도 쉰다");
   const midOff = dayPlan(new Date(2026, 9, 8), week(OFF, OFF, OFF, "mid", OFF, OFF, OFF)); // 목요일 쉼 → 수요일 중간반 기준
-  assert.deepEqual(names(midOff), ["06:00 휴식", "07:30 취미", "09:30 가사", "10:00 점심", "11:00 휴식", "18:00 저녁", "19:00 휴식", "19:30 운동", "21:30 샤워", "22:00 휴식", "22:30 리뷰", "23:00 취침"]);
+  assert.deepEqual(names(midOff), ["06:00 휴식", "07:00 취미", "09:00 가사", "09:30 휴식", "10:00 점심", "11:00 휴식", "18:00 저녁", "19:00 휴식", "19:30 운동", "21:00 샤워", "21:30 휴식", "22:30 리뷰", "23:00 취침"]);
   const allOff = dayPlan(new Date(2026, 9, 6), week(OFF, OFF, OFF, OFF, OFF, OFF, OFF));
   assert.deepEqual([allOff.working, allOff.shift], [false, "open"], "한 주가 다 쉬는 날이면 오픈반 일과표 기준");
 });
@@ -258,11 +304,11 @@ test("일요일은 운동·샤워 칸이 휴식이 되고, 이어진 휴식은 �
   const sun = dayPlan(new Date(2026, 8, 27), DEFAULT_SETTINGS); // 마감반 주 일요일
   assert.equal(sun.blocks.some((x) => x.kind === "exercise" || x.kind === "shower"), false);
   assert.deepEqual(sun.blocks.slice(0, 5).map((x) => `${x.start} ${x.name}`),
-    ["06:00 휴식", "07:30 취미", "09:30 가사", "10:00 휴식", "12:30 점심"]);
+    ["06:00 휴식", "07:00 취미", "09:00 가사", "09:30 휴식", "12:00 점심"], "09:30 휴식 + 운동 + 샤워가 한 칸으로");
   const openSun = dayPlan(new Date(2026, 9, 4), DEFAULT_SETTINGS); // 오픈반 주 일요일
   assert.deepEqual(openSun.blocks.slice(3, 6).map((x) => `${x.start} ${x.name}`),
-    ["15:30 휴식", "18:30 저녁", "19:30 취미"]);
-  // 운동·샤워가 휴식으로 합쳐져 3시간이 되니 '알바 끝나고 30분' 설명은 뗀다
+    ["15:30 휴식", "18:00 저녁", "19:00 취미"]);
+  // 운동·샤워가 휴식으로 합쳐져 2시간 30분이 되니 '알바 끝나고 30분' 설명은 뗀다
   assert.equal(openSun.blocks[3].note, "");
   assert.equal(DEFAULT_TEMPLATES.open[3].note, "알바 끝나고 30분"); // 기본 일과표는 그대로
 });

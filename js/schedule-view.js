@@ -10,15 +10,20 @@ import { $, esc } from "./dom.js";
 
 const KEY = "schedule";
 
+let migrated = false; // 앱을 열면서 저장된 일과표를 새 모양으로 옮겼는지 (기록 시트에도 한 번 보내려고)
+export const scheduleMigrated = () => migrated;
 function loadSettings() {
   const saved = store.load(KEY, null);
   if (!saved) return withDayShifts({ ...DEFAULT_SETTINGS, closeReset: CLOSE_RESET }, new Date()); // 처음 쓰는 폰은 이미 기본값
-  // 옛 기본 일과표가 그대로 저장돼 있으면 새 기본값으로 (직접 고친 건 그대로)
+  // 옛 기본 일과표가 그대로 저장돼 있으면 새 기본값으로 (직접 고친 건 그대로). 핫픽스 v3.0.1: 운동 1시간 30분 · 취미 30분 당김, 중간반도
   const templates = upgradeTemplates({ ...DEFAULT_SETTINGS.templates, ...saved.templates }); // 빠진 반이 있으면 기본값으로
   // 핫픽스 v2.5.1: 마감반을 한 번 기본값으로 (예전 것은 oldClose 에 보관)
   // 핫픽스 v2.8.1: '한 주씩 번갈아' · '알바 하는 요일' 을 요일별 알바로 옮긴다 (지금 주의 반 그대로, 꺼 둔 요일은 쉬는 날)
   const next = withDayShifts(alignCloseOnce({ ...DEFAULT_SETTINGS, ...saved, templates }, new Date()), new Date());
-  if (JSON.stringify(next) !== JSON.stringify({ ...DEFAULT_SETTINGS, ...saved })) store.save(KEY, next);
+  if (JSON.stringify(next) !== JSON.stringify({ ...DEFAULT_SETTINGS, ...saved })) {
+    store.save(KEY, next);
+    migrated = true;
+  }
   return next;
 }
 let settings = loadSettings();
