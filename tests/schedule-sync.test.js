@@ -27,7 +27,9 @@ test("일정 설정 · 요일별 알바: 월~일 7줄, 반 이름과 알바 시�
 test("일정 설정 · 일과표: 반마다 칸마다 한 줄, 끝은 다음 칸의 시작 (취침은 다음 날 첫 칸까지)", () => {
   const rows = settingRows(settings, sunday).filter((r) => r[0] === "일과표");
   assert.equal(rows.length, DEFAULT_TEMPLATES.open.length + DEFAULT_TEMPLATES.mid.length + DEFAULT_TEMPLATES.close.length);
-  assert.deepEqual(rows[2], ["일과표", "오픈반", "08:30", "15:30", "알바 · 오픈반", ""]);
+  assert.equal(rows.length, 14 * 3, "반마다 취침 · 아침 칸이 늘었다 (핫픽스 v3.0.4)");
+  assert.deepEqual(rows.slice(0, 2), [["일과표", "오픈반", "06:00", "06:30", "취침", ""], ["일과표", "오픈반", "06:30", "07:00", "아침", ""]]);
+  assert.deepEqual(rows[4], ["일과표", "오픈반", "08:30", "15:30", "알바 · 오픈반", ""]);
   assert.deepEqual(rows.filter((r) => r[5] !== ""), [], "설명 칸은 전부 빈칸 (핫픽스 v3.0.3), 칸 수는 그대로");
   for (const r of rows) assert.equal(r.length, 6);
   assert.deepEqual(rows.filter((r) => r[1] === "오픈반").at(-1), ["일과표", "오픈반", "23:00", "06:00", "취침", ""]);
@@ -61,6 +63,24 @@ test("일정 설정 · 규칙: 쉬는 날 · 일요일 · 캘린더 · 끼니 �
   assert.ok(dayPlan(parseDate("2026-10-10"), settings).blocks.some((x) => x.start === "18:00" && x.name === "저녁"));
 });
 
+test("핫픽스 v3.0.4 · 규칙 12줄: 아침 · 교회 줄은 맨 아래에 더하고 앞의 10줄 순서는 그대로", () => {
+  const rules = settingRows(settings, sunday).filter((r) => r[0] === "규칙");
+  assert.deepEqual(rules.map((r) => r[1]), ["쉬는 날", "쉬는 날 (오픈반 일과)", "쉬는 날 (중간반 일과)", "쉬는 날 (마감반 일과)", "쉬는 날", "일요일",
+    "캘린더", "알바 중 끼니", "집 끼니", "하루", "아침", "일요일"]);
+  assert.deepEqual(rules[10].slice(1, 5), ["아침", "06:30", "07:00", "월~토 아침"]);
+  assert.deepEqual(rules[11].slice(1, 5), ["일요일", "09:30", "12:00", "교회"]);
+  for (const r of rules) assert.equal(r.length, 6);
+});
+
+test("핫픽스 v3.0.4 · 앞으로 7일: 아침 줄은 월~토에만 (끼니 메뉴 빈칸), 교회 줄은 일요일에만, 끼니 메뉴는 점심 · 저녁뿐", () => {
+  const rows = weekRows(settings, {}, sunday); // 10/4 일 ~ 10/10 토
+  assert.deepEqual(rows.filter((r) => r[6] === "아침").map((r) => [r[0], r[4], r[5], r[8]]),
+    ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09", "2026-10-10"].map((d) => [d, "06:30", "07:00", ""]));
+  assert.deepEqual(rows.filter((r) => r[6] === "교회").map((r) => r.slice(0, 6)), [["2026-10-04", "일", "쉬는 날", "요일별", "09:30", "12:00"]]);
+  assert.deepEqual([...new Set(rows.filter((r) => r[8]).map((r) => r[6]))].sort(), ["알바 중 저녁", "알바 중 점심", "저녁", "점심"]);
+  for (const r of rows) assert.equal(r.length, 9);
+});
+
 test("앞으로 7일 · 오늘부터 7일, 날마다 반과 출처", () => {
   const rows = weekRows(settings, {}, sunday);
   const days = [...new Set(rows.map((r) => r[0]))];
@@ -92,7 +112,8 @@ test("앞으로 7일 · 중간반 · 마감반 날: '알바 중 저녁' 줄, 집
   const wed = rowsOf(rows, "2026-10-07");
   const lunch = wed.findIndex((r) => r[6] === "점심");
   assert.deepEqual(names(wed).slice(lunch, lunch + 5), ["10:00 점심", "11:00 출근 준비", "12:00 알바 · 중간반", "알바 중 저녁", "19:00 휴식"]);
-  assert.deepEqual(names(wed).slice(0, lunch), ["06:00 휴식", "07:00 취미", "09:00 가사", "09:30 휴식"]);
+  assert.deepEqual(names(wed).slice(0, lunch), ["06:00 취침", "06:30 아침", "07:00 취미", "09:00 가사", "09:30 휴식"]);
+  assert.equal(wed.find((r) => r[6] === "아침")[8], "", "아침은 끼니 메뉴가 아직 없다 (핫픽스 v3.0.4)");
   assert.equal(wed.find((r) => r[6] === "알바 중 저녁")[8], "닭가슴살 + 햇반");
   assert.equal(wed.find((r) => r[6] === "점심")[8], "계란 볶음밥");
   const thu = rowsOf(rows, "2026-10-08");

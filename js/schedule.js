@@ -1,4 +1,4 @@
-// 하루 일과표 만들기. 규칙은 Notion '일정' (2026-09-28 15:39 수정본).
+// 하루 일과표 만들기. 규칙은 Notion '일정' (2026-10-09 08:20 수정본).
 // 칸(block)은 시작 시각만 갖고, 끝은 다음 칸의 시작이다. 마지막 칸(취침)은 다음 날 첫 칸까지.
 
 export const SHIFTS = {
@@ -18,9 +18,14 @@ const b = (start, kind, name, note = "") => ({ start, kind, name, note });
 // - 취미 2시간: 오픈반 19:00, 마감반 · 중간반은 12시간 차이로 07:00.
 //   Notion 은 '저녁 6시부터' 지만, 알바 뒤 30분 휴식 · 운동 · 샤워 · 저녁 1시간을 다 지키면 오픈반은 19:00 이 가장 이르다 (은월 선택: 규칙을 지키고 되는 만큼만 당긴다)
 // - 가사 30분은 이른 아침·늦은 저녁을 피한다 (21:30 까지는 괜찮다고 봄, 사용자 선택)
+// - 기상 06:30 (핫픽스 v3.0.4, 은월 2026-10-09): 하루는 그대로 06:00 에 바뀌고, 첫 칸 06:00~06:30 은 어젯밤부터 이어진 취침.
+//   아침 30분(06:30~07:00)은 식사 1시간 규칙의 예외 — 취미 07:00 / 19:00 을 지키려고. 메뉴가 아직 없어서 종류를 점심 · 저녁("meal")과
+//   따로 "breakfast" 로 둔다 (식단 · 시트 끼니 메뉴는 "meal" 칸만 센다). 일요일은 아래 sunday() 가 바꾼다
 export const DEFAULT_TEMPLATES = {
   open: [
-    b("06:00", "rest", "휴식"),
+    b("06:00", "sleep", "취침"),
+    b("06:30", "breakfast", "아침"),
+    b("07:00", "rest", "휴식"),
     b("07:30", "prep", "출근 준비"),
     b("08:30", "work", "알바 · 오픈반"),
     b("15:30", "rest", "휴식"),
@@ -35,7 +40,8 @@ export const DEFAULT_TEMPLATES = {
   ],
   // 중간반 (12:00~19:00): 아침은 마감반처럼 취미 · 가사, 알바 끝나고 30분 쉬고 운동 (은월 선택 'B안', 2026-10-04)
   mid: [
-    b("06:00", "rest", "휴식"),
+    b("06:00", "sleep", "취침"),
+    b("06:30", "breakfast", "아침"),
     b("07:00", "hobby", "취미"),
     b("09:00", "chores", "가사"),
     b("09:30", "rest", "휴식"),
@@ -50,7 +56,8 @@ export const DEFAULT_TEMPLATES = {
     b("23:00", "sleep", "취침"),
   ],
   close: [
-    b("06:00", "rest", "휴식"),
+    b("06:00", "sleep", "취침"),
+    b("06:30", "breakfast", "아침"),
     b("07:00", "hobby", "취미"),
     b("09:00", "chores", "가사"),
     b("09:30", "rest", "휴식"),
@@ -73,14 +80,17 @@ const OLD_DEFAULTS = {
     "06:00 휴식|07:30 출근 준비|08:30 알바 · 오픈반|15:30 휴식|16:00 운동|18:00 샤워|18:30 저녁|19:30 가사|20:00 취미|22:00 휴식|22:30 리뷰|23:00 취침", // v22 까지
     "06:00 휴식|07:30 출근 준비|08:30 알바 · 오픈반|15:30 운동|17:30 샤워|18:00 저녁|19:00 취미|21:00 가사|21:30 휴식|22:30 리뷰|23:00 취침", // v23 ~ v2.0
     "06:00 휴식|07:30 출근 준비|08:30 알바 · 오픈반|15:30 휴식|16:00 운동|18:00 샤워|18:30 저녁|19:30 취미|21:30 가사|22:00 휴식|22:30 리뷰|23:00 취침", // v2.1 ~ v3.0 (운동 2시간, 취미 19:30)
+    "06:00 휴식|07:30 출근 준비|08:30 알바 · 오픈반|15:30 휴식|16:00 운동|17:30 샤워|18:00 저녁|19:00 취미|21:00 가사|21:30 휴식|22:30 리뷰|23:00 취침", // v3.0.1 ~ v3.0.3 (기상 06:00, 아침 칸 없음)
   ],
   mid: [
     "06:00 휴식|07:30 취미|09:30 가사|10:00 점심|11:00 출근 준비|12:00 알바 · 중간반|19:00 휴식|19:30 운동|21:30 샤워|22:00 휴식|22:30 리뷰|23:00 취침", // v2.8.1 ~ v3.0
+    "06:00 휴식|07:00 취미|09:00 가사|09:30 휴식|10:00 점심|11:00 출근 준비|12:00 알바 · 중간반|19:00 휴식|19:30 운동|21:00 샤워|21:30 휴식|22:30 리뷰|23:00 취침", // v3.0.1 ~ v3.0.3
   ],
   close: [
     "06:00 가사|06:30 휴식|08:00 취미|10:00 운동|12:00 샤워|12:30 점심|13:30 휴식|14:00 출근 준비|15:00 알바 · 마감반|22:00 휴식|22:30 리뷰|23:00 취침",
     "06:00 가사|06:30 휴식|07:00 취미|09:00 휴식|10:00 운동|12:00 샤워|12:30 점심|13:30 휴식|14:00 출근 준비|15:00 알바 · 마감반|22:00 휴식|22:30 리뷰|23:00 취침",
     "06:00 휴식|07:30 취미|09:30 가사|10:00 운동|12:00 샤워|12:30 점심|13:30 휴식|14:00 출근 준비|15:00 알바 · 마감반|22:00 휴식|22:30 리뷰|23:00 취침", // v2.1 ~ v3.0 (운동 2시간, 취미 07:30)
+    "06:00 휴식|07:00 취미|09:00 가사|09:30 휴식|10:00 운동|11:30 샤워|12:00 점심|13:00 휴식|14:00 출근 준비|15:00 알바 · 마감반|22:00 휴식|22:30 리뷰|23:00 취침", // v3.0.1 ~ v3.0.3
   ],
 };
 const shape = (blocks) => blocks.map((x) => `${x.start} ${x.name}`).join("|");
@@ -223,6 +233,29 @@ function noExercise(blocks) {
     x.kind === "exercise" || x.kind === "shower" ? b(x.start, "rest", "휴식") : x));
 }
 
+// 일요일 (핫픽스 v3.0.4, 은월 2026-10-09). 판단 기준은 요일 — 알바 날이든 쉬는 날이든, 캘린더 반이든 요일별 반이든 같다
+// 1) 아침 칸이 없다. 바로 뒤가 취미(마감반 · 중간반 일과)면 취미를 그 자리(06:30)로 당기고 남는 30분은 휴식, 아니면 그 30분이 휴식
+// 2) 교회 09:30~12:00 이 겹치는 칸을 덮는다. 알바 · 출근 준비와 겹치는 날만 빼고 —
+//    중간반으로 알바하는 일요일(출근 준비 11:00, 은월 선택)과 오픈반으로 알바하는 일요일(알바 08:30~)은 교회 칸이 없다
+export const CHURCH = { start: "09:30", end: "12:00", name: "교회" };
+function sunday(blocks) {
+  let out = blocks;
+  const i = out.findIndex((x) => x.kind === "breakfast");
+  if (i >= 0) {
+    const [am, next] = [out[i], out[i + 1]];
+    const moved = next?.kind === "hobby"
+      ? [{ ...next, start: am.start }, b(toHHMM(toMin(am.start) + toMin(endOf(out, i + 1)) - toMin(next.start)), "rest", "휴식")]
+      : [b(am.start, "rest", "휴식"), ...(next ? [next] : [])];
+    out = mergeRest([...out.slice(0, i), ...moved, ...out.slice(i + 2)]);
+  }
+  const [s, e] = [toMin(CHURCH.start), toMin(CHURCH.end)];
+  const atWork = out.some((x, j) => (x.kind === "work" || x.kind === "prep") && toMin(x.start) < e && out[j + 1] && toMin(out[j + 1].start) > s);
+  if (atWork) return out;
+  const running = out.findLast((x) => toMin(x.start) < e); // 교회가 끝날 때 하고 있던 칸은 12:00 부터 이어진다
+  const after = running && !out.some((x) => toMin(x.start) === e) ? [{ ...running, start: CHURCH.end }] : [];
+  return mergeRest(sortBlocks([...out.filter((x) => toMin(x.start) < s || toMin(x.start) >= e), b(CHURCH.start, "church", CHURCH.name), ...after]));
+}
+
 // 그 날의 일과표
 // 캘린더에서 받은 그 날의 알바: "open" · "mid" · "close" · "off"(받은 기간 안인데 알바 없음) · null(모름 → 요일별 알바)
 export function calShift(date, cal) {
@@ -244,7 +277,7 @@ export function dayPlan(date, settings) {
   const working = c ? c !== OFF : own !== OFF;
   let blocks = settings.templates[shift] ?? DEFAULT_TEMPLATES[shift];
   if (!working) blocks = toDayOff(blocks, shift);
-  if (date.getDay() === 0) blocks = noExercise(blocks);
+  if (day === 0) blocks = sunday(noExercise(blocks));
   return { shift, working, blocks, fromCal: Boolean(c) };
 }
 

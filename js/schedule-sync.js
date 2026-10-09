@@ -2,7 +2,7 @@
 // Claude 브리핑이 규칙을 따로 적어 두지 않고 이 탭을 읽게 하려는 것. 계산만 — 보내기는 hobby-sync-view.js.
 // 탭과 칸 이름은 apps-script/hobby-sync.gs 의 TABS 에 있다. 여기서는 칸 순서대로 값만 만든다.
 // 일과표 · 끼니는 새로 계산하지 않고 schedule.js · meals.js 것을 그대로 쓴다 (앱 화면과 늘 같게).
-import { SHIFTS, SHIFT_IDS, OFF, DAY_OFF_MEAL, DEFAULT_TEMPLATES, dayPlan, withDayShifts, endOf, parseDate, ymd, toMin, toHHMM } from "./schedule.js";
+import { SHIFTS, SHIFT_IDS, OFF, DAY_OFF_MEAL, DEFAULT_TEMPLATES, CHURCH, dayPlan, withDayShifts, endOf, parseDate, ymd, toMin, toHHMM } from "./schedule.js";
 import { DAYS, WEEK_ORDER } from "./time.js";
 import { reviewDay } from "./review.js";
 import { dayMeals, workMeal, dishById, ROTATION, LEFTOVER, WORK_DISH } from "./meals.js";
@@ -15,6 +15,8 @@ const offMeal = (id) => {
   const m = DAY_OFF_MEAL[id];
   return ["규칙", `쉬는 날 (${SHIFTS[id].label} 일과)`, m.start, toHHMM(toMin(m.start) + 60), m.name, "알바 중에 먹던 끼니를 집에서 먹는다 (그 1시간이 통째로 휴식 칸일 때)"];
 };
+const amAt = DEFAULT_TEMPLATES.open.findIndex((x) => x.kind === "breakfast");
+const breakfast = { start: DEFAULT_TEMPLATES.open[amAt].start, end: endOf(DEFAULT_TEMPLATES.open, amAt) };
 const rotation = ROTATION.flatMap((d) => (d.makesTwo ? [d.short, LEFTOVER.short] : [d.short])).join(" → ");
 const RULES = [
   ["규칙", "쉬는 날", "", "", "알바 · 출근 준비 → 휴식", "이어진 휴식 칸은 한 칸으로 합친다"],
@@ -25,6 +27,9 @@ const RULES = [
   ["규칙", "알바 중 끼니", "", "", `늘 ${WORK_DISH.short}`, ""],
   ["규칙", "집 끼니", "", "", rotation, "이 순서로 돌고 월요일마다 처음부터. 직접 바꾼 칸은 순서를 쓰지 않는다"],
   ["규칙", "하루", "", "", "06:00 에 바뀐다", "06:00 전이면 '앞으로 7일' 의 첫 날은 어제"],
+  // 핫픽스 v3.0.4: 맨 아래에 더한다 (위 줄들의 순서는 그대로)
+  ["규칙", "아침", breakfast.start, breakfast.end, "월~토 아침", "일요일은 없음. 메뉴는 아직 없어서 끼니 메뉴 칸은 빈칸"],
+  ["규칙", "일요일", CHURCH.start, CHURCH.end, CHURCH.name, `겹치는 칸을 덮는다. 아침 취미(마감반 · 중간반 일과)는 ${breakfast.start} 부터. 알바 · 출근 준비와 겹치는 일요일(중간반 · 오픈반 알바)은 교회 칸 없음`],
 ];
 
 // 일정 설정: 구분 | 반/요일 | 시작 | 끝 | 칸 이름 | 설명

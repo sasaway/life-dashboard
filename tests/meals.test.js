@@ -4,7 +4,7 @@ import {
   DISHES, LEFTOVER, WORK_DISH, CHAPA, SKIP, homeMeals, workMeal, planMeals, planWeek, withOverride,
   pickable, dishById, dayMeals, syncMealLog, recordDay, MEAL_LOG_DAYS, proteinSummary,
 } from "../js/meals.js";
-import { mondayOf } from "../js/schedule.js";
+import { mondayOf, dayPlan } from "../js/schedule.js";
 import { IDEAS, ideasFor, MAX_IDEAS } from "../js/meal-tips.js";
 import { DEFAULT_SETTINGS } from "../js/schedule.js";
 
@@ -204,4 +204,15 @@ test("중간반 날 (v2.8.1): 집 끼니는 10:00 점심, 알바 중 끼니는 �
   assert.deepEqual(homeMeals(wed, s).map((m) => [m.label, m.start]), [["점심", "10:00"]]);
   assert.deepEqual([workMeal(wed, s).label, workMeal(wed, s).dish.id, workMeal(wed, s).first], ["저녁", "chicken", false]);
   assert.deepEqual(dayMeals(wed, s).map((m) => [m.label, Boolean(m.work)]), [["점심", false], ["저녁", true]]);
+});
+
+test("핫픽스 v3.0.4: 아침 칸은 식단 끼니로 세지 않는다 — 집 끼니 · 먹은 기록 · 자동 돌림은 점심 · 저녁 그대로", () => {
+  const days = [28, 29, 30].map((d) => new Date(2026, 8, d)); // 오픈반 주 월~수
+  for (const d of days) {
+    assert.ok(dayPlan(d, DEFAULT_SETTINGS).blocks.some((x) => x.name === "아침"), "일과표에는 아침 칸이 있다");
+    assert.deepEqual(homeMeals(d, DEFAULT_SETTINGS).map((m) => [m.label, m.start]), [["저녁", "18:00"]]);
+    assert.deepEqual(dayMeals(d, DEFAULT_SETTINGS).map((m) => m.label), ["점심", "저녁"]);
+  }
+  // 돌림도 그대로: 월 짜글이 → 화 남은 짜글이 → 수 볶음밥
+  assert.deepEqual(days.map((d) => dayMeals(d, DEFAULT_SETTINGS).at(-1).dish), ["jja", "jja-left", "rice"]);
 });
