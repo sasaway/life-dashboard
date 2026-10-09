@@ -14,6 +14,8 @@
 | ponytail (본체) · ponytail-gain · ponytail-help | 같은 저장소 @ e3ba2aa | SAFE — 0/100. 다만 본체는 '매 답변마다 켜짐 · 설명은 코드 뒤 세 줄까지' 라서 쉬운 한국어 설명 규칙과 부딪힌다 | **설치 안 함** (2026-09-25 사용자 결정 — 이번 일에 필요한 두 개만) | 게으른 해법 모드 · 점수판 · 도움말 |
 | ponytail-debt | 같은 저장소 @ e3ba2aa | **CAUTION** — 0/100 이나 검사 불완전(스킬이 가리키는 PONYTAIL-DEBT.md 가 저장소에 없음) | **설치 안 함** | `ponytail:` 주석 모아 보기 |
 | (ponytail 훅·MCP 서버) | 같은 저장소 `hooks/` `ponytail-mcp/` | 검사 안 함 — 스킬만 설치해서 쓰지 않음 | 설치 안 함 | 매 세션 자동 켜기 |
+| life-dev | 이 저장소 `.claude/skills/life-dev` — Claude Code 가 은월 요청으로 직접 씀 (2026-10-09, 외부 출처 없음) | **APPROVE** — 0/100, 문제 0건. 스캐너의 'CAUTION' 표시는 글 속의 저장소 파일 경로(`js/version.js` · `PROGRESS.md` 등)가 스킬 폴더에 없다는 안내 8건뿐 — 이 저장소 파일을 가리키는 것이라 정상. 실행 파일 없음, 글 지시만. 올리기(push) · Notion 수정은 은월이 말할 때만 하라고 적혀 있음 | 설치됨 (2026-10-09, 프로젝트 안 — 이 저장소를 열 때만 보임) | 개발 진행 방식 — 새 기능 · 핫픽스 · x.9 유지보수 모두 (종류 정하기 → 계획 → 만들기 → 확인 → 커밋 → 보고 → Cowork 로 넘기는 글) |
+| life-handoff (Cowork 용) | `Claude outputs/cowork-skill_life-handoff` — Claude Code 가 씀 (2026-10-09). 저장소에는 안 올림 | **APPROVE** — 0/100, SAFE, 문제 0건. 글 지시만 | Claude Code 에는 설치 안 함 — 은월이 Cowork 쪽에 올려서 씀 | Cowork 가 Claude Code 와 주고받는 순서 (새 기능 · 핫픽스 · 유지보수 모두) |
 
 ## 도구 (스킬 아님)
 
