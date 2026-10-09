@@ -27,9 +27,9 @@ const week = () => planWeek(mondayOf(new Date()), getScheduleSettings(), overrid
 const todayOf = (w) => w.find((d) => d.day === ymd(new Date()));
 
 // 오늘 메뉴 한 줄 (누르면 레시피, '안 먹음 · 외식' 은 레시피 없이 글만). t = 왼쪽 칸(시각 또는 '알바 중')
-const mealRow = (dish, t, label, note = "") => dish.none
+const mealRow = (dish, t, label) => dish.none
   ? `<li>${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}</span></li>`
-  : `<li><button class="meal-link" data-recipe-dish="${esc(dish.id)}" aria-label="${esc(label)} ${esc(dish.short)} 레시피 보기">${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}${note ? `<span class="meal-note">${esc(note)}</span>` : ""}</span><span class="go">레시피</span></button></li>`;
+  : `<li><button class="meal-link" data-recipe-dish="${esc(dish.id)}" aria-label="${esc(label)} ${esc(dish.short)} 레시피 보기">${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}</span><span class="go">레시피</span></button></li>`;
 // 알바 중 끼니는 먹는 차례대로: 오픈반 점심은 집 저녁보다 먼저, 마감반 저녁은 집 점심 다음
 const inOrder = (home, work, first) => (work ? (first ? [work, ...home] : [...home, work]) : home);
 
@@ -37,14 +37,13 @@ const inOrder = (home, work, first) => (work ? (first ? [work, ...home] : [...ho
 export function renderMealMain() {
   const t = todayOf(week());
   const home = t.meals.map((m) => mealRow(m.dish, `<span class="t mono">${esc(m.start)}</span>`, m.label));
-  const work = t.work && mealRow(t.work.dish, `<span class="t">알바 중</span>`, t.work.label, t.work.note);
+  const work = t.work && mealRow(t.work.dish, `<span class="t">알바 중</span>`, t.work.label);
   $("mealMain").innerHTML = inOrder(home, work, t.work?.first).join("");
 }
 
 // ---------- 일상생활 › 식단 ----------
 // 알바 중 끼니는 늘 같아서 고르는 칸이 아니라 작은 한 줄
-const workNote = (w) =>
-  `<span class="work-note">${esc(w.label)} · 알바 중 · ${esc(w.dish.short)}${w.note ? ` (${esc(w.note)})` : ""}</span>`;
+const workNote = (w) => `<span class="work-note">${esc(w.label)} · 알바 중 · ${esc(w.dish.short)}</span>`;
 // 이번 주 식단표가 이 탭의 주인공이다. 오늘 줄은 일정표의 '진행 중' 칸처럼 강조하고, 지난 날은 흐리게.
 function renderMealTab() {
   const w = week();

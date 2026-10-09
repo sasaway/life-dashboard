@@ -56,7 +56,6 @@
 .sched .t{font-size:var(--fs-small);color:var(--sub);padding-top:1px}
 .sched .dot{width:7px;height:7px;border-radius:50%;background:var(--line);margin-top:8px;justify-self:center}
 .sched .n{font-weight:500}
-.sched .p{display:block;font-size:var(--fs-tiny);color:var(--faint)}
 .sched li.past .n,.sched li.past .t{color:var(--faint)}
 .sched li.cur{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
 .sched li.cur .dot{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
@@ -182,7 +181,6 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .meal-list li{display:grid;grid-template-columns:48px 1fr;gap:8px;align-items:baseline}
 .meal-list .t{font-size:var(--fs-small);color:var(--sub)}
 .meal-list b{font-weight:600}
-.meal-note{display:block;font-size:var(--fs-tiny);color:var(--faint);font-weight:400}
 /* 이번 주 식단표: 오늘 줄은 일정표의 진행 중 칸과 같은 모양 (시안 .sched li.cur) */
 .week-meals{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 .week-meals>li{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:start;padding:10px;border-radius:10px;border:1px solid transparent}
@@ -554,11 +552,10 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .rep .q{margin:14px 0 4px;font-size:var(--fs-label);font-weight:600}
 .rep-q:first-of-type .q{margin-top:0}
 .rep-q .mini{margin:0 0 4px}
-.rep-ans,.rep-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.rep-ans{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .rep-ans button{width:100%;display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-top:1px solid var(--line);
   padding:8px 0;min-height:var(--touch);font-size:var(--fs-small);color:var(--ink);overflow-wrap:anywhere}
 .rep-ans .d{color:var(--faint)}
-.rep-list li{font-size:var(--fs-small);padding:3px 0;overflow-wrap:anywhere}
 
 /* ---------- 명조 가챠 계산기 (v2.4): 재화 · 픽업. 숫자 칸 줄은 돈 화면 .money-rows 를 그대로 쓴다 ---------- */
 .gc .money-rows .field.won{width:104px}

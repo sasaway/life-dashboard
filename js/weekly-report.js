@@ -1,10 +1,10 @@
 // 주간리뷰 보고서 계산 (v2.3). Notion '주간리뷰' (2026-09-29 13:36).
-// 기록(식단 mealLog · 운동 workoutLog · 회고 reviews · 취미 hobbyLog)을 읽기만 하고 저장하지 않는다. AI 없이 폰 안에서 센다.
+// 기록(식단 mealLog · 운동 workoutLog · 회고 reviews)을 읽기만 하고 저장하지 않는다. AI 없이 폰 안에서 센다.
+// 취미 카드는 핫픽스 v3.0.3 에서 뺐다 (Notion 주간리뷰가 식단 · 운동 · 일일 회고만 확인). 취미 기록(hobbyLog)은 그대로 쌓인다.
 import { parseDate } from "./schedule.js";
 import { dishById, proteinSummary } from "./meals.js";
 import { planFor, progressOf } from "./workout.js";
 import { QUESTIONS } from "./review.js";
-import { BUILD } from "./wuwa.js";
 
 // ---------- 식단: 많이 먹은 것 · 단백질 ----------
 // 남은 짜글이는 짜글이로 센다. '안 먹음 · 외식' 은 따로.
@@ -66,54 +66,4 @@ export function reviewReport(reviews, days, top = 3) {
     return { question: q, answers, frequent };
   });
   return { written: written.length, byQuestion };
-}
-
-// ---------- 취미: 체크한 날 · 주 처음과 지금 비교 ----------
-// start = 그 주를 처음 열 때 저장한 한 벌, end = 지금(또는 다음 주 처음) 모습. charName(id) → 공명자 이름
-export function hobbyReport(hobbyLog, days, start, end, charName) {
-  const rows = days.map((d) => hobbyLog.days?.[d]).filter(Boolean);
-  const full = (key) => rows.filter((r) => r[key] && r[key][0] >= r[key][1]).length;
-  const weekly = rows.map((r) => r.wwWeek).filter(Boolean).at(-1) ?? null;
-  return {
-    recorded: rows.length,
-    wwFullDays: full("ww"),
-    wwWeekly: weekly,
-    wfFullDays: full("wf"),
-    changes: start ? hobbyChanges(start, end, charName) : null, // null = 그 주 처음 모습이 없다 (v2.2.2 전)
-  };
-}
-
-export function hobbyChanges(start, end, charName) {
-  const out = { wuwa: [], warframe: [] };
-  // 명조 파티표: 파티 추가·삭제, 칸에 넣은·뺀 공명자
-  const before = new Map(start.parties.map((p) => [p.id, p]));
-  for (const p of end.parties) {
-    const old = before.get(p.id);
-    if (!old) { out.wuwa.push(`파티 추가: ${p.name}`); continue; }
-    const was = new Set(old.slots.filter(Boolean));
-    const now = new Set(p.slots.filter(Boolean));
-    const inn = [...now].filter((id) => !was.has(id)).map(charName);
-    const gone = [...was].filter((id) => !now.has(id)).map(charName);
-    if (inn.length) out.wuwa.push(`${p.name}: ${inn.join(", ")} 넣음`);
-    if (gone.length) out.wuwa.push(`${p.name}: ${gone.join(", ")} 뺌`);
-  }
-  for (const p of start.parties) if (!end.parties.some((x) => x.id === p.id)) out.wuwa.push(`파티 삭제: ${p.name}`);
-  // 육성 체크: 새로 한 것
-  for (const [id, b] of Object.entries(end.builds)) {
-    const newly = BUILD.filter((x) => b?.[x.id] && !start.builds[id]?.[x.id]).map((x) => x.label);
-    if (newly.length) out.wuwa.push(`${charName(id)}: ${newly.join(" · ")} 완료`);
-  }
-  // 워프레임 장비: 워프레임 추가·삭제·고침, 그 외 무기 추가·삭제
-  const frames = new Map(start.gear.frames.map((f) => [f.id, f]));
-  for (const f of end.gear.frames) {
-    const old = frames.get(f.id);
-    if (!old) out.warframe.push(`워프레임 추가: ${f.frame || "이름 없음"}`);
-    else if (JSON.stringify(old) !== JSON.stringify(f)) out.warframe.push(`${f.frame || "이름 없음"} 장비 고침`);
-  }
-  for (const f of start.gear.frames) if (!end.gear.frames.some((x) => x.id === f.id)) out.warframe.push(`워프레임 삭제: ${f.frame || "이름 없음"}`);
-  const addW = end.gear.others.filter((n) => !start.gear.others.includes(n));
-  const delW = start.gear.others.filter((n) => !end.gear.others.includes(n));
-  if (addW.length) out.warframe.push(`그 외 무기 추가: ${addW.join(", ")}`);
-  if (delW.length) out.warframe.push(`그 외 무기 삭제: ${delW.join(", ")}`);
-  return out;
 }

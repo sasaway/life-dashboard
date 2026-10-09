@@ -5,12 +5,9 @@ import {
   QUESTIONS, WEEK_QUESTIONS, reviewDay, isWeeklyTime, answeredCount, statusLabel, pastDays, mondayKey,
   weekDays, shiftWeek, dayLabel, weekLabel, withAnswer,
 } from "./review.js";
-import { mealReport, workoutReport, reviewReport, hobbyReport } from "./weekly-report.js";
+import { mealReport, workoutReport, reviewReport } from "./weekly-report.js";
 import { parseDate } from "./schedule.js";
 import { DAYS } from "./time.js";
-import { withUpcoming } from "./wuwa.js";
-import { pickupNames } from "./pickups.js";
-import { migrateGear, DEFAULT_GEAR } from "./warframe.js";
 import { markSyncDirty } from "./hobby-sync-view.js";
 import { $, esc } from "./dom.js";
 
@@ -84,25 +81,10 @@ function reportHtml(days) {
       ${q.frequent.length ? `<p class="mini">자주: ${q.frequent.map((f) => `${esc(f.word)} <span class="mono">${f.n}</span>`).join(" · ")}</p>` : ""}
       <ul class="rep-ans">${q.answers.map((a) => `<li><button data-day="${a.day}" aria-label="${esc(dayLabel(a.day))} 회고 열기"><span class="d">${esc(dayShort(a.day))}</span><span>${esc(a.text)}</span></button></li>`).join("") || `<li class="mini">답 없음</li>`}</ul>
     </div>`).join("") : `<p class="mini">이 주에 쓴 일일 회고가 없어.</p>`;
-  // 취미: 이 주를 처음 열 때 한 벌 ↔ 다음 주 처음(지난 주면) 또는 지금
-  const hobbyLog = { days: {}, weeks: {}, ...store.load("hobbyLog", {}) };
-  const chars = withUpcoming(store.load("wuwaChars", { list: [] }).list, pickupNames(store.load("wuwaPickups", null)));
-  const charName = (id) => chars.find((c) => c.id === id)?.name ?? `알 수 없는 공명자 (${id})`;
-  const now = { parties: store.load("wuwaParties", []), builds: store.load("wuwaBuilds", {}), gear: migrateGear(store.load("wfGear", DEFAULT_GEAR)) };
-  const end = hobbyLog.weeks[shiftWeek(week, 1)] ?? now;
-  const hobby = hobbyReport(hobbyLog, days, hobbyLog.weeks[week], end, charName);
-  const list = (items) => items.length ? `<ul class="rep-list">${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="mini">바뀐 것 없음</p>`;
-  const hobbyBody = `<dl class="rep-dl">
-      ${row("명조", hobby.recorded ? `일일 다 한 날 <span class="mono">${hobby.wwFullDays} / ${hobby.recorded}</span>일${hobby.wwWeekly ? ` · 주간 <span class="mono">${hobby.wwWeekly[0]} / ${hobby.wwWeekly[1]}</span>` : ""}` : "기록 없음")}
-      ${row("워프레임", hobby.recorded ? `출격 · 포르마 다 한 날 <span class="mono">${hobby.wfFullDays} / ${hobby.recorded}</span>일` : "기록 없음")}
-    </dl>
-    ${hobby.changes ? `<p class="q">명조 파티표 · 육성</p>${list(hobby.changes.wuwa)}<p class="q">워프레임 장비</p>${list(hobby.changes.warframe)}`
-      : `<p class="mini">이 주 처음 모습이 없어서 바뀐 것은 다음 주부터 보여. (취미 기록은 v2.2.2 부터 남아.)</p>`}`;
   const upto = days.length < 7 ? `${dayShort(today)}요일까지` : "한 주";
   return card("식단", `기록 ${meal.recorded}일`, mealBody)
     + card("운동", upto, gymBody)
-    + card("회고", `${rev.written}일 씀`, revBody)
-    + card("취미", upto, hobbyBody);
+    + card("회고", `${rev.written}일 씀`, revBody);
 }
 
 function renderWeek() {

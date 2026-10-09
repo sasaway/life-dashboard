@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mealReport, workoutReport, words, reviewReport, hobbyReport, hobbyChanges } from "../js/weekly-report.js";
+import { mealReport, workoutReport, words, reviewReport } from "../js/weekly-report.js";
 import { weekDays } from "../js/review.js";
 
 const WEEK = weekDays("2026-09-28"); // 월 9/28 ~ 일 10/4
@@ -53,33 +53,7 @@ test("회고: 질문별로 한 주 답을 모으고, 두 날 넘게 나온 낱�
   assert.equal(r.byQuestion[2].answers.length, 1);
 });
 
-const START = {
-  parties: [{ id: "p1", name: "파티 1", slots: ["1503", "1103", null] }, { id: "p2", name: "파티 2", slots: [null, null, null] }],
-  builds: { 1503: { lv: 1 } },
-  gear: { frames: [{ id: "inv", frame: "오락시아", primary: "쿠바 소백" }, { id: "cc", frame: "벤쉬" }], others: ["볼터", "패리스"] },
-};
-const END = {
-  parties: [{ id: "p1", name: "파티 1", slots: ["1503", "1505", null] }, { id: "p3", name: "파티 3", slots: [null, null, null] }],
-  builds: { 1503: { lv: 1, weapon: 1, skill: 1 }, 1505: { lv: 1 } },
-  gear: { frames: [{ id: "inv", frame: "오락시아", primary: "쿠바 소벡" }, { id: "n", frame: "나린" }], others: ["볼터", "쏜바크"] },
-};
-const NAMES = { 1503: "벨리나", 1103: "설지", 1505: "파수인" };
-
-test("취미 바뀐 것: 파티 추가·삭제·넣음·뺌, 새로 한 육성 체크, 워프레임 장비", () => {
-  const c = hobbyChanges(START, END, (id) => NAMES[id]);
-  assert.deepEqual(c.wuwa, ["파티 1: 파수인 넣음", "파티 1: 설지 뺌", "파티 추가: 파티 3", "파티 삭제: 파티 2",
-    "벨리나: 무기 돌파 · 스킬작 완료", "파수인: 레벨 돌파 완료"]);
-  assert.deepEqual(c.warframe, ["오락시아 장비 고침", "워프레임 추가: 나린", "워프레임 삭제: 벤쉬", "그 외 무기 추가: 쏜바크", "그 외 무기 삭제: 패리스"]);
-});
-
-test("취미: 체크를 다 한 날, 주간은 마지막 날 값, 주 처음 모습이 없으면 바뀐 것은 null", () => {
-  const hobbyLog = { days: {
-    "2026-09-28": { ww: [4, 4], wwWeek: [2, 6], wf: [2, 2] },
-    "2026-09-29": { ww: [2, 4], wwWeek: [5, 6], wf: [1, 2] },
-  } };
-  const r = hobbyReport(hobbyLog, WEEK, null, END, (id) => id);
-  assert.deepEqual([r.recorded, r.wwFullDays, r.wfFullDays], [2, 1, 1]);
-  assert.deepEqual(r.wwWeekly, [5, 6]);
-  assert.equal(r.changes, null);
-  assert.ok(hobbyReport(hobbyLog, WEEK, START, END, (id) => id).changes.wuwa.length > 0);
+test("핫픽스 v3.0.3: 보고서 계산은 식단 · 운동 · 회고 세 가지뿐이다 (취미 카드 계산은 지움, 취미 기록은 hobby-log 에 그대로)", async () => {
+  const report = await import("../js/weekly-report.js");
+  assert.deepEqual(Object.keys(report).sort(), ["mealReport", "reviewReport", "words", "workoutReport"]);
 });

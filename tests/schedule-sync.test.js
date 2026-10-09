@@ -27,9 +27,11 @@ test("일정 설정 · 요일별 알바: 월~일 7줄, 반 이름과 알바 시�
 test("일정 설정 · 일과표: 반마다 칸마다 한 줄, 끝은 다음 칸의 시작 (취침은 다음 날 첫 칸까지)", () => {
   const rows = settingRows(settings, sunday).filter((r) => r[0] === "일과표");
   assert.equal(rows.length, DEFAULT_TEMPLATES.open.length + DEFAULT_TEMPLATES.mid.length + DEFAULT_TEMPLATES.close.length);
-  assert.deepEqual(rows[2], ["일과표", "오픈반", "08:30", "15:30", "알바 · 오픈반", "점심 · 13~14시 사이 · 40분"]);
+  assert.deepEqual(rows[2], ["일과표", "오픈반", "08:30", "15:30", "알바 · 오픈반", ""]);
+  assert.deepEqual(rows.filter((r) => r[5] !== ""), [], "설명 칸은 전부 빈칸 (핫픽스 v3.0.3), 칸 수는 그대로");
+  for (const r of rows) assert.equal(r.length, 6);
   assert.deepEqual(rows.filter((r) => r[1] === "오픈반").at(-1), ["일과표", "오픈반", "23:00", "06:00", "취침", ""]);
-  assert.deepEqual(rows.find((r) => r[1] === "중간반" && r[4] === "운동"), ["일과표", "중간반", "19:30", "21:00", "운동", "이동 포함 1시간 30분"]);
+  assert.deepEqual(rows.find((r) => r[1] === "중간반" && r[4] === "운동"), ["일과표", "중간반", "19:30", "21:00", "운동", ""]);
   assert.deepEqual(rows.find((r) => r[1] === "오픈반" && r[4] === "취미").slice(2, 4), ["19:00", "21:00"], "취미 2시간 (핫픽스 v3.0.1)");
   assert.deepEqual([...new Set(rows.map((r) => r[1]))], ["오픈반", "중간반", "마감반"]);
 });
@@ -39,7 +41,7 @@ test("일정 설정 · 직접 고친 일과표는 고친 시각 그대로 들어
   const mine = { ...settings, templates: { ...DEFAULT_TEMPLATES, open } };
   const rows = settingRows(mine, sunday).filter((r) => r[0] === "일과표" && r[1] === "오픈반");
   assert.deepEqual(rows.find((r) => r[4] === "운동 (헬스장)").slice(2, 4), ["16:10", "17:30"]);
-  assert.equal(rows.find((r) => r[5] === "알바 끝나고 30분")[3], "16:10", "앞 칸의 끝도 같이 바뀐다");
+  assert.deepEqual(rows.find((r) => r[2] === "15:30").slice(3, 5), ["16:10", "휴식"], "앞 칸의 끝도 같이 바뀐다");
   // '앞으로 7일' 에도: 월요일(오픈반)
   const mon = rowsOf(weekRows(mine, {}, sunday), "2026-10-05");
   assert.deepEqual(mon.find((r) => r[6] === "운동 (헬스장)").slice(4, 6), ["16:10", "17:30"]);
@@ -53,7 +55,8 @@ test("일정 설정 · 규칙: 쉬는 날 · 일요일 · 캘린더 · 끼니 �
   assert.deepEqual(rules.find((r) => r[1] === "쉬는 날 (마감반 일과)").slice(2, 5), ["18:00", "19:00", "저녁"]);
   assert.equal(rules.find((r) => r[1] === "집 끼니")[4], "짜글이 → 짜글이 (남은 것) → 계란 볶음밥 → 안성탕면");
   const open = workMeal(parseDate("2026-10-05"), settings);
-  assert.ok(rules.find((r) => r[1] === "알바 중 끼니")[5].includes(open.note), "알바 중 점심 설명은 앱과 같은 글");
+  assert.deepEqual(rules.find((r) => r[1] === "알바 중 끼니").slice(4), [`늘 ${open.dish.short}`, ""], "시각 글은 없다 (핫픽스 v3.0.3)");
+  assert.ok(!JSON.stringify(settingRows(settings, sunday)).match(/13~14|40분/));
   // 규칙 글이 실제 계산과 맞는지: 쉬는 토요일(마감반 일과)에는 18:00 저녁이 생긴다
   assert.ok(dayPlan(parseDate("2026-10-10"), settings).blocks.some((x) => x.start === "18:00" && x.name === "저녁"));
 });
@@ -74,12 +77,13 @@ test("앞으로 7일 · 오늘부터 7일, 날마다 반과 출처", () => {
 test("앞으로 7일 · 오픈반 날: 메인 일과표 칸 그대로 + 알바 칸 아래 '알바 중 점심' 줄", () => {
   const mon = rowsOf(weekRows(settings, {}, sunday), "2026-10-05");
   const blocks = dayPlan(parseDate("2026-10-05"), settings).blocks;
-  assert.deepEqual(mon.filter((r) => r[4]).map((r) => [r[4], r[6], r[7]]), blocks.map((x) => [x.start, x.name, x.note]));
+  assert.deepEqual(mon.filter((r) => r[4]).map((r) => [r[4], r[6], r[7]]), blocks.map((x) => [x.start, x.name, ""]));
+  assert.deepEqual(weekRows(settings, {}, sunday).filter((r) => r[7] !== ""), [], "설명 칸은 전부 빈칸 (핫픽스 v3.0.3)");
   const i = mon.findIndex((r) => r[6] === "알바 · 오픈반");
-  assert.deepEqual(mon[i].slice(4), ["08:30", "15:30", "알바 · 오픈반", "점심 · 13~14시 사이 · 40분", ""]);
-  assert.deepEqual(mon[i + 1].slice(4), ["", "", "알바 중 점심", "13~14시 사이 시작 · 40분", "닭가슴살 + 햇반"], "시각은 정해진 게 없어 빈칸");
+  assert.deepEqual(mon[i].slice(4), ["08:30", "15:30", "알바 · 오픈반", "", ""]);
+  assert.deepEqual(mon[i + 1].slice(4), ["", "", "알바 중 점심", "", "닭가슴살 + 햇반"], "시각 · 설명은 빈칸");
   assert.deepEqual(mon.find((r) => r[6] === "저녁").slice(4), ["18:00", "19:00", "저녁", "", "짜글이"]);
-  assert.deepEqual(mon.find((r) => r[6] === "운동").slice(4, 8), ["16:00", "17:30", "운동", "이동 포함 1시간 30분"]);
+  assert.deepEqual(mon.find((r) => r[6] === "운동").slice(4, 8), ["16:00", "17:30", "운동", ""]);
   assert.deepEqual(mon.at(-1).slice(4, 7), ["23:00", "06:00", "취침"]);
 });
 

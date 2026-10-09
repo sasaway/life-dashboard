@@ -32,14 +32,13 @@ export function homeMeals(date, settings) {
     .map((x) => ({ key: `${day} ${x.name}`, day, label: x.name, start: x.start }));
 }
 
-// 알바 중에 먹는 끼니: 오픈반은 점심(13~14시 사이 시작, 40분), 중간반·마감반은 저녁(시각은 Notion 에 없음)
-export const OPEN_LUNCH_NOTE = "13~14시 사이 시작 · 40분";
+// 알바 중에 먹는 끼니: 오픈반은 점심, 중간반·마감반은 저녁 (시각은 정해 둔 게 없다 — 핫픽스 v3.0.3 에서 Notion 따라 시각 글을 뺌)
 export function workMeal(date, settings) {
   const plan = dayPlan(date, settings);
   if (!plan.working) return null;
   return plan.shift === "open"
-    ? { label: "점심", dish: WORK_DISH, note: OPEN_LUNCH_NOTE, first: true }
-    : { label: "저녁", dish: WORK_DISH, note: "", first: false };
+    ? { label: "점심", dish: WORK_DISH, first: true }
+    : { label: "저녁", dish: WORK_DISH, first: false };
 }
 
 // 끼니마다 요리를 정한다.

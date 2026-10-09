@@ -12,6 +12,7 @@ export const OFF = "off"; // 쉬는 날
 const b = (start, kind, name, note = "") => ({ start, kind, name, note });
 
 // 기본 일과표. 설정에서 고칠 수 있다. (핫픽스 v3.0.1, 은월 2026-10-05 'A안' — Notion 핫픽스 '취미 당기기' · '운동 1시간 반')
+// 칸 설명(note)은 전부 빈칸이다 (핫픽스 v3.0.3, Notion '일정표에 있는 회색설명 삭제하기' — 은월 선택: 전부)
 // - 운동은 이동 포함 1시간 30분, 바로 뒤에 샤워 30분
 // - 알바가 끝나면 30분 쉬고 운동 (오픈반 · 중간반. 마감반은 운동이 알바 전)
 // - 취미 2시간: 오픈반 19:00, 마감반 · 중간반은 12시간 차이로 07:00.
@@ -21,52 +22,52 @@ export const DEFAULT_TEMPLATES = {
   open: [
     b("06:00", "rest", "휴식"),
     b("07:30", "prep", "출근 준비"),
-    b("08:30", "work", "알바 · 오픈반", "점심 · 13~14시 사이 · 40분"),
-    b("15:30", "rest", "휴식", "알바 끝나고 30분"),
-    b("16:00", "exercise", "운동", "이동 포함 1시간 30분"),
+    b("08:30", "work", "알바 · 오픈반"),
+    b("15:30", "rest", "휴식"),
+    b("16:00", "exercise", "운동"),
     b("17:30", "shower", "샤워"),
     b("18:00", "meal", "저녁"),
-    b("19:00", "hobby", "취미", "명조 · 워프레임"),
+    b("19:00", "hobby", "취미"),
     b("21:00", "chores", "가사"),
     b("21:30", "rest", "휴식"),
-    b("22:30", "review", "리뷰", "오늘 4가지 질문"),
+    b("22:30", "review", "리뷰"),
     b("23:00", "sleep", "취침"),
   ],
   // 중간반 (12:00~19:00): 아침은 마감반처럼 취미 · 가사, 알바 끝나고 30분 쉬고 운동 (은월 선택 'B안', 2026-10-04)
   mid: [
     b("06:00", "rest", "휴식"),
-    b("07:00", "hobby", "취미", "명조 · 워프레임"),
+    b("07:00", "hobby", "취미"),
     b("09:00", "chores", "가사"),
     b("09:30", "rest", "휴식"),
     b("10:00", "meal", "점심"),
     b("11:00", "prep", "출근 준비"),
-    b("12:00", "work", "알바 · 중간반", "저녁 · 닭가슴살 + 햇반"),
-    b("19:00", "rest", "휴식", "알바 끝나고 30분"),
-    b("19:30", "exercise", "운동", "이동 포함 1시간 30분"),
+    b("12:00", "work", "알바 · 중간반"),
+    b("19:00", "rest", "휴식"),
+    b("19:30", "exercise", "운동"),
     b("21:00", "shower", "샤워"),
     b("21:30", "rest", "휴식"),
-    b("22:30", "review", "리뷰", "오늘 4가지 질문"),
+    b("22:30", "review", "리뷰"),
     b("23:00", "sleep", "취침"),
   ],
   close: [
     b("06:00", "rest", "휴식"),
-    b("07:00", "hobby", "취미", "명조 · 워프레임"),
+    b("07:00", "hobby", "취미"),
     b("09:00", "chores", "가사"),
     b("09:30", "rest", "휴식"),
-    b("10:00", "exercise", "운동", "이동 포함 1시간 30분"),
+    b("10:00", "exercise", "운동"),
     b("11:30", "shower", "샤워"),
     b("12:00", "meal", "점심"),
     b("13:00", "rest", "휴식"),
     b("14:00", "prep", "출근 준비"),
-    b("15:00", "work", "알바 · 마감반", "저녁 · 닭가슴살 + 햇반"),
+    b("15:00", "work", "알바 · 마감반"),
     b("22:00", "rest", "휴식"),
-    b("22:30", "review", "리뷰", "오늘 4가지 질문"),
+    b("22:30", "review", "리뷰"),
     b("23:00", "sleep", "취침"),
   ],
 };
 
 // 옛 기본 일과표들. 폰에 이 모양(시각·이름)이 그대로 저장돼 있으면 새 기본값으로 바꾼다.
-// 사용자가 설정에서 고친 일과표는 건드리지 않는다 (알바 칸의 옛 설명 '점심은 식대' 만 새 설명으로).
+// 사용자가 설정에서 고친 일과표는 건드리지 않는다.
 const OLD_DEFAULTS = {
   open: [
     "06:00 휴식|07:30 출근 준비|08:30 알바 · 오픈반|15:30 휴식|16:00 운동|18:00 샤워|18:30 저녁|19:30 가사|20:00 취미|22:00 휴식|22:30 리뷰|23:00 취침", // v22 까지
@@ -82,19 +83,24 @@ const OLD_DEFAULTS = {
     "06:00 휴식|07:30 취미|09:30 가사|10:00 운동|12:00 샤워|12:30 점심|13:30 휴식|14:00 출근 준비|15:00 알바 · 마감반|22:00 휴식|22:30 리뷰|23:00 취침", // v2.1 ~ v3.0 (운동 2시간, 취미 07:30)
   ],
 };
-const OLD_WORK_NOTE = /^(점심|저녁)은 식대$/;
 const shape = (blocks) => blocks.map((x) => `${x.start} ${x.name}`).join("|");
 export function upgradeTemplates(templates) {
   const out = { ...templates };
   for (const shift of SHIFT_IDS) { // 중간반도 (핫픽스 v3.0.1)
     if (!out[shift]) continue;
     if (OLD_DEFAULTS[shift].includes(shape(out[shift]))) out[shift] = DEFAULT_TEMPLATES[shift];
-    else if (out[shift].some((x) => x.kind === "work" && OLD_WORK_NOTE.test(x.note ?? ""))) {
-      const note = DEFAULT_TEMPLATES[shift].find((x) => x.kind === "work").note;
-      out[shift] = out[shift].map((x) => (x.kind === "work" && OLD_WORK_NOTE.test(x.note ?? "") ? { ...x, note } : x));
-    }
   }
   return out;
+}
+
+// 핫픽스 v3.0.3: 일정표 칸 아래 설명을 전부 없앴다. 폰에 저장된 일과표의 칸 설명도 한 번만 비운다 (시각 · 이름은 그대로).
+// 설명을 고치는 화면이 없어서 저장된 설명은 모두 옛 기본 글이다. 비운 뒤 notesCleared 표시가 남는다.
+export const NOTES_CLEARED = "3.0.3";
+export function clearNotesOnce(settings) {
+  if (settings.notesCleared === NOTES_CLEARED) return settings;
+  const templates = Object.fromEntries(Object.entries(settings.templates ?? {}).map(([shift, blocks]) =>
+    [shift, blocks.some((x) => x.note) ? blocks.map((x) => ({ ...x, note: "" })) : blocks]));
+  return { ...settings, templates, notesCleared: NOTES_CLEARED };
 }
 
 // 핫픽스 v2.5.1 (은월 10-02): 폰의 마감반 일과표가 기본값과 다르게 남아 있었다 (한 번 고친 옛 일과표는 위 자동 바꾸기가 건너뜀).
@@ -191,16 +197,8 @@ function restBase(dayShifts, day) {
   return "open";
 }
 
-// 이어진 휴식 칸은 하나로 합친다. 합친 칸은 길이가 달라지니 설명('알바 끝나고 30분' 등)을 뗀다
-function mergeRest(blocks) {
-  const out = [];
-  for (const x of blocks) {
-    const last = out[out.length - 1];
-    if (x.kind === "rest" && last?.kind === "rest") out[out.length - 1] = { ...last, note: "" };
-    else out.push(x);
-  }
-  return out;
-}
+// 이어진 휴식 칸은 하나로 합친다
+const mergeRest = (blocks) => blocks.filter((x, i) => !(x.kind === "rest" && blocks[i - 1]?.kind === "rest"));
 
 // 쉬는 날: 알바·출근 준비 → 휴식, 알바 중에 먹던 끼니를 집에서 먹는다
 function toDayOff(blocks, shift) {
