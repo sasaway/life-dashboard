@@ -4,7 +4,7 @@ import {
   DEFAULT_SETTINGS, DEFAULT_TEMPLATES, SHIFTS, SHIFT_IDS, OFF, toMin, shiftFor, withDayShifts, setDayShift, hasDayShifts,
   dayPlan, currentIndex, nowInfo, leftLabel, checkTemplate, sortBlocks, upgradeTemplates, blockLengths, lengthLabel, endOf,
 } from "../js/schedule.js";
-import { alignCloseOnce, CLOSE_RESET, clearNotesOnce, NOTES_CLEARED } from "../js/schedule.js";
+import { alignCloseOnce, CLOSE_RESET, clearNotesOnce, NOTES_CLEARED, renameWakeOnce, WAKE_NAMED, WAKE } from "../js/schedule.js";
 
 // 칸마다 [시작, 끝] 분. 마지막 칸은 다음 날 첫 칸까지.
 function spans(blocks) {
@@ -21,9 +21,9 @@ for (const shift of ["open", "mid", "close"]) {
   const blocks = DEFAULT_TEMPLATES[shift];
   const label = SHIFTS[shift].label;
 
-  test(`${label} 주: 취침은 23:00 부터 다음 날 06:30 까지 — 하루 첫 칸 06:00~06:30 이 이어진 취침 (핫픽스 v3.0.4)`, () => {
+  test(`${label} 주: 취침은 23:00 부터 다음 날 06:30 까지 — 하루 첫 칸 06:00~06:30 은 이어진 잠이고 이름은 '기상' (핫픽스 v3.0.4 · v3.0.7)`, () => {
     const [morning, night] = find(blocks, "sleep");
-    assert.deepEqual([morning.start, morning.len, morning.name], ["06:00", 30, "취침"]);
+    assert.deepEqual([morning.start, morning.len, morning.name], ["06:00", 30, "기상"]);
     assert.equal(blocks[0], DEFAULT_TEMPLATES[shift][0]);
     assert.deepEqual([night.start, night.len], ["23:00", 420], "마지막 칸은 23:00 → 다음 날 첫 칸 06:00");
     assert.equal(blocks.at(-1).kind, "sleep");
@@ -229,7 +229,7 @@ test("반은 세 가지: 오픈반 08:30~15:30 · 중간반 12:00~19:00 · 마�
 
 test("중간반 일과표 (은월 선택 B안): 아침에 취미·가사, 10:00 점심, 알바 끝나고 30분 쉬고 운동", () => {
   assert.deepEqual(DEFAULT_TEMPLATES.mid.map((x) => `${x.start} ${x.name}`), [
-    "06:00 취침", "06:30 아침", "07:00 취미", "09:00 가사", "09:30 휴식", "10:00 점심", "11:00 출근 준비", "12:00 알바 · 중간반",
+    "06:00 기상", "06:30 아침", "07:00 취미", "09:00 가사", "09:30 휴식", "10:00 점심", "11:00 출근 준비", "12:00 알바 · 중간반",
     "19:00 휴식", "19:30 운동", "21:00 샤워", "21:30 휴식", "22:30 리뷰", "23:00 취침",
   ]);
   const all = spans(DEFAULT_TEMPLATES.mid);
@@ -255,7 +255,7 @@ test("요일별 알바 · 쉬는 날: 거슬러 올라가 가장 가까운 알�
   assert.equal(sun.shift, "close");
   assert.ok(!names(sun).some((n) => n.includes("운동")), "일요일은 운동도 쉰다");
   const midOff = dayPlan(new Date(2026, 9, 8), week(OFF, OFF, OFF, "mid", OFF, OFF, OFF)); // 목요일 쉼 → 수요일 중간반 기준
-  assert.deepEqual(names(midOff), ["06:00 취침", "06:30 아침", "07:00 취미", "09:00 가사", "09:30 휴식", "10:00 점심", "11:00 휴식", "18:00 저녁", "19:00 휴식", "19:30 운동", "21:00 샤워", "21:30 휴식", "22:30 리뷰", "23:00 취침"]);
+  assert.deepEqual(names(midOff), ["06:00 기상", "06:30 아침", "07:00 취미", "09:00 가사", "09:30 휴식", "10:00 점심", "11:00 휴식", "18:00 저녁", "19:00 휴식", "19:30 운동", "21:00 샤워", "21:30 휴식", "22:30 리뷰", "23:00 취침"]);
   const allOff = dayPlan(new Date(2026, 9, 6), week(OFF, OFF, OFF, OFF, OFF, OFF, OFF));
   assert.deepEqual([allOff.working, allOff.shift], [false, "open"], "한 주가 다 쉬는 날이면 오픈반 일과표 기준");
 });
@@ -303,7 +303,7 @@ test("오픈반 주 쉬는 날: 알바·출근 준비 대신 휴식, 12:00 점�
   assert.equal(plan.working, false);
   assert.equal(plan.blocks.some((x) => x.kind === "work" || x.kind === "prep"), false);
   assert.deepEqual(plan.blocks.slice(0, 6).map((x) => [x.start, x.name]),
-    [["06:00", "취침"], ["06:30", "아침"], ["07:00", "휴식"], ["12:00", "점심"], ["13:00", "휴식"], ["16:00", "운동"]]);
+    [["06:00", "기상"], ["06:30", "아침"], ["07:00", "휴식"], ["12:00", "점심"], ["13:00", "휴식"], ["16:00", "운동"]]);
 });
 
 test("마감반 주 쉬는 날: 18:00 저녁이 생긴다", () => {
@@ -324,7 +324,7 @@ test("일요일은 운동·샤워 칸이 휴식이 되고, 이어진 휴식은 �
   const sun = dayPlan(new Date(2026, 8, 27), DEFAULT_SETTINGS); // 마감반 주 일요일
   assert.equal(sun.blocks.some((x) => x.kind === "exercise" || x.kind === "shower"), false);
   assert.deepEqual(sun.blocks.slice(0, 6).map((x) => `${x.start} ${x.name}`),
-    ["06:00 취침", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 교회", "12:00 점심"], "09:30 휴식 + 운동 + 샤워 자리는 교회 (핫픽스 v3.0.4)");
+    ["06:00 기상", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 교회", "12:00 점심"], "09:30 휴식 + 운동 + 샤워 자리는 교회 (핫픽스 v3.0.4)");
   const openSun = dayPlan(new Date(2026, 9, 4), DEFAULT_SETTINGS); // 오픈반 주 일요일
   assert.deepEqual(openSun.blocks.slice(4, 7).map((x) => `${x.start} ${x.name}`),
     ["15:30 휴식", "18:00 저녁", "19:00 취미"], "알바 뒤 휴식 + 운동 + 샤워가 한 칸으로");
@@ -345,7 +345,7 @@ const planNames = (date, s) => dayPlan(date, s).blocks.map((x) => `${x.start} ${
 const SUN = new Date(2026, 9, 11);
 const WEEKDAYS = [12, 13, 14, 15, 16, 17].map((d) => new Date(2026, 9, d)); // 월~토
 
-test("v3.0.4 월~토: 세 반 모두 알바 날 · 쉬는 날에 06:00 취침 → 06:30 아침, 하루 24시간이 빈틈 · 겹침 없이 이어진다", () => {
+test("v3.0.4 월~토: 세 반 모두 알바 날 · 쉬는 날에 06:00 기상 → 06:30 아침, 하루 24시간이 빈틈 · 겹침 없이 이어진다", () => {
   for (const shift of ["open", "mid", "close"]) {
     for (const s of [everyDay(shift), { ...DEFAULT_SETTINGS, dayShifts: [shift, OFF, OFF, OFF, OFF, OFF, shift] }]) {
       for (const d of WEEKDAYS) {
@@ -373,24 +373,24 @@ test("v3.0.4 월~토: 세 반 모두 알바 날 · 쉬는 날에 06:00 취침 �
 });
 
 test("v3.0.4 일요일 · 마감반으로 알바: 아침 없음, 취미 06:30 (2시간), 교회 09:30~12:00", () => {
-  assert.deepEqual(planNames(SUN, everyDay("close")), ["06:00 취침", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 교회", "12:00 점심",
+  assert.deepEqual(planNames(SUN, everyDay("close")), ["06:00 기상", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 교회", "12:00 점심",
     "13:00 휴식", "14:00 출근 준비", "15:00 알바 · 마감반", "22:00 휴식", "22:30 리뷰", "23:00 취침"]);
 });
 
 test("v3.0.4 일요일 · 쉬는 날: 오픈반 일과는 저녁 취미 그대로 19:00 (18:00 저녁도 그대로), 마감반 · 중간반 일과는 취미 06:30", () => {
-  assert.deepEqual(planNames(SUN, offSundayAfter("open")), ["06:00 취침", "06:30 휴식", "09:30 교회", "12:00 점심", "13:00 휴식", "18:00 저녁",
+  assert.deepEqual(planNames(SUN, offSundayAfter("open")), ["06:00 기상", "06:30 휴식", "09:30 교회", "12:00 점심", "13:00 휴식", "18:00 저녁",
     "19:00 취미", "21:00 가사", "21:30 휴식", "22:30 리뷰", "23:00 취침"]);
-  assert.deepEqual(planNames(SUN, offSundayAfter("close")), ["06:00 취침", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 교회", "12:00 점심",
+  assert.deepEqual(planNames(SUN, offSundayAfter("close")), ["06:00 기상", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 교회", "12:00 점심",
     "13:00 휴식", "18:00 저녁", "19:00 휴식", "22:30 리뷰", "23:00 취침"]);
   // 중간반 일과로 쉬는 일요일: 10:00 점심이 교회에 덮여 집 끼니는 저녁 하나
-  assert.deepEqual(planNames(SUN, offSundayAfter("mid")), ["06:00 취침", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 교회", "12:00 휴식",
+  assert.deepEqual(planNames(SUN, offSundayAfter("mid")), ["06:00 기상", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 교회", "12:00 휴식",
     "18:00 저녁", "19:00 휴식", "22:30 리뷰", "23:00 취침"]);
 });
 
 test("v3.0.4 일요일 · 알바 · 출근 준비가 교회 시간과 겹치면 교회 칸을 넣지 않는다 (중간반 — 은월 선택, 오픈반도 같은 이유)", () => {
-  assert.deepEqual(planNames(SUN, everyDay("mid")), ["06:00 취침", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 휴식", "10:00 점심",
+  assert.deepEqual(planNames(SUN, everyDay("mid")), ["06:00 기상", "06:30 취미", "08:30 휴식", "09:00 가사", "09:30 휴식", "10:00 점심",
     "11:00 출근 준비", "12:00 알바 · 중간반", "19:00 휴식", "22:30 리뷰", "23:00 취침"]);
-  assert.deepEqual(planNames(SUN, everyDay("open")), ["06:00 취침", "06:30 휴식", "07:30 출근 준비", "08:30 알바 · 오픈반", "15:30 휴식", "18:00 저녁",
+  assert.deepEqual(planNames(SUN, everyDay("open")), ["06:00 기상", "06:30 휴식", "07:30 출근 준비", "08:30 알바 · 오픈반", "15:30 휴식", "18:00 저녁",
     "19:00 취미", "21:00 가사", "21:30 휴식", "22:30 리뷰", "23:00 취침"]);
   // 캘린더에서 온 반이어도 같은 규칙 (요일이 기준)
   const cal = { ...everyDay("open"), cal: { from: "2026-10-05", until: "2026-10-18", shifts: { "2026-10-11": "close" } } };
@@ -444,10 +444,10 @@ test("v3.0.4 폰에 v3.0.1 ~ v3.0.3 기본 일과표가 그대로 있으면 새 
   assert.deepEqual(upgradeTemplates(JSON.parse(JSON.stringify(DEFAULT_TEMPLATES))), DEFAULT_TEMPLATES, "저장됐다 읽힌 새 기본값도 그대로");
 });
 
-test("v3.0.4 '지금': 06:10 은 취침(06:00~06:30), 06:40 은 아침, 일요일 07:00 은 취미 · 10:00 은 교회, 새벽 3시는 어젯밤 취침", () => {
+test("v3.0.4 · v3.0.7 '지금': 06:10 은 기상(06:00~06:30), 06:40 은 아침, 일요일 07:00 은 취미 · 10:00 은 교회, 새벽 3시는 어젯밤 취침", () => {
   const mon = dayPlan(WEEKDAYS[0], everyDay("open")).blocks;
   const at = (blocks, hhmm) => nowInfo(blocks, toMin(hhmm));
-  assert.deepEqual([at(mon, "06:10").block.name, at(mon, "06:10").start, at(mon, "06:10").end, at(mon, "06:10").leftMin], ["취침", "06:00", "06:30", 20]);
+  assert.deepEqual([at(mon, "06:10").block.name, at(mon, "06:10").start, at(mon, "06:10").end, at(mon, "06:10").leftMin], ["기상", "06:00", "06:30", 20]);
   assert.deepEqual([at(mon, "06:40").block.name, at(mon, "06:40").next.name], ["아침", "휴식"]);
   assert.deepEqual([at(mon, "03:00").block.name, at(mon, "03:00").start, at(mon, "03:00").end], ["취침", "23:00", "06:00"]);
   const sun = dayPlan(SUN, everyDay("close")).blocks;
@@ -525,4 +525,57 @@ test("v2.9 칸 길이: 시각 순서로 다음 칸까지, 마지막 칸은 다�
   assert.deepEqual(blockLengths([{ start: "06:00" }]), [1440]);
   assert.deepEqual([lengthLabel(90), lengthLabel(60), lengthLabel(30), lengthLabel(420)], ["1시간 30분", "1시간", "30분", "7시간"]);
   assert.deepEqual([endOf(open, 0), endOf(open, open.length - 1)], ["06:30", "06:00"]);
+});
+
+// ---------- 핫픽스 v3.0.7: 하루 첫 칸 이름 '기상' ----------
+// v3.0.4 ~ v3.0.6 기본값 (첫 칸 이름 '취침')
+const v306Blocks = (shift) => DEFAULT_TEMPLATES[shift].map((x, i) => (i === 0 ? { ...x, name: "취침" } : { ...x }));
+
+test("v3.0.7 기본 일과표: 세 반의 첫 칸(06:00~06:30) 이름은 '기상', 종류 · 시각 · 칸 수는 그대로 · 밤 23:00 은 그대로 '취침'", () => {
+  assert.equal(WAKE, "기상");
+  for (const shift of ["open", "mid", "close"]) {
+    const blocks = DEFAULT_TEMPLATES[shift];
+    assert.deepEqual([blocks[0].start, blocks[0].kind, blocks[0].name, blocks[1].start], ["06:00", "sleep", "기상", "06:30"], shift);
+    assert.deepEqual([blocks.at(-1).start, blocks.at(-1).kind, blocks.at(-1).name], ["23:00", "sleep", "취침"], shift);
+    assert.equal(blocks.length, 14);
+    assert.equal(blocks.filter((x) => x.name === "기상").length, 1);
+  }
+});
+
+test("v3.0.7 폰에 v3.0.4 ~ v3.0.6 기본 일과표(첫 칸 '취침')가 그대로 있으면 새 기본값으로, 두 번 돌려도 같다", () => {
+  const up = upgradeTemplates({ open: v306Blocks("open"), mid: v306Blocks("mid"), close: v306Blocks("close") });
+  for (const shift of ["open", "mid", "close"]) {
+    assert.equal(up[shift], DEFAULT_TEMPLATES[shift], shift);
+    assert.equal(upgradeTemplates(up)[shift], DEFAULT_TEMPLATES[shift]);
+  }
+  assert.deepEqual(upgradeTemplates(JSON.parse(JSON.stringify(DEFAULT_TEMPLATES))), DEFAULT_TEMPLATES, "저장됐다 읽힌 새 기본값도 그대로");
+});
+
+test("v3.0.7 저장된 첫 칸 이름 옮기기: 06:00 에 시작하고 이름이 정확히 '취침' 일 때만 '기상' 으로, 한 번만", () => {
+  const edited = v306Blocks("open").map((x) => (x.kind === "exercise" ? { ...x, start: "16:10", name: "운동 (헬스장)" } : x)); // 직접 고친 반
+  const named = v306Blocks("mid").map((x, i) => (i === 0 ? { ...x, name: "늦잠" } : x));                                         // 직접 지은 이름
+  const late = [{ start: "07:00", kind: "sleep", name: "취침", note: "" }, { start: "08:00", kind: "custom", name: "산책", note: "" }, { start: "23:00", kind: "sleep", name: "취침", note: "" }];
+  const phone = { dayShifts: ["off", "open", "open", "mid", "close", "close", "off"], templates: { open: edited, mid: named, close: late } };
+  const out = renameWakeOnce(phone);
+  assert.equal(out.wakeNamed, WAKE_NAMED);
+  // 직접 고친 반: 첫 칸 이름만 바뀌고 나머지는 그대로
+  assert.deepEqual(out.templates.open[0], { ...edited[0], name: "기상" });
+  assert.deepEqual(out.templates.open.slice(1), edited.slice(1));
+  assert.equal(out.templates.open.at(-1).name, "취침", "밤 취침은 그대로");
+  assert.equal(out.templates.mid, named, "직접 지은 이름은 건드리지 않는다");
+  assert.equal(out.templates.close, late, "06:00 에 시작하지 않는 첫 칸은 그대로");
+  assert.deepEqual(out.dayShifts, phone.dayShifts);
+  assert.equal(edited[0].name, "취침", "원본은 건드리지 않는다");
+  assert.equal(renameWakeOnce(out), out, "표시가 있으면 다시 하지 않는다");
+  // 이미 '기상' 이면 아무 일도 없다 (표시만 남는다)
+  const already = renameWakeOnce({ templates: DEFAULT_TEMPLATES });
+  assert.equal(already.templates.open, DEFAULT_TEMPLATES.open);
+  // 옮긴 뒤 일부러 '취침' 으로 다시 적은 건 또 바꾸지 않는다
+  const back = { ...out, templates: { ...out.templates, open: edited } };
+  assert.equal(renameWakeOnce(back).templates.open[0].name, "취침");
+  // 이름을 보고 동작하는 곳은 없다: 옛 이름이어도 '지금' · 일요일 규칙이 똑같이 돈다
+  const s = (templates) => ({ ...DEFAULT_SETTINGS, dayShifts: Array(7).fill("close"), templates });
+  const [oldSun, newSun] = [dayPlan(SUN, s({ ...DEFAULT_TEMPLATES, close: v306Blocks("close") })).blocks, dayPlan(SUN, s(DEFAULT_TEMPLATES)).blocks];
+  assert.deepEqual(oldSun.map((x) => `${x.start} ${x.kind}`), newSun.map((x) => `${x.start} ${x.kind}`));
+  assert.deepEqual([nowInfo(oldSun, toMin("06:10")).block.name, nowInfo(newSun, toMin("06:10")).block.name], ["취침", "기상"]);
 });

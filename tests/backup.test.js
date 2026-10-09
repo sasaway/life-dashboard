@@ -241,3 +241,22 @@ test("핫픽스 v3.0.6 식단 메뉴 설정(mealMenu)도 백업 → 되살리기
   assert.deepEqual(later.dump(), phone.dump());
   assert.deepEqual(JSON.parse(later.getItem("ld:mealMenu")), menu);
 });
+
+test("핫픽스 v3.0.7 첫 칸이 '취침' 인 옛 백업을 되살려도 안 깨지고, 앱이 불러올 때 '기상' 으로 읽힌다", async () => {
+  const { upgradeTemplates, clearNotesOnce, renameWakeOnce, DEFAULT_TEMPLATES, dayPlan } = await import("../js/schedule.js");
+  const oldTemplates = Object.fromEntries(Object.entries(DEFAULT_TEMPLATES).map(([k, blocks]) => [k, blocks.map((x, i) => (i === 0 ? { ...x, name: "취침" } : x))]));
+  oldTemplates.open = oldTemplates.open.map((x) => (x.kind === "exercise" ? { ...x, name: "운동 (헬스장)" } : x)); // 한 반은 직접 고친 것
+  const old = { ...DEFAULT_SETTINGS, dayShifts: ["off", "open", "open", "mid", "close", "close", "off"], notesCleared: "3.0.3", templates: oldTemplates };
+  const phone = fakeStorage({ "ld:schedule": JSON.stringify(old) });
+  const text = JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v3.0.6 핫픽스 · 10월 9일" }));
+  const later = fakeStorage({});
+  restoreItems(later, readBackupText(text).backup.items);
+  const saved = JSON.parse(later.getItem("ld:schedule"));
+  assert.equal(saved.templates.open[0].name, "취침", "되살린 직후에는 백업 그대로");
+  // 앱이 저장된 일과표를 불러오는 길 (schedule-view.js loadSettings 와 같은 순서)
+  const loaded = renameWakeOnce(clearNotesOnce({ ...saved, templates: upgradeTemplates(saved.templates) }));
+  for (const shift of ["open", "mid", "close"]) assert.equal(loaded.templates[shift][0].name, "기상", shift);
+  assert.equal(loaded.templates.open.find((x) => x.kind === "exercise").name, "운동 (헬스장)", "직접 고친 칸은 그대로");
+  assert.deepEqual(loaded.templates.mid, DEFAULT_TEMPLATES.mid, "안 고친 반은 새 기본값");
+  assert.equal(dayPlan(new Date(2026, 9, 12), loaded).blocks[0].name, "기상");
+});

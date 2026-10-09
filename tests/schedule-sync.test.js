@@ -28,7 +28,7 @@ test("일정 설정 · 일과표: 반마다 칸마다 한 줄, 끝은 다음 칸
   const rows = settingRows(settings, sunday).filter((r) => r[0] === "일과표");
   assert.equal(rows.length, DEFAULT_TEMPLATES.open.length + DEFAULT_TEMPLATES.mid.length + DEFAULT_TEMPLATES.close.length);
   assert.equal(rows.length, 14 * 3, "반마다 취침 · 아침 칸이 늘었다 (핫픽스 v3.0.4)");
-  assert.deepEqual(rows.slice(0, 2), [["일과표", "오픈반", "06:00", "06:30", "취침", ""], ["일과표", "오픈반", "06:30", "07:00", "아침", ""]]);
+  assert.deepEqual(rows.slice(0, 2), [["일과표", "오픈반", "06:00", "06:30", "기상", ""], ["일과표", "오픈반", "06:30", "07:00", "아침", ""]]);
   assert.deepEqual(rows[4], ["일과표", "오픈반", "08:30", "15:30", "알바 · 오픈반", ""]);
   assert.deepEqual(rows.filter((r) => r[5] !== ""), [], "설명 칸은 전부 빈칸 (핫픽스 v3.0.3), 칸 수는 그대로");
   for (const r of rows) assert.equal(r.length, 6);
@@ -115,7 +115,7 @@ test("앞으로 7일 · 중간반 · 마감반 날: '알바 중 저녁' 줄, 집
   const wed = rowsOf(rows, "2026-10-07");
   const lunch = wed.findIndex((r) => r[6] === "점심");
   assert.deepEqual(names(wed).slice(lunch, lunch + 5), ["10:00 점심", "11:00 출근 준비", "12:00 알바 · 중간반", "알바 중 저녁", "19:00 휴식"]);
-  assert.deepEqual(names(wed).slice(0, lunch), ["06:00 취침", "06:30 아침", "07:00 취미", "09:00 가사", "09:30 휴식"]);
+  assert.deepEqual(names(wed).slice(0, lunch), ["06:00 기상", "06:30 아침", "07:00 취미", "09:00 가사", "09:30 휴식"]);
   assert.equal(wed.find((r) => r[6] === "아침")[8], "통밀빵 세트", "아침 메뉴 (핫픽스 v3.0.5)");
   assert.equal(wed.find((r) => r[6] === "알바 중 저녁")[8], "닭가슴살 + 햇반");
   assert.equal(wed.find((r) => r[6] === "점심")[8], "안성탕면");
@@ -202,4 +202,20 @@ test("핫픽스 v3.0.6 · 시트는 지금 메뉴를 따른다: 규칙 글 · �
     }
   } finally { setMealMenu({}); }
   assert.match(settingRows(settings, sunday).find((r) => r[1] === "집 끼니")[5], /안성탕면 은 주 2번까지/, "기본값으로 돌아오면 원래 글");
+});
+
+test("핫픽스 v3.0.7 · 시트 두 탭의 하루 첫 칸은 '기상' (06:00~06:30), 밤은 '취침' · 칸 수는 그대로", () => {
+  const plan = settingRows(settings, sunday).filter((r) => r[0] === "일과표");
+  for (const label of ["오픈반", "중간반", "마감반"]) {
+    const rows = plan.filter((r) => r[1] === label);
+    assert.deepEqual(rows[0], ["일과표", label, "06:00", "06:30", "기상", ""]);
+    assert.deepEqual(rows.at(-1), ["일과표", label, "23:00", "06:00", "취침", ""]);
+    assert.equal(rows.length, 14);
+  }
+  const next7 = weekRows(settings, {}, sunday);
+  for (const day of [...new Set(next7.map((r) => r[0]))]) {
+    assert.deepEqual(rowsOf(next7, day)[0].slice(4, 7), ["06:00", "06:30", "기상"], day);
+    assert.deepEqual(rowsOf(next7, day).at(-1).slice(4, 7), ["23:00", "06:00", "취침"], day);
+  }
+  for (const r of next7) assert.equal(r.length, 9);
 });
