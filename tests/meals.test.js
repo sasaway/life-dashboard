@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   DISHES, LEFTOVER, WORK_DISH, CHAPA, SKIP, OLD_RICE, homeMeals, workMeal, planMeals, planWeek, withOverride,
   pickable, dishById, dayMeals, syncMealLog, recordDay, MEAL_LOG_DAYS, proteinSummary, autoDishes, upgradeOverrides, mealProtein, eatOrder,
+  BASE_DISHES, menuWith, setMealMenu, toggleAllowed, toggleAuto, addCustom, renameCustom, removeCustom, resetMenu,
 } from "../js/meals.js";
 import { mondayOf, dayPlan } from "../js/schedule.js";
 import { IDEAS, ideasFor, MAX_IDEAS } from "../js/meal-tips.js";
@@ -323,4 +324,131 @@ test("v3.0.5 이름을 고친 식사 칸도 끼니를 안다: 15시 전이면 �
   const s = { ...OFF_WEEK, templates: { ...DEFAULT_SETTINGS.templates, open: mine } };
   assert.deepEqual(homeMeals(MON, s).map((m) => [m.label, m.meal]), [["브런치", "점심"], ["야식", "저녁"]]);
   assert.ok(planWeek(MON, s, {}).flatMap((d) => d.meals).every((m) => m.dish.id !== "bread"));
+});
+
+// ---------- 핫픽스 v3.0.6: 설정 › 식단 메뉴 ----------
+// 메뉴를 바꿔 보는 테스트는 끝에 기본값으로 되돌린다 (다른 테스트가 같은 모듈을 쓴다)
+function withMenu(saved, fn) {
+  setMealMenu(saved);
+  try { return fn(); } finally { setMealMenu({}); }
+}
+const mainIds = (s, o = {}) => planWeek(MON, s, o).flatMap((d) => d.meals).filter((m) => m.meal !== "아침").map((m) => m.dish.id);
+
+test("v3.0.6 저장은 기본값에서 바뀐 것만: 안 건드리면 {}, 되돌리면 다시 {} · 기본 목록은 그대로", () => {
+  assert.deepEqual(menuWith({}), BASE_DISHES);
+  assert.deepEqual(DISHES, BASE_DISHES);
+  const a = toggleAllowed({}, "bread", "점심");
+  assert.deepEqual(a, { allowed: { bread: ["아침", "점심"] } });
+  assert.deepEqual(toggleAllowed(a, "bread", "점심"), {}, "다시 끄면 기본값과 같아져 저장에서 빠진다");
+  const b = toggleAuto({}, "ramen");
+  assert.deepEqual(b, { off: ["ramen"] });
+  assert.deepEqual(toggleAuto(b, "ramen"), {});
+  assert.equal(menuWith(b).find((d) => d.id === "ramen").off, true);
+  assert.deepEqual(menuWith(b).find((d) => d.id === "ramen").allowed, ["점심", "저녁"], "칩은 그대로 남는다");
+  // 닭가슴살(알바 중만)은 칩도 스위치도 없다
+  const none = {};
+  assert.equal(toggleAllowed(none, "chicken", "저녁"), none);
+  assert.equal(toggleAuto(none, "chicken"), none);
+  assert.equal(toggleAllowed(none, "없는 메뉴", "저녁"), none);
+});
+
+test("v3.0.6 허용 끼니를 바꾸면 돌림에 반영된다: 통밀빵에 점심을 켜면 점심 후보, 저녁에는 안 나온다", () => {
+  const saved = toggleAllowed({}, "bread", "점심");
+  withMenu(saved, () => {
+    assert.deepEqual(autoDishes("점심").map((d) => d.id), ["rice-soy", "rice-kimchi", "bread", "jja", "ramen"]);
+    assert.deepEqual(pickable("저녁").auto.map((d) => d.id), ["rice-soy", "rice-kimchi", "jja", "ramen"]);
+    const week = planWeek(MON, OFF_WEEK, {}).flatMap((d) => d.meals);
+    assert.ok(week.some((m) => m.meal === "점심" && m.dish.id === "bread"), "점심에 통밀빵이 나온다");
+    assert.ok(!week.some((m) => m.meal === "저녁" && m.dish.id === "bread"), "저녁에는 안 나온다");
+    assert.deepEqual(planWeek(MON, OFF_WEEK, {}), planWeek(MON, OFF_WEEK, {}), "같은 설정이면 늘 같은 결과");
+  });
+  assert.ok(!mainIds(OFF_WEEK).includes("bread"), "기본값으로 돌아오면 다시 아침만");
+});
+
+test("v3.0.6 자동 배정에서 뺀 메뉴는 돌림에 안 나오고, 고르는 창 '다른 메뉴' 에는 있어서 직접 고를 수 있다", () => {
+  assert.ok(mainIds(OPEN_WEEK).includes("ramen"));
+  withMenu(toggleAuto({}, "ramen"), () => {
+    for (const s of [OPEN_WEEK, CLOSE_WEEK, MIXED_WEEK, OFF_WEEK]) assert.ok(!mainIds(s).includes("ramen"));
+    assert.ok(!pickable("저녁").auto.some((d) => d.id === "ramen"));
+    assert.ok(pickable("저녁").other.some((d) => d.id === "ramen"));
+    assert.equal(planWeek(MON, OPEN_WEEK, { "2026-10-14 저녁": "ramen" })[2].meals.at(-1).dish.id, "ramen", "직접 고르면 된다");
+  });
+  // 짜글이를 빼면 오픈반 저녁 우선 · 남은 짜글이도 없다
+  withMenu(toggleAuto({}, "jja"), () => assert.ok(!mainIds(OPEN_WEEK).some((id) => id === "jja" || id === "jja-left")));
+});
+
+test("v3.0.6 끼니마다 자동 배정 메뉴가 하나는 있어야 한다: 마지막 하나를 끄는 칩 · 스위치 · 삭제는 받은 값을 그대로 돌려준다", () => {
+  // 아침: 간장 · 김치 · 통밀빵 → 둘을 빼면 통밀빵 하나
+  let s = toggleAuto(toggleAuto({}, "rice-soy"), "rice-kimchi");
+  // 볶음밥 둘이 빠지면 점심 · 저녁은 짜글이 · 라면이 남는다
+  assert.deepEqual(s.off, ["rice-soy", "rice-kimchi"]);
+  assert.equal(toggleAuto(s, "bread"), s, "아침의 마지막 메뉴는 못 뺀다");
+  assert.equal(toggleAllowed(s, "bread", "아침"), s, "아침 칩도 못 끈다");
+  s = toggleAuto(s, "jja");
+  assert.equal(toggleAuto(s, "ramen"), s, "점심 · 저녁의 마지막 메뉴는 못 뺀다");
+  assert.equal(toggleAllowed(s, "ramen", "저녁"), s);
+  // 직접 추가한 메뉴가 그 끼니의 마지막이면 지우기도 막힌다
+  let c = toggleAllowed(addCustom(s, "샐러드", "x-1"), "x-1", "점심"); // 샐러드는 저녁만
+  c = toggleAllowed(c, "ramen", "저녁");                              // 라면은 점심만 → 저녁은 샐러드뿐
+  assert.deepEqual(menuWith(c).filter((d) => !d.off && d.allowed.includes("저녁")).map((d) => d.id), ["x-1"]);
+  assert.equal(removeCustom(c, "x-1"), c);
+  assert.equal(toggleAuto(c, "x-1"), c);
+  // 이런 설정에서도 식단 계산은 죽지 않는다
+  withMenu(c, () => assert.equal(planWeek(MON, OFF_WEEK, {}).flatMap((d) => d.meals).length, 6 * 3 + 2));
+});
+
+test("v3.0.6 메뉴가 통째로 비어도 (설정이 막지만) 식단 계산은 죽지 않는다", () => {
+  withMenu({ off: BASE_DISHES.map((d) => d.id) }, () => {
+    const all = planWeek(MON, OFF_WEEK, {}).flatMap((d) => d.meals);
+    assert.equal(all.length, 20);
+    assert.ok(all.every((m) => m.dish.id === "skip"));
+  });
+});
+
+test("v3.0.6 이름만 있는 메뉴: 점심 · 저녁 돌림에 들어오고, 레시피 · 단백질은 없다 · 이름 고치기", () => {
+  let s = addCustom({}, "  샐러드  ", "x-100");
+  assert.deepEqual(s, { custom: [{ id: "x-100", name: "샐러드", allowed: ["점심", "저녁"] }] });
+  assert.equal(addCustom(s, "   ", "x-200"), s, "이름이 비면 안 더한다");
+  assert.deepEqual(addCustom(s, "샌드위치", "x-100").custom.map((c) => c.id), ["x-100", "x-100-2"], "id 가 겹치면 번호를 붙인다");
+  withMenu(s, () => {
+    const d = dishById("x-100");
+    assert.deepEqual([d.name, d.short, d.custom, d.allowed.join("·")], ["샐러드", "샐러드", true, "점심·저녁"]);
+    assert.ok(mainIds(OFF_WEEK).includes("x-100"), "돌림에 들어온다");
+    assert.ok(!planWeek(MON, OFF_WEEK, {}).flatMap((x) => x.meals).some((m) => m.meal === "아침" && m.dish.id === "x-100"));
+    assert.equal(mealProtein({ dish: "x-100" }), null);
+    assert.deepEqual(proteinSummary({ d: [{ label: "점심", dish: "x-100" }, { label: "저녁", dish: "jja" }] }, ["d"]), { meals: 1, hit: 1, grams: 25 });
+    // 아침 칩을 켜면 아침 요일 순서의 네 번째로
+    withMenu(toggleAllowed(s, "x-100", "아침"), () => assert.equal(planWeek(MON, OFF_WEEK, {})[3].meals[0].dish.id, "x-100"));
+  });
+  const r = renameCustom(s, "x-100", "닭가슴살 샐러드");
+  assert.deepEqual(r.custom, [{ id: "x-100", name: "닭가슴살 샐러드", allowed: ["점심", "저녁"] }]);
+  assert.equal(renameCustom(s, "x-100", "  "), s, "빈 이름으로는 안 바뀐다");
+  assert.equal(renameCustom(s, "rice-soy", "다른 이름"), s, "기본 메뉴 이름은 못 고친다");
+});
+
+test("v3.0.6 지운 메뉴: 목록 · 돌림 · 고르는 창에서 빠지고, 지난 기록과 직접 고른 칸에서는 이름으로 읽힌다 · 기본 메뉴는 못 지운다", () => {
+  const s = toggleAuto(addCustom({}, "샐러드", "x-1"), "x-1");
+  const gone = removeCustom(s, "x-1");
+  assert.deepEqual(gone, { removed: [{ id: "x-1", name: "샐러드" }] }, "자동 배정 표시도 같이 정리된다");
+  assert.equal(removeCustom(gone, "rice-soy"), gone);
+  withMenu(gone, () => {
+    assert.ok(!DISHES.some((d) => d.id === "x-1"));
+    assert.ok(![...pickable("저녁").auto, ...pickable("저녁").other].some((d) => d.id === "x-1"));
+    assert.equal(dishById("x-1").short, "샐러드");
+    assert.equal(planWeek(MON, OFF_WEEK, { "2026-10-12 점심": "x-1" })[0].meals[1].dish.short, "샐러드", "직접 골라 둔 칸");
+    assert.deepEqual(proteinSummary({ d: [{ label: "점심", dish: "x-1" }] }, ["d"]), { meals: 0, hit: 0, grams: 0 });
+  });
+  assert.equal(dishById("x-1"), undefined, "설정을 비우면 없다");
+  // 같은 이름으로 다시 추가해도 id 가 겹치지 않는다
+  assert.deepEqual(addCustom(gone, "샐러드", "x-1").custom.map((c) => c.id), ["x-1-2"]);
+});
+
+test("v3.0.6 기본값으로: 끼니 칩 · 자동 배정만 처음대로, 직접 추가한 메뉴와 지운 메뉴 이름은 그대로", () => {
+  let s = toggleAllowed(toggleAuto({}, "ramen"), "bread", "점심");
+  s = removeCustom(addCustom(addCustom(s, "샐러드", "x-1"), "토스트", "x-2"), "x-2");
+  s = toggleAuto(toggleAllowed(s, "x-1", "아침"), "x-1");
+  const back = resetMenu(s);
+  assert.deepEqual(back, { custom: [{ id: "x-1", name: "샐러드", allowed: ["아침", "점심", "저녁"] }], removed: [{ id: "x-2", name: "토스트" }] });
+  assert.deepEqual(menuWith(back).slice(0, BASE_DISHES.length), BASE_DISHES);
+  assert.deepEqual(resetMenu({}), {});
 });

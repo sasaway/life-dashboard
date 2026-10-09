@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { settingRows, weekRows, scheduleSnapshot, NEXT_DAYS } from "../js/schedule-sync.js";
 import { DEFAULT_SETTINGS, DEFAULT_TEMPLATES, dayPlan, parseDate } from "../js/schedule.js";
-import { planWeek, workMeal } from "../js/meals.js";
+import { planWeek, workMeal, setMealMenu } from "../js/meals.js";
 
 // 월·화 오픈반 · 수 중간반 · 목·금 마감반 · 토·일 휴무 (dayShifts 는 일요일부터)
 const settings = { ...DEFAULT_SETTINGS, dayShifts: ["off", "open", "open", "mid", "close", "close", "off"] };
@@ -180,4 +180,26 @@ test("옛 설정(요일별 알바가 없는 폰)도 줄이 만들어진다 · �
   assert.ok(snap.next7.length > 7 * 10);
   assert.doesNotMatch(JSON.stringify(scheduleSnapshot({ settings }, sunday)), /kg|cm|몸무게|체중|키/);
   for (const r of [...snap.plan, ...snap.next7]) for (const v of r) assert.ok(v.length <= 100, "한 칸 100자 안 (심부름꾼이 자른다)");
+});
+
+test("핫픽스 v3.0.6 · 시트는 지금 메뉴를 따른다: 규칙 글 · 끼니 메뉴 이름 (직접 추가한 메뉴도), 칸 수는 그대로 · 한 칸 100자 안", () => {
+  const menu = { allowed: { bread: ["아침", "점심"] }, off: ["ramen", "jja"],
+    custom: [{ id: "x-1", name: "샐러드", allowed: ["아침", "점심", "저녁"] }, { id: "x-2", name: "아주아주 긴 이름의 메뉴 스무 글자쯤 된다", allowed: ["아침"] }] };
+  setMealMenu(menu);
+  try {
+    const rule = settingRows(settings, sunday).find((r) => r[1] === "집 끼니");
+    assert.equal(rule[4], "아침: 간장 계란 볶음밥 → 김치 계란 볶음밥 → 통밀빵 세트 → 샐러드 → 아주아주 긴 이름의 메뉴 스무 글자쯤 된다");
+    assert.equal(rule[5], "점심 · 저녁: 같은 날 같은 메뉴는 한 번", "뺀 짜글이 · 라면 문장은 없다");
+    const snap = scheduleSnapshot({ settings }, sunday);
+    for (const r of snap.plan) { assert.equal(r.length, 6); for (const v of r) assert.ok(v.length <= 100); }
+    for (const r of snap.next7) assert.equal(r.length, 9);
+    const menus = new Set(snap.next7.map((r) => r[8]));
+    assert.ok(menus.has("샐러드"), "직접 추가한 메뉴 이름이 그대로 나간다");
+    assert.ok(!menus.has("안성탕면") && !menus.has("짜글이"));
+    // 식단표와 한 칸도 다르지 않다
+    for (const d of planWeek(parseDate("2026-10-05"), settings, {}).filter((x) => x.day <= "2026-10-10")) {
+      assert.deepEqual(rowsOf(snap.next7, d.day).filter((r) => r[4] && r[8]).map((r) => [r[6], r[8]]), d.meals.map((m) => [m.label, m.dish.short]), d.day);
+    }
+  } finally { setMealMenu({}); }
+  assert.match(settingRows(settings, sunday).find((r) => r[1] === "집 끼니")[5], /안성탕면 은 주 2번까지/, "기본값으로 돌아오면 원래 글");
 });

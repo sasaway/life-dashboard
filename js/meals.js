@@ -7,14 +7,15 @@ export const BREAKFAST = "아침";
 export const MEALS = [BREAKFAST, "점심", "저녁"];
 const MAIN = ["점심", "저녁"];
 
-// 메뉴 목록. 새 메뉴는 여기에 한 줄 더하면 된다 — 규칙 코드는 이름이 아니라 아래 칸만 본다.
+// 기본 메뉴 목록. 새 메뉴는 여기에 한 줄 더하면 된다 — 규칙 코드는 이름이 아니라 아래 칸만 본다.
+// 은월이 설정 › 식단 메뉴에서 고친 것(허용 끼니 · 자동 배정 빼기 · 직접 추가)은 아래 '메뉴 설정' 이 여기에 얹는다 (핫픽스 v3.0.6)
 // allowed:  자동 배정에 쓰는 끼니 (칸을 눌러 직접 고르는 건 다 된다)
 // eggs:     계란이 들어가는 요리 — 오픈반 알바 날 아침에는 3개로 (점심을 못 먹을 수 있어서)
 // makesTwo: 한 번 만들어 두 끼 — 다음 점심 · 저녁에 남은 것을 먹는다
 // afterOpen: 오픈반 퇴근 후 저녁에 먼저 놓는다
 // weekMax:  한 주에 자동으로 놓는 횟수 (연달아 놓지도 않는다)
 // work:     알바 중에 먹는 요리 — 집 끼니에는 자동으로 놓지 않는다
-export const DISHES = [
+export const BASE_DISHES = [
   { id: "rice-soy", name: "간장 계란 볶음밥", short: "간장 계란 볶음밥", allowed: MEALS, eggs: true },
   { id: "rice-kimchi", name: "김치 계란 볶음밥", short: "김치 계란 볶음밥", allowed: MEALS, eggs: true },
   { id: "bread", name: "통밀빵 세트", short: "통밀빵 세트", allowed: [BREAKFAST], eggs: true },
@@ -22,7 +23,7 @@ export const DISHES = [
   { id: "ramen", name: "라면 (안성탕면)", short: "안성탕면", allowed: MAIN, weekMax: 2 }, // 자동 배정의 라면은 안성탕면
   { id: "chicken", name: "닭가슴살 + 햇반", short: "닭가슴살 + 햇반", allowed: [], work: true },
 ];
-export const WORK_DISH = DISHES.find((d) => d.work);
+export const WORK_DISH = BASE_DISHES.find((d) => d.work);
 // 라면의 다른 한 가지 — 칸을 눌러 직접 고를 때만 (v2.2). 라면 횟수 · 연속 계산에는 라면으로 센다
 export const CHAPA = { id: "chapa", name: "라면 (짜파게티)", short: "짜파게티", allowed: [], countsAs: "ramen" };
 // 짜글이는 두 끼 분량을 만들어 다음 끼니에 남은 것을 먹는다
@@ -33,10 +34,91 @@ export const SKIP = { id: "skip", name: "안 먹음 · 외식", short: "안 먹�
 // 레시피가 굴소스 · 간장 양념이라 직접 고른 칸(mealOverrides)은 간장 계란 볶음밥으로 옮긴다
 export const OLD_RICE = { id: "rice", name: "계란 볶음밥", short: "계란 볶음밥", allowed: [] };
 
-const ALL = [...DISHES, CHAPA, LEFTOVER, SKIP, OLD_RICE];
-export const dishById = (id) => ALL.find((d) => d.id === id);
-// 그 끼니에 자동으로 놓는 메뉴 (목록 순서대로)
-export const autoDishes = (meal) => DISHES.filter((d) => d.allowed.includes(meal));
+// ---------- 메뉴 설정 (핫픽스 v3.0.6) ----------
+// 저장 칸 mealMenu 에는 기본값에서 바뀐 것만 둔다 — 안 건드린 메뉴는 나중에 코드의 기본값이 바뀌면 따라온다.
+// { allowed: { bread: ["아침", "점심"] },        기본 메뉴 중 허용 끼니를 고친 것
+//   off: ["ramen"],                              자동 배정에서 뺀 메뉴 (칸을 눌러 직접 고르는 건 된다)
+//   custom: [{ id: "x-…", name, allowed }],      직접 추가한 메뉴 (이름만 — 레시피 · 단백질 없음)
+//   removed: [{ id, name }] }                    지운 메뉴의 이름 (지난 기록 · 직접 고른 칸이 계속 읽히게)
+const ordered = (list) => MEALS.filter((m) => list.includes(m));
+const sameMeals = (a, b) => a.length === b.length && a.every((m) => b.includes(m));
+// 기본값 + 저장값 = 지금 메뉴 목록. 뺀 메뉴에는 off 가 붙는다
+export function menuWith(saved = {}) {
+  const off = (id) => ((saved.off ?? []).includes(id) ? { off: true } : {});
+  return [
+    ...BASE_DISHES.map((d) => ({ ...d, allowed: d.work ? [] : ordered(saved.allowed?.[d.id] ?? d.allowed), ...off(d.id) })),
+    ...(saved.custom ?? []).map((c) => ({ id: c.id, name: c.name, short: c.name, allowed: ordered(c.allowed ?? []), custom: true, ...off(c.id) })),
+  ];
+}
+// 지금 메뉴. 앱은 열 때와 설정에서 고칠 때 setMealMenu 로 바꾼다 (meal-menu-view.js)
+export let DISHES = menuWith();
+let gone = [];
+export function setMealMenu(saved = {}) {
+  DISHES = menuWith(saved);
+  gone = (saved.removed ?? []).map((r) => ({ id: r.id, name: r.name, short: r.name, allowed: [], custom: true }));
+}
+
+export const dishById = (id) => [...DISHES, CHAPA, LEFTOVER, SKIP, OLD_RICE, ...gone].find((d) => d.id === id);
+// 그 끼니에 자동으로 놓는 메뉴 (목록 순서대로, 뺀 메뉴는 없다)
+export const autoDishes = (meal, dishes = DISHES) => dishes.filter((d) => !d.off && d.allowed.includes(meal));
+
+// 설정에서 고치기. 전부 저장값 → 새 저장값 (화면과 떨어져 있어 테스트가 쓴다).
+// 끼니마다 자동 배정 메뉴가 하나는 있어야 한다 — 어기는 변경은 받은 값을 그대로 돌려준다 (화면이 그걸 보고 안내한다)
+const menuOk = (saved) => MEALS.every((m) => autoDishes(m, menuWith(saved)).length > 0);
+function tidy(saved) {
+  const allowed = Object.fromEntries(Object.entries(saved.allowed ?? {}).filter(([id, list]) => {
+    const base = BASE_DISHES.find((d) => d.id === id);
+    return base && !base.work && !sameMeals(ordered(list), base.allowed);
+  }));
+  const out = {};
+  if (Object.keys(allowed).length) out.allowed = allowed;
+  for (const k of ["off", "custom", "removed"]) if (saved[k]?.length) out[k] = saved[k];
+  return out;
+}
+const changed = (saved, next) => (menuOk(next) ? tidy(next) : saved);
+
+export function toggleAllowed(saved, id, meal) {
+  const dish = menuWith(saved).find((d) => d.id === id);
+  if (!dish || dish.work || !MEALS.includes(meal)) return saved;
+  const allowed = dish.allowed.includes(meal) ? dish.allowed.filter((m) => m !== meal) : ordered([...dish.allowed, meal]);
+  return changed(saved, dish.custom
+    ? { ...saved, custom: saved.custom.map((c) => (c.id === id ? { ...c, allowed } : c)) }
+    : { ...saved, allowed: { ...saved.allowed, [id]: allowed } });
+}
+export function toggleAuto(saved, id) {
+  const dish = menuWith(saved).find((d) => d.id === id);
+  if (!dish || dish.work) return saved;
+  const off = saved.off ?? [];
+  return changed(saved, { ...saved, off: dish.off ? off.filter((x) => x !== id) : [...off, id] });
+}
+// 이름만 있는 메뉴. 처음에는 점심 · 저녁에 놓는다 (추가한 뒤 칩으로 고친다). id 는 부르는 쪽이 준다 (x-<시각>)
+export function addCustom(saved, name, id) {
+  const text = String(name ?? "").trim();
+  if (!text || !id) return saved;
+  const taken = new Set([...menuWith(saved), CHAPA, LEFTOVER, SKIP, OLD_RICE, ...(saved.removed ?? [])].map((d) => d.id));
+  let unique = id;
+  for (let n = 2; taken.has(unique); n++) unique = `${id}-${n}`;
+  return tidy({ ...saved, custom: [...(saved.custom ?? []), { id: unique, name: text, allowed: MAIN }] });
+}
+export function renameCustom(saved, id, name) {
+  const text = String(name ?? "").trim();
+  if (!text || !(saved.custom ?? []).some((c) => c.id === id && c.name !== text)) return saved;
+  return { ...saved, custom: saved.custom.map((c) => (c.id === id ? { ...c, name: text } : c)) };
+}
+export function removeCustom(saved, id) {
+  const dish = (saved.custom ?? []).find((c) => c.id === id);
+  if (!dish) return saved;
+  return changed(saved, {
+    ...saved,
+    custom: saved.custom.filter((c) => c.id !== id),
+    off: (saved.off ?? []).filter((x) => x !== id),
+    removed: [...(saved.removed ?? []), { id, name: dish.name }],
+  });
+}
+// 기본값으로: 허용 끼니 · 자동 배정만 처음대로. 직접 추가한 메뉴(와 지운 메뉴 이름)는 그대로 둔다
+export function resetMenu(saved) {
+  return tidy({ ...saved, allowed: {}, off: [] });
+}
 // 칸을 눌렀을 때 고를 수 있는 것: 그 끼니의 자동 배정 메뉴가 먼저, 나머지는 '다른 메뉴'
 export function pickable(meal) {
   const auto = autoDishes(meal);
@@ -85,9 +167,11 @@ export function eatOrder(home, work, first, isBreakfast = (m) => m.meal === BREA
 //   그 밖에는 그 날 이미 놓인 메뉴 · 횟수가 찬 메뉴 · 방금 먹은 횟수 제한 메뉴를 빼고 차례대로.
 //   짜글이는 남은 것을 다 먹은 바로 다음 칸과 그 주의 마지막 칸(이어 먹을 칸이 없다)에는 새로 놓지 않는다
 // - 차례는 횟수 제한이 있는 메뉴(라면)부터 — 주에 한 번은 꼭 나오게
-const FILL = [...DISHES.filter((d) => d.weekMax), ...DISHES.filter((d) => !d.weekMax)].filter((d) => MAIN.some((m) => d.allowed.includes(m)));
+const fillOrder = () => [...DISHES.filter((d) => d.weekMax), ...DISHES.filter((d) => !d.weekMax)]
+  .filter((d) => !d.off && MAIN.some((m) => d.allowed.includes(m)));
 const countKey = (id) => dishById(id)?.countsAs ?? id;
 export function planMeals(slots, overrides = {}) {
+  const FILL = fillOrder(); // 돌 때마다 지금 메뉴에서 (설정에서 고치면 바로 반영)
   const lastMain = slots.findLastIndex((s) => s.meal !== BREAKFAST);
   const used = {};   // 날짜 → 그 날 이미 놓인 메뉴
   const count = {};  // 이번 주 점심 · 저녁에 놓인 횟수
@@ -101,7 +185,7 @@ export function planMeals(slots, overrides = {}) {
     if (!auto) id = overrides[slot.key];
     else if (am) {
       const list = autoDishes(BREAKFAST);
-      id = list[((parseDate(slot.day).getDay() + 6) % 7) % list.length].id;
+      id = (list[((parseDate(slot.day).getDay() + 6) % 7) % list.length] ?? SKIP).id; // 목록이 비면 (설정이 막지만) 죽지 않게
     } else if (left) id = LEFTOVER.id;
     else {
       const ok = (d) => d.allowed.includes(slot.meal) && !used[slot.day]?.has(d.id)
@@ -113,9 +197,10 @@ export function planMeals(slots, overrides = {}) {
         if (ok(d)) { pick = d; turn = (turn + k + 1) % FILL.length; }
       }
       // 다 걸리면 (하루에 집 끼니가 아주 많을 때) 같은 날 겹치는 것만 눈감는다
-      id = (pick ?? FILL.find((d) => d.allowed.includes(slot.meal) && !d.weekMax && !d.makesTwo) ?? FILL[0]).id;
+      id = (pick ?? FILL.find((d) => d.allowed.includes(slot.meal) && !d.weekMax && !d.makesTwo)
+        ?? FILL.find((d) => d.allowed.includes(slot.meal)) ?? FILL[0] ?? SKIP).id;
     }
-    const dish = dishById(id) ?? DISHES[0];
+    const dish = dishById(id) ?? DISHES[0] ?? SKIP;
     (used[slot.day] ??= new Set()).add(dish.id);
     if (!am) {
       left = Boolean(dish.makesTwo);

@@ -226,3 +226,18 @@ test("v2.9 자동 백업: 앱이 저장하는 칸이 하나도 빠지지 않고 
   assert.deepEqual(later.dump(), phone.dump());
   assert.equal(photosOf(out.backup).length, PHOTOS.length);
 });
+
+test("핫픽스 v3.0.6 식단 메뉴 설정(mealMenu)도 백업 → 되살리기로 그대로 돌아온다 (코드가 저장하는 칸 목록에도 들어 있다)", async () => {
+  const dir = new URL("../js/", import.meta.url);
+  const src = readdirSync(dir).map((f) => readFileSync(new URL(f, dir), "utf8")).join("\n");
+  assert.match(src, /^const KEY = "mealMenu"/m);
+  const menu = { allowed: { bread: ["아침", "점심"] }, off: ["ramen"], custom: [{ id: "x-1", name: "샐러드 \"큰 것\"", allowed: ["점심", "저녁"] }], removed: [{ id: "x-0", name: "토스트" }] };
+  const phone = fakeStorage({ "ld:mealMenu": JSON.stringify(menu), "ld:mealOverrides": JSON.stringify({ "2026-10-12 점심": "x-1" }) });
+  const backup = await makeBackup({ storage: phone, photos: [], appVersion: "v3.0.6 핫픽스 · 10월 9일" });
+  const out = readBackupText(JSON.stringify(backup));
+  assert.equal(out.error, undefined);
+  const later = fakeStorage({ "ld:mealMenu": "{}" });
+  restoreItems(later, out.backup.items);
+  assert.deepEqual(later.dump(), phone.dump());
+  assert.deepEqual(JSON.parse(later.getItem("ld:mealMenu")), menu);
+});

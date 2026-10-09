@@ -7,6 +7,7 @@ import { calendarOn, openCalendarSettings } from "./calendar-view.js";
 import { hobbySyncState, openHobbySyncSettings } from "./hobby-sync-view.js";
 import { libraryCount } from "./library-view.js";
 import { backupState } from "./backup-view.js";
+import { menuState } from "./meal-menu-view.js";
 import { openSheet } from "./sheet.js";
 import { $, esc } from "./dom.js";
 
@@ -18,6 +19,9 @@ const GROUPS = [
   { title: "알바", items: [
     { id: "shift", label: "요일별 알바", icon: "calendarDays", state: todayShift },
     { id: "rows", label: "일과표 고치기", icon: "listOrdered", state: () => "" },
+  ] },
+  { title: "식단", items: [
+    { id: "menu", label: "식단 메뉴", icon: "utensils", state: menuState },
   ] },
   { title: "연결", items: [
     { id: "cal", label: "캘린더 알바 연결", icon: "calendarSync", state: () => (calendarOn() ? "연결됨" : "안 됨") },

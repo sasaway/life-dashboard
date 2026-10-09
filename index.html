@@ -422,6 +422,18 @@
         </div>
       </section>
     </div>
+    <div class="set-page" id="set-menu" hidden>
+      <section class="card" aria-label="식단 메뉴">
+        <div class="card-h"><small>켠 끼니에 자동으로 놓여</small></div>
+        <ul class="menu-rows" id="menuRows"></ul>
+        <form class="menu-add" id="menuAdd" autocomplete="off">
+          <input class="field" id="menuNew" maxlength="20" placeholder="새 메뉴 이름" aria-label="새 메뉴 이름">
+          <button class="btn btn-primary">추가</button>
+        </form>
+        <p class="msg" id="menuMsg" role="status"></p>
+        <div class="btns"><button class="btn btn-ghost" id="menuReset">기본값으로</button></div>
+      </section>
+    </div>
     <div class="set-page" id="set-cal" hidden>
       <section class="card" aria-label="캘린더 알바 연결">
         <div class="card-h"><small id="calStatus"></small></div>

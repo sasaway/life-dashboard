@@ -17,6 +17,7 @@ import { startCalendar } from "./calendar-view.js";
 import { startHobbySync } from "./hobby-sync-view.js";
 import { startSettings } from "./settings-view.js";
 import { startBackup } from "./backup-view.js";
+import { startMealMenu } from "./meal-menu-view.js";
 import { $ } from "./dom.js";
 
 
@@ -141,6 +142,7 @@ startHobbySync();
 startClock();
 startTabs();
 startSettings();
+startMealMenu();
 startBackup();
 registerServiceWorker();
 askToKeepData();

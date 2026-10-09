@@ -10,27 +10,33 @@ import { dayMeals, workMeal, dishById, autoDishes, LEFTOVER, WORK_DISH, BREAKFAS
 export const NEXT_DAYS = 7;
 export const DAY_OFF_LABEL = "휴무"; // '일정 설정' 탭의 요일별 알바 줄. '앞으로 7일' 의 반 칸은 다른 탭처럼 '쉬는 날'
 
-// 코드에 정해진 규칙을 글로: 구분 '규칙' | 무엇에 | 시작 | 끝 | 어떻게 | 설명. 글은 schedule.js · meals.js 의 값에서 만든다
+// 코드에 정해진 규칙을 글로: 구분 '규칙' | 무엇에 | 시작 | 끝 | 어떻게 | 설명. 글은 schedule.js · meals.js 의 값에서 만든다.
+// 끼니 규칙은 은월이 설정 › 식단 메뉴에서 고칠 수 있어서 (핫픽스 v3.0.6) 보낼 때마다 지금 메뉴에서 만든다
 const offMeal = (id) => {
   const m = DAY_OFF_MEAL[id];
   return ["규칙", `쉬는 날 (${SHIFTS[id].label} 일과)`, m.start, toHHMM(toMin(m.start) + 60), m.name, "알바 중에 먹던 끼니를 집에서 먹는다 (그 1시간이 통째로 휴식 칸일 때)"];
 };
 const amAt = DEFAULT_TEMPLATES.open.findIndex((x) => x.kind === "breakfast");
 const breakfast = { start: DEFAULT_TEMPLATES.open[amAt].start, end: endOf(DEFAULT_TEMPLATES.open, amAt) };
-// 끼니별 메뉴 규칙 (핫픽스 v3.0.5) — 글은 meals.js 의 메뉴 목록에서 만든다
-const shorts = (meal) => autoDishes(meal).map((d) => d.short);
-const amRule = `${BREAKFAST}: ${shorts(BREAKFAST).join(" → ")}`;
-const [first, limited] = [autoDishes("저녁").find((d) => d.afterOpen), autoDishes("저녁").find((d) => d.weekMax)];
-// 한 칸 100자 안 (심부름꾼이 자른다)
-const mainRule = `점심 · 저녁: 오픈반 알바 날 저녁은 ${first.short} 먼저, 다음 점심 · 저녁은 ${LEFTOVER.short}. ${limited.short} 은 주 ${limited.weekMax}번까지. 같은 날 같은 메뉴는 한 번`;
-const RULES = [
+// 끼니별 메뉴 규칙 (핫픽스 v3.0.5). 한 칸 100자 안 (심부름꾼이 자른다)
+const CELL = 100;
+function mealRules() {
+  const am = `${BREAKFAST}: ${autoDishes(BREAKFAST).map((d) => d.short).join(" → ")}`;
+  const [first, limited] = [autoDishes("저녁").find((d) => d.afterOpen), autoDishes("저녁").find((d) => d.weekMax)];
+  const main = ["점심 · 저녁:",
+    first ? `오픈반 알바 날 저녁은 ${first.short} 먼저, 다음 점심 · 저녁은 ${LEFTOVER.short}.` : "",
+    limited ? `${limited.short} 은 주 ${limited.weekMax}번까지.` : "",
+    "같은 날 같은 메뉴는 한 번"].filter(Boolean).join(" ");
+  return [am.slice(0, CELL), main.slice(0, CELL)];
+}
+const rules = () => [
   ["규칙", "쉬는 날", "", "", "알바 · 출근 준비 → 휴식", "이어진 휴식 칸은 한 칸으로 합친다"],
   ...SHIFT_IDS.map(offMeal),
   ["규칙", "쉬는 날", "", "", "어느 반 일과표를 쓰나", "그 요일에서 거슬러 올라가 가장 가까운 알바 날의 반 (한 주가 다 휴무면 오픈반)"],
   ["규칙", "일요일", "", "", "운동 · 샤워 → 휴식", "일요일은 운동을 쉰다"],
   ["규칙", "캘린더", "", "", "캘린더 알바가 먼저", "캘린더에서 받은 날은 요일별 알바 대신 그 반. 받은 기간 안에 알바가 없는 날은 쉬는 날"],
   ["규칙", "알바 중 끼니", "", "", `늘 ${WORK_DISH.short}`, ""],
-  ["규칙", "집 끼니", "", "", amRule, mainRule],
+  ["규칙", "집 끼니", "", "", ...mealRules()],
   ["규칙", "하루", "", "", "06:00 에 바뀐다", "06:00 전이면 '앞으로 7일' 의 첫 날은 어제"],
   // 핫픽스 v3.0.4: 맨 아래에 더한다 (위 줄들의 순서는 그대로)
   ["규칙", "아침", breakfast.start, breakfast.end, "월~토 아침", "일요일은 없음. 오픈반 알바 날은 계란 3개"],
@@ -52,7 +58,7 @@ export function settingRows(settings, now) {
     const blocks = s.templates?.[id] ?? DEFAULT_TEMPLATES[id];
     return blocks.map((x, i) => ["일과표", SHIFTS[id].label, x.start, endOf(blocks, i), x.name, ""]);
   });
-  return [...days, ...tables, ...RULES];
+  return [...days, ...tables, ...rules()];
 }
 
 // 앞으로 7일: 날짜 | 요일 | 반 | 반 출처 | 시작 | 끝 | 칸 이름 | 설명 | 끼니 메뉴

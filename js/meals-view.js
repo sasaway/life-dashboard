@@ -34,7 +34,7 @@ const todayOf = (w) => w.find((d) => d.day === ymd(new Date()));
 // 오픈반 알바 날 아침의 계란 요리에만 붙는 작은 알약 (다른 날은 2개라 아무것도 안 붙인다)
 const eggMark = (m) => (m.eggs === 3 ? '<span class="mark">계란 3개</span>' : "");
 // 오늘 메뉴 한 줄 (누르면 레시피, '안 먹음 · 외식' 은 레시피 없이 글만). t = 왼쪽 칸(시각 또는 '알바 중')
-const mealRow = (dish, t, label, mark = "") => dish.none
+const mealRow = (dish, t, label, mark = "") => (dish.none || dish.custom) // 레시피가 없는 것: 안 먹음 · 외식, 직접 추가한 메뉴
   ? `<li>${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}</span></li>`
   : `<li><button class="meal-link" data-recipe-dish="${esc(dish.id)}" aria-label="${esc(label)} ${esc(dish.short)} 레시피 보기">${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}${mark}</span><span class="go">레시피</span></button></li>`;
 // 알바 중 끼니는 먹는 차례대로 (meals.js eatOrder): 오픈반 점심은 아침 다음 · 집 저녁보다 먼저, 마감반 저녁은 집 점심 다음
@@ -88,7 +88,7 @@ function openPicker(key) {
   $("pickTitle").textContent = `${m.label} 바꾸기`;
   $("pickDate").textContent = shortDay(new Date(`${m.day}T00:00`));
   $("pickRecipe").dataset.dish = m.dish.id;
-  $("pickRecipe").hidden = Boolean(m.dish.none); // '안 먹음 · 외식' 은 레시피가 없다
+  $("pickRecipe").hidden = Boolean(m.dish.none || m.dish.custom); // '안 먹음 · 외식' · 직접 추가한 메뉴는 레시피가 없다
   // 이 끼니에 자동으로 놓는 메뉴가 먼저, 그 밖은 '다른 메뉴' 아래 (직접 고르는 건 다 된다)
   const pick = (dish) => `
     <li><button class="pick" data-dish="${dish.id}" aria-pressed="${!m.auto && m.dish.id === dish.id}">${esc(dish.name)}</button></li>`;
