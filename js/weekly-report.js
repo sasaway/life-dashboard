@@ -20,8 +20,8 @@ export function mealReport(log, days) {
   return { top, skip, protein: proteinSummary(log, days), recorded: days.filter((d) => log[d]).length };
 }
 
-// ---------- 운동: 운동한 날 · 하루 평균 세트 · 기본 세트 달성률 ----------
-export function workoutReport(log, days) {
+// ---------- 운동: 운동한 날 · 하루 평균 세트 · 기본 세트 달성률 · 유산소 합계 분 (v3.1, cardioMin = { 날짜: 분 }) ----------
+export function workoutReport(log, days, cardioMin = {}) {
   const planned = days.filter((d) => planFor(parseDate(d)).key); // 일요일은 쉬는 날
   const setsOf = (d) => Object.values(log[d] ?? {}).reduce((a, n) => a + n, 0);
   const worked = days.filter((d) => setsOf(d) > 0);
@@ -37,6 +37,7 @@ export function workoutReport(log, days) {
     worked: worked.length,
     avgSets: worked.length ? Math.round(worked.reduce((a, d) => a + setsOf(d), 0) / worked.length) : 0,
     pct: total ? Math.round((done / total) * 100) : 0,
+    cardio: { minutes: days.reduce((a, d) => a + (cardioMin[d] ?? 0), 0), days: days.filter((d) => cardioMin[d]).length },
   };
 }
 

@@ -57,3 +57,15 @@ test("핫픽스 v3.0.3: 보고서 계산은 식단 · 운동 · 회고 세 가�
   const report = await import("../js/weekly-report.js");
   assert.deepEqual(Object.keys(report).sort(), ["mealReport", "reviewReport", "words", "workoutReport"]);
 });
+
+test("v3.1 운동: 이번 주 유산소 합계 분과 적은 날 수 — 이 주 날짜만 세고, 분을 안 적었으면 0", () => {
+  const log = { "2026-09-28": { cardio: 1 }, "2026-09-29": { cardio: 1 }, "2026-09-30": { cardio: 1 } };
+  const mins = { "2026-09-28": 22, "2026-09-30": 30, "2026-09-27": 17, "2026-10-05": 12 }; // 앞뒤 주의 분은 빠진다
+  const r = workoutReport(log, WEEK, mins);
+  assert.deepEqual(r.cardio, { minutes: 52, days: 2 });
+  assert.equal(r.worked, 3, "분 없이 한 날(화)도 운동한 날로는 센다");
+  assert.deepEqual(workoutReport(log, WEEK).cardio, { minutes: 0, days: 0 });
+  const { cardio, ...rest } = r;
+  const { cardio: _, ...before } = workoutReport(log, WEEK);
+  assert.deepEqual(rest, before, "세트 숫자는 분 때문에 바뀌지 않는다");
+});

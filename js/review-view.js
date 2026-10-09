@@ -68,11 +68,12 @@ function reportHtml(days) {
       ${meal.skip ? row("안 먹음 · 외식", `<span class="mono">${meal.skip}</span>끼`) : ""}
     </dl>` : `<p class="mini">이 주 식단 기록이 없어. (먹은 기록은 v2.2 부터 남아.)</p>`;
   // 운동
-  const gym = workoutReport(store.load("workoutLog", {}), days);
+  const gym = workoutReport(store.load("workoutLog", {}), days, store.load("cardioMin", {}));
   const gymBody = gym.planned ? `<dl class="rep-dl">
       ${row("운동한 날", `<span class="mono">${gym.worked} / ${gym.planned}</span>일`)}
       ${row("하루 평균", `<span class="mono">${gym.avgSets}</span>세트 (운동한 날)`)}
       ${row("기본 세트", `<span class="mono">${gym.pct}%</span> 했어`)}
+      ${gym.cardio.minutes ? row("유산소", `합계 <span class="mono">${gym.cardio.minutes}</span>분 · <span class="mono">${gym.cardio.days}</span>일`) : ""}
     </dl><div class="meter"><i style="width:${gym.pct}%"></i></div>` : `<p class="mini">아직 운동하는 날이 없었어.</p>`;
   // 회고
   const rev = reviewReport(reviews, days);
