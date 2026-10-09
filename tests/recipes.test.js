@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import {
   RECIPES, HEATS, DISH_RECIPES, recipesForDish, hasTimer, totalMinutes, mmss, proteinOf, PROTEIN_GOAL,
 } from "../js/recipes.js";
-import { DISHES, LEFTOVER, CHAPA } from "../js/meals.js";
+import { DISHES, LEFTOVER, CHAPA, OLD_RICE } from "../js/meals.js";
 import { newTimer, start, pause, reset, remaining, isRunning, progress } from "../js/timer.js";
 
 test("식단의 모든 요리(남은 짜글이 포함)에 레시피가 있다", () => {
-  for (const d of [...DISHES, CHAPA, LEFTOVER]) {
+  for (const d of [...DISHES, CHAPA, LEFTOVER, OLD_RICE]) {
     const list = recipesForDish(d.id);
     assert.ok(list.length > 0, d.id);
     assert.ok(list.every(Boolean), `${d.id} 의 레시피 id 가 틀렸다`);
@@ -15,7 +15,7 @@ test("식단의 모든 요리(남은 짜글이 포함)에 레시피가 있다", 
   assert.deepEqual(recipesForDish("ramen").map((r) => r.name), ["안성탕면 + 단백질"]);
   assert.deepEqual(recipesForDish("chapa").map((r) => r.name), ["짜파게티 + 계란 프라이"]);
   assert.deepEqual(recipesForDish("skip"), []); // '안 먹음 · 외식' 은 레시피 없음
-  assert.deepEqual(Object.keys(DISH_RECIPES).sort(), [...DISHES, CHAPA, LEFTOVER].map((d) => d.id).sort());
+  assert.deepEqual(Object.keys(DISH_RECIPES).sort(), [...DISHES, CHAPA, LEFTOVER, OLD_RICE].map((d) => d.id).sort());
 });
 
 test("모든 단계에 불 세기가 있고, 재료에는 양이 적혀 있다", () => {
@@ -103,4 +103,22 @@ test("요리마다 한 끼 단백질 숫자 (v2.2.1, 은월 확인)", () => {
   assert.deepEqual(Object.fromEntries(["jja", "jja-left", "rice", "ramen", "chapa", "chicken", "skip"].map((id) => [id, proteinOf(id)])),
     { jja: 25, "jja-left": 25, rice: 18, ramen: 30, chapa: 24, chicken: 29, skip: null });
   assert.equal(PROTEIN_GOAL, 22);
+});
+
+test("핫픽스 v3.0.5 새 레시피: 통밀빵 세트 · 김치 계란 볶음밥 (제안이라고 출처에 적고, 계란 굽기에 타이머, 한 끼 단백질)", () => {
+  const [bread, kimchi, soy] = ["bread", "rice-kimchi", "rice"].map((id) => RECIPES.find((r) => r.id === id));
+  assert.deepEqual([bread.name, kimchi.name, soy.name], ["통밀빵 세트", "김치 계란 볶음밥", "간장 계란 볶음밥"]);
+  for (const r of [bread, kimchi]) assert.match(r.source, /제안/, `${r.id}: 영상에서 읽은 게 아니라 제안`);
+  // 통밀빵 세트: 빵 2장 + 계란 + 우유, 계란 프라이는 짜파게티 레시피와 같은 불 · 시간
+  const ing = Object.fromEntries(bread.ingredients);
+  assert.equal(ing["통밀빵"], "2장");
+  assert.match(ing["계란"], /^2개.*3개/);
+  assert.match(ing["우유"], /200ml/);
+  const fry = RECIPES.find((r) => r.id === "ramen-chapa").steps[0];
+  assert.deepEqual([bread.steps[0].heat, bread.steps[0].sec], [fry.heat, fry.sec]);
+  assert.ok(bread.steps.filter(hasTimer).length >= 2);
+  assert.match(Object.fromEntries(kimchi.ingredients)["익은 김치"], /^100g/);
+  assert.deepEqual(["bread", "rice-kimchi", "rice-soy", "rice"].map(proteinOf), [26, 20, 18, 18]);
+  assert.deepEqual(recipesForDish("rice-soy"), recipesForDish("rice"), "옛 계란 볶음밥 기록도 같은 레시피를 연다");
+  for (const r of [bread, kimchi, soy]) assert.match(r.why, /계란을 3개/, `${r.id}: 오픈반 날 아침 안내`);
 });

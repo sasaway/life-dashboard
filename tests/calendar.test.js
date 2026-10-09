@@ -55,5 +55,5 @@ test("주 중간에 반이 바뀌어도 하루하루 일과표·식단이 따라
 
   const week = planWeek(new Date(2026, 10, 16), set, {});
   assert.deepEqual(week.map((d) => d.work.label), ["점심", "점심", "점심", "저녁", "저녁", "저녁", "저녁"]);
-  assert.deepEqual(week.map((d) => d.meals.map((m) => m.label).join()), ["저녁", "저녁", "저녁", "점심", "점심", "점심", "점심"]);
+  assert.deepEqual(week.map((d) => d.meals.map((m) => m.label).join()), ["아침,저녁", "아침,저녁", "아침,저녁", "아침,점심", "아침,점심", "아침,점심", "점심"]); // 아침은 핫픽스 v3.0.5 부터, 일요일은 없음
 });

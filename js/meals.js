@@ -1,35 +1,64 @@
-// 식단: 주간 식단표와 오늘의 식단. 규칙은 Notion '식단' · '일정 › 알바' (2026-09-28 15:39 수정본).
-// 집에서 먹는 끼니는 일과표의 식사 칸에서 가져온다. 알바 중 끼니는 늘 닭가슴살 + 햇반.
-import { dayPlan, ymd, weekDates, mondayOf } from "./schedule.js";
+// 식단: 주간 식단표와 오늘의 식단. 규칙은 Notion '식단' · '일정 › 알바' + 은월이 정한 끼니별 메뉴 (핫픽스 v3.0.5, 2026-10-09).
+// 집에서 먹는 끼니는 일과표의 아침 칸 · 식사 칸에서 가져온다. 알바 중 끼니는 늘 닭가슴살 + 햇반.
+import { dayPlan, ymd, weekDates, mondayOf, parseDate } from "./schedule.js";
 import { proteinOf, PROTEIN_GOAL } from "./recipes.js";
 
-// 메인 요리. 새 요리는 여기에 한 줄 더하면 돌림에 들어간다.
-// work: 알바 중에 먹는 요리 — 집 끼니 자동 돌림에서는 뺀다 (칸을 눌러 직접 고르는 건 된다)
+export const BREAKFAST = "아침";
+export const MEALS = [BREAKFAST, "점심", "저녁"];
+const MAIN = ["점심", "저녁"];
+
+// 메뉴 목록. 새 메뉴는 여기에 한 줄 더하면 된다 — 규칙 코드는 이름이 아니라 아래 칸만 본다.
+// allowed:  자동 배정에 쓰는 끼니 (칸을 눌러 직접 고르는 건 다 된다)
+// eggs:     계란이 들어가는 요리 — 오픈반 알바 날 아침에는 3개로 (점심을 못 먹을 수 있어서)
+// makesTwo: 한 번 만들어 두 끼 — 다음 점심 · 저녁에 남은 것을 먹는다
+// afterOpen: 오픈반 퇴근 후 저녁에 먼저 놓는다
+// weekMax:  한 주에 자동으로 놓는 횟수 (연달아 놓지도 않는다)
+// work:     알바 중에 먹는 요리 — 집 끼니에는 자동으로 놓지 않는다
 export const DISHES = [
-  { id: "jja", name: "김치 대패 짜글이", short: "짜글이", makesTwo: true },
-  { id: "rice", name: "계란 볶음밥", short: "계란 볶음밥" },
-  { id: "ramen", name: "라면 (안성탕면)", short: "안성탕면" }, // 자동 돌림의 라면은 안성탕면
-  { id: "chicken", name: "닭가슴살 + 햇반", short: "닭가슴살 + 햇반", work: true },
+  { id: "rice-soy", name: "간장 계란 볶음밥", short: "간장 계란 볶음밥", allowed: MEALS, eggs: true },
+  { id: "rice-kimchi", name: "김치 계란 볶음밥", short: "김치 계란 볶음밥", allowed: MEALS, eggs: true },
+  { id: "bread", name: "통밀빵 세트", short: "통밀빵 세트", allowed: [BREAKFAST], eggs: true },
+  { id: "jja", name: "김치 대패 짜글이", short: "짜글이", allowed: MAIN, makesTwo: true, afterOpen: true },
+  { id: "ramen", name: "라면 (안성탕면)", short: "안성탕면", allowed: MAIN, weekMax: 2 }, // 자동 배정의 라면은 안성탕면
+  { id: "chicken", name: "닭가슴살 + 햇반", short: "닭가슴살 + 햇반", allowed: [], work: true },
 ];
 export const WORK_DISH = DISHES.find((d) => d.work);
-export const ROTATION = DISHES.filter((d) => !d.work);
-// 라면의 다른 한 가지 — 칸을 눌러 직접 고를 때만 (v2.2, 주간 보고서 단백질을 맞게 세려고 나눔)
-export const CHAPA = { id: "chapa", name: "라면 (짜파게티)", short: "짜파게티" };
+// 라면의 다른 한 가지 — 칸을 눌러 직접 고를 때만 (v2.2). 라면 횟수 · 연속 계산에는 라면으로 센다
+export const CHAPA = { id: "chapa", name: "라면 (짜파게티)", short: "짜파게티", allowed: [], countsAs: "ramen" };
 // 짜글이는 두 끼 분량을 만들어 다음 끼니에 남은 것을 먹는다
-export const LEFTOVER = { id: "jja-left", name: "짜글이 (남은 것)", short: "짜글이 (남은 것)" };
+export const LEFTOVER = { id: "jja-left", name: "짜글이 (남은 것)", short: "짜글이 (남은 것)", allowed: [] };
 // 계획과 다르게 집에서 안 먹은 끼니 (v2.2)
-export const SKIP = { id: "skip", name: "안 먹음 · 외식", short: "안 먹음 · 외식", none: true };
+export const SKIP = { id: "skip", name: "안 먹음 · 외식", short: "안 먹음 · 외식", allowed: [], none: true };
+// v3.0.4 까지의 '계란 볶음밥'. 지난 먹은 기록(mealLog)이 그대로 읽히게 남긴다 (고르는 창에는 없다).
+// 레시피가 굴소스 · 간장 양념이라 직접 고른 칸(mealOverrides)은 간장 계란 볶음밥으로 옮긴다
+export const OLD_RICE = { id: "rice", name: "계란 볶음밥", short: "계란 볶음밥", allowed: [] };
 
-const ALL = [DISHES[0], DISHES[1], DISHES[2], CHAPA, DISHES[3], LEFTOVER, SKIP];
+const ALL = [...DISHES, CHAPA, LEFTOVER, SKIP, OLD_RICE];
 export const dishById = (id) => ALL.find((d) => d.id === id);
-export const pickable = () => ALL; // 칸을 눌렀을 때 고를 수 있는 것
+// 그 끼니에 자동으로 놓는 메뉴 (목록 순서대로)
+export const autoDishes = (meal) => DISHES.filter((d) => d.allowed.includes(meal));
+// 칸을 눌렀을 때 고를 수 있는 것: 그 끼니의 자동 배정 메뉴가 먼저, 나머지는 '다른 메뉴'
+export function pickable(meal) {
+  const auto = autoDishes(meal);
+  return { auto, other: [...DISHES.filter((d) => !auto.includes(d)), CHAPA, LEFTOVER, SKIP] };
+}
 
-// 그 날 집에서 먹는 끼니 칸
+export const upgradeOverrides = (overrides) => (Object.values(overrides).includes(OLD_RICE.id)
+  ? Object.fromEntries(Object.entries(overrides).map(([k, id]) => [k, id === OLD_RICE.id ? "rice-soy" : id]))
+  : overrides);
+
+// 그 날 집에서 먹는 끼니 칸: 일과표의 아침 칸(월~토)과 식사 칸, 시각 순서대로.
+// meal 은 어느 끼니인지 — 이름을 고친 식사 칸은 15시 전이면 점심, 뒤면 저녁으로 본다. open 은 오픈반으로 알바하는 날
 export function homeMeals(date, settings) {
   const day = ymd(date);
-  return dayPlan(date, settings).blocks
-    .filter((x) => x.kind === "meal")
-    .map((x) => ({ key: `${day} ${x.name}`, day, label: x.name, start: x.start }));
+  const plan = dayPlan(date, settings);
+  const open = plan.working && plan.shift === "open";
+  return plan.blocks
+    .filter((x) => x.kind === "meal" || x.kind === "breakfast")
+    .map((x) => ({
+      key: `${day} ${x.name}`, day, label: x.name, start: x.start, open,
+      meal: x.kind === "breakfast" ? BREAKFAST : MAIN.includes(x.name) ? x.name : x.start < "15:00" ? MAIN[0] : MAIN[1],
+    }));
 }
 
 // 알바 중에 먹는 끼니: 오픈반은 점심, 중간반·마감반은 저녁 (시각은 정해 둔 게 없다 — 핫픽스 v3.0.3 에서 Notion 따라 시각 글을 뺌)
@@ -40,22 +69,61 @@ export function workMeal(date, settings) {
     ? { label: "점심", dish: WORK_DISH, first: true }
     : { label: "저녁", dish: WORK_DISH, first: false };
 }
+// 먹는 차례: 알바 중 점심(first)은 아침 다음 · 집 저녁보다 먼저, 알바 중 저녁은 맨 뒤
+export function eatOrder(home, work, first, isBreakfast = (m) => m.meal === BREAKFAST) {
+  if (!work) return home;
+  if (!first) return [...home, work];
+  const n = home.findIndex((m) => !isBreakfast(m));
+  const k = n < 0 ? home.length : n;
+  return [...home.slice(0, k), work, ...home.slice(k)];
+}
 
-// 끼니마다 요리를 정한다.
-// - 직접 고른 칸(overrides)은 그대로 쓴다
-// - 짜글이를 만든 다음 끼니는 남은 짜글이
-// - 나머지는 짜글이 → 볶음밥 → 라면 순서로 돈다 (닭가슴살은 알바 끼니라 빠짐, 직접 고른 칸은 순서를 쓰지 않는다)
+// 한 주(월~일)의 끼니마다 요리를 정한다. 같은 칸 · 같은 고른 값이면 늘 같은 결과 (앱을 연 시각과 상관없다).
+// 위가 이긴다: ① 직접 고른 칸(overrides) ② 허용 끼니 ③ 짜글이 이어 먹기 ④ 오픈반 저녁 짜글이 ⑤ 라면 횟수 · 연속 ⑥ 차례대로 채우기
+// - 아침: 요일로 정한다 (월 = 아침 메뉴 첫 번째부터 차례로) — 다른 칸을 바꿔도 안 흔들린다
+// - 점심 · 저녁: 짜글이를 만든 다음 칸은 남은 짜글이 (아침은 건너뛴다. 같은 날 두 끼여도 남은 짜글이는 된다)
+//   그 밖에는 그 날 이미 놓인 메뉴 · 횟수가 찬 메뉴 · 방금 먹은 횟수 제한 메뉴를 빼고 차례대로.
+//   짜글이는 남은 것을 다 먹은 바로 다음 칸과 그 주의 마지막 칸(이어 먹을 칸이 없다)에는 새로 놓지 않는다
+// - 차례는 횟수 제한이 있는 메뉴(라면)부터 — 주에 한 번은 꼭 나오게
+const FILL = [...DISHES.filter((d) => d.weekMax), ...DISHES.filter((d) => !d.weekMax)].filter((d) => MAIN.some((m) => d.allowed.includes(m)));
+const countKey = (id) => dishById(id)?.countsAs ?? id;
 export function planMeals(slots, overrides = {}) {
+  const lastMain = slots.findLastIndex((s) => s.meal !== BREAKFAST);
+  const used = {};   // 날짜 → 그 날 이미 놓인 메뉴
+  const count = {};  // 이번 주 점심 · 저녁에 놓인 횟수
   let turn = 0;
-  let cookedJja = false;
-  return slots.map((slot) => {
+  let left = false;  // 남은 짜글이가 기다리는 중
+  let prev = null;   // 바로 앞 점심 · 저녁
+  return slots.map((slot, i) => {
+    const am = slot.meal === BREAKFAST;
+    const auto = !overrides[slot.key];
     let id;
-    let auto = false;
-    if (overrides[slot.key]) id = overrides[slot.key];
-    else if (cookedJja) { id = LEFTOVER.id; auto = true; }
-    else { id = ROTATION[turn++ % ROTATION.length].id; auto = true; }
-    cookedJja = DISHES.find((d) => d.id === id)?.makesTwo ?? false;
-    return { ...slot, dish: dishById(id) ?? DISHES[0], auto };
+    if (!auto) id = overrides[slot.key];
+    else if (am) {
+      const list = autoDishes(BREAKFAST);
+      id = list[((parseDate(slot.day).getDay() + 6) % 7) % list.length].id;
+    } else if (left) id = LEFTOVER.id;
+    else {
+      const ok = (d) => d.allowed.includes(slot.meal) && !used[slot.day]?.has(d.id)
+        && !(d.weekMax && ((count[d.id] ?? 0) >= d.weekMax || prev === d.id))
+        && !(d.makesTwo && (prev === LEFTOVER.id || i === lastMain));
+      let pick = slot.open && slot.meal === MAIN[1] ? FILL.find((d) => d.afterOpen && ok(d)) : undefined;
+      for (let k = 0; !pick && k < FILL.length; k++) {
+        const d = FILL[(turn + k) % FILL.length];
+        if (ok(d)) { pick = d; turn = (turn + k + 1) % FILL.length; }
+      }
+      // 다 걸리면 (하루에 집 끼니가 아주 많을 때) 같은 날 겹치는 것만 눈감는다
+      id = (pick ?? FILL.find((d) => d.allowed.includes(slot.meal) && !d.weekMax && !d.makesTwo) ?? FILL[0]).id;
+    }
+    const dish = dishById(id) ?? DISHES[0];
+    (used[slot.day] ??= new Set()).add(dish.id);
+    if (!am) {
+      left = Boolean(dish.makesTwo);
+      prev = countKey(dish.id);
+      count[prev] = (count[prev] ?? 0) + 1;
+    } else if (dish.makesTwo) left = true; // 아침에 직접 짜글이를 고른 날
+    const eggs = am && slot.open && dish.eggs ? { eggs: 3 } : {};
+    return { ...slot, dish, auto, ...eggs };
   });
 }
 
@@ -82,16 +150,17 @@ export function withOverride(overrides, key, id) {
 // ---------- 먹은 기록 (v2.2, 주간 보고서용) ----------
 // 계획대로 먹었다고 치고, 날마다 그 날 끼니를 한 벌 저장해 둔다 (다르게 먹었으면 칸을 눌러 바꾸거나 '안 먹음 · 외식').
 // 식단은 설정(일과표·돌림)으로 다시 계산되니, 지난 날은 저장해 둔 것을 그대로 둬야 나중에 설정이 바뀌어도 기록이 안 흔들린다.
-// { "2026-09-28": [{ label: "점심", dish: "chicken", work: true }, { label: "저녁", dish: "jja" }] }
+// { "2026-09-28": [{ label: "아침", dish: "rice-soy", eggs: 3 }, { label: "점심", dish: "chicken", work: true }, { label: "저녁", dish: "jja" }] }
+// 아침 · eggs(오픈반 날 계란 3개)는 핫픽스 v3.0.5 부터. 그 전에 적힌 날은 그대로 둔다
 export const MEAL_LOG_DAYS = 60;
 
 // 그 날 먹는 끼니를 먹는 차례대로 (집 끼니 + 알바 중 끼니)
 export function dayMeals(date, settings, overrides = {}) {
   const d = planWeek(mondayOf(date), settings, overrides).find((x) => x.day === ymd(date));
-  const home = d.meals.map((m) => ({ label: m.label, dish: m.dish.id }));
-  if (!d.work) return home;
-  const work = { label: d.work.label, dish: d.work.dish.id, work: true };
-  return d.work.first ? [work, ...home] : [...home, work];
+  const am = new Set(d.meals.filter((m) => m.meal === BREAKFAST).map((m) => m.label));
+  const home = d.meals.map((m) => ({ label: m.label, dish: m.dish.id, ...(m.eggs ? { eggs: m.eggs } : {}) }));
+  const work = d.work && { label: d.work.label, dish: d.work.dish.id, work: true };
+  return eatOrder(home, work, d.work?.first, (m) => am.has(m.label));
 }
 
 // 앱을 열 때 · 식단을 바꿀 때: 오늘은 늘 새로 적고, 지난 6일은 비어 있을 때만 채운다. 60일 넘은 건 정리.
@@ -111,8 +180,15 @@ export function recordDay(log, date, today, settings, overrides = {}) {
   return { ...log, [ymd(date)]: dayMeals(date, settings, overrides) };
 }
 
+// 기록 한 끼의 단백질(g). 계란 3개로 먹은 끼니는 계란 한 개만큼(약 6g) 더한다. '안 먹음 · 외식' 은 null
+export const EGG_PROTEIN = 6;
+export function mealProtein(m) {
+  const g = proteinOf(m.dish);
+  return g == null ? null : g + (m.eggs === 3 ? EGG_PROTEIN : 0);
+}
+
 // 며칠 치 기록의 단백질 (주간 보고서용): 먹은 끼니 수 · 한 끼 목표를 넘긴 끼니 수 · 합계(g). '안 먹음 · 외식' 은 세지 않는다
 export function proteinSummary(log, days) {
-  const eaten = days.flatMap((day) => log[day] ?? []).map((m) => proteinOf(m.dish)).filter((g) => g != null);
+  const eaten = days.flatMap((day) => log[day] ?? []).map(mealProtein).filter((g) => g != null);
   return { meals: eaten.length, hit: eaten.filter((g) => g >= PROTEIN_GOAL).length, grams: eaten.reduce((a, g) => a + g, 0) };
 }

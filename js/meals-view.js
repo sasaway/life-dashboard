@@ -4,7 +4,7 @@ import { openSheet, closeSheet } from "./sheet.js";
 import { getScheduleSettings } from "./schedule-view.js";
 import { ymd, mondayOf } from "./schedule.js";
 import { DAYS } from "./time.js";
-import { planWeek, withOverride, pickable, syncMealLog, recordDay } from "./meals.js";
+import { planWeek, withOverride, pickable, syncMealLog, recordDay, eatOrder, upgradeOverrides } from "./meals.js";
 import { ideasFor } from "./meal-tips.js";
 import { openRecipeForDish } from "./recipe-view.js";
 import { markSyncDirty } from "./hobby-sync-view.js";
@@ -13,6 +13,11 @@ import { $, esc } from "./dom.js";
 const shortDay = (d) => `${DAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
 
 let overrides = store.load("mealOverrides", {}); // { "2026-09-25 점심": "ramen" }
+// 핫픽스 v3.0.5: 직접 골라 둔 옛 '계란 볶음밥' 칸은 간장 계란 볶음밥으로 (먹은 기록 mealLog 는 그대로 둔다)
+if (upgradeOverrides(overrides) !== overrides) {
+  overrides = upgradeOverrides(overrides);
+  store.save("mealOverrides", overrides);
+}
 let mealLog = store.load("mealLog", {});          // 날마다 먹은 끼니 한 벌 (v2.2, 주간 보고서용)
 
 // 오늘 기록을 새로 맞추고, 지난 며칠 중 빈 날을 채운다 (바뀐 게 있을 때만 저장)
@@ -26,19 +31,21 @@ function syncLog() {
 const week = () => planWeek(mondayOf(new Date()), getScheduleSettings(), overrides);
 const todayOf = (w) => w.find((d) => d.day === ymd(new Date()));
 
+// 오픈반 알바 날 아침의 계란 요리에만 붙는 작은 알약 (다른 날은 2개라 아무것도 안 붙인다)
+const eggMark = (m) => (m.eggs === 3 ? '<span class="mark">계란 3개</span>' : "");
 // 오늘 메뉴 한 줄 (누르면 레시피, '안 먹음 · 외식' 은 레시피 없이 글만). t = 왼쪽 칸(시각 또는 '알바 중')
-const mealRow = (dish, t, label) => dish.none
+const mealRow = (dish, t, label, mark = "") => dish.none
   ? `<li>${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}</span></li>`
-  : `<li><button class="meal-link" data-recipe-dish="${esc(dish.id)}" aria-label="${esc(label)} ${esc(dish.short)} 레시피 보기">${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}</span><span class="go">레시피</span></button></li>`;
-// 알바 중 끼니는 먹는 차례대로: 오픈반 점심은 집 저녁보다 먼저, 마감반 저녁은 집 점심 다음
-const inOrder = (home, work, first) => (work ? (first ? [work, ...home] : [...home, work]) : home);
+  : `<li><button class="meal-link" data-recipe-dish="${esc(dish.id)}" aria-label="${esc(label)} ${esc(dish.short)} 레시피 보기">${t}<span class="n"><b>${esc(label)}</b> · ${esc(dish.short)}${mark}</span><span class="go">레시피</span></button></li>`;
+// 알바 중 끼니는 먹는 차례대로 (meals.js eatOrder): 오픈반 점심은 아침 다음 · 집 저녁보다 먼저, 마감반 저녁은 집 점심 다음
+const inOrder = (d) => eatOrder(d.meals, d.work && { work: d.work }, d.work?.first);
 
 // ---------- 메인 카드: 오늘 메뉴만 ----------
 export function renderMealMain() {
   const t = todayOf(week());
-  const home = t.meals.map((m) => mealRow(m.dish, `<span class="t mono">${esc(m.start)}</span>`, m.label));
-  const work = t.work && mealRow(t.work.dish, `<span class="t">알바 중</span>`, t.work.label);
-  $("mealMain").innerHTML = inOrder(home, work, t.work?.first).join("");
+  $("mealMain").innerHTML = inOrder(t).map((m) => (m.work
+    ? mealRow(m.work.dish, `<span class="t">알바 중</span>`, m.work.label)
+    : mealRow(m.dish, `<span class="t mono">${esc(m.start)}</span>`, m.label, eggMark(m)))).join("");
 }
 
 // ---------- 일상생활 › 식단 ----------
@@ -57,9 +64,8 @@ function renderMealTab() {
       <span class="wd"><b>${DAYS[d.date.getDay()]}</b><span class="num">${d.date.getMonth() + 1}/${d.date.getDate()}</span></span>
       <span class="slots">
         ${d.day === today ? '<span class="pill">오늘</span>' : ""}
-        ${inOrder(d.meals.map((m) => `<button class="meal-chip" data-slot="${esc(m.key)}" aria-label="${esc(shortDay(d.date))} ${esc(m.label)}: ${esc(m.dish.short)}. 바꾸기">
-          <span class="lbl">${esc(m.label)}</span><span class="dish">${esc(m.dish.short)}</span>${m.auto ? "" : '<span class="mark">직접</span>'}</button>`),
-          d.work && workNote(d.work), d.work?.first).join("")}
+        ${inOrder(d).map((m) => (m.work ? workNote(m.work) : `<button class="meal-chip" data-slot="${esc(m.key)}" aria-label="${esc(shortDay(d.date))} ${esc(m.label)}: ${esc(m.dish.short)}${m.eggs === 3 ? " 계란 3개" : ""}. 바꾸기">
+          <span class="lbl">${esc(m.label)}</span><span class="dish">${esc(m.dish.short)}</span>${eggMark(m)}${m.auto ? "" : '<span class="mark">직접</span>'}</button>`)).join("")}
       </span>
     </li>`;
   }).join("");
@@ -83,9 +89,12 @@ function openPicker(key) {
   $("pickDate").textContent = shortDay(new Date(`${m.day}T00:00`));
   $("pickRecipe").dataset.dish = m.dish.id;
   $("pickRecipe").hidden = Boolean(m.dish.none); // '안 먹음 · 외식' 은 레시피가 없다
-  $("pickList").innerHTML = pickable().map((dish) => `
-    <li><button class="pick" data-dish="${dish.id}" aria-pressed="${!m.auto && m.dish.id === dish.id}">${esc(dish.name)}</button></li>`).join("")
-    + `<li><button class="pick" data-dish="" aria-pressed="${m.auto}">자동으로 (돌림 순서대로)</button></li>`;
+  // 이 끼니에 자동으로 놓는 메뉴가 먼저, 그 밖은 '다른 메뉴' 아래 (직접 고르는 건 다 된다)
+  const pick = (dish) => `
+    <li><button class="pick" data-dish="${dish.id}" aria-pressed="${!m.auto && m.dish.id === dish.id}">${esc(dish.name)}</button></li>`;
+  const { auto, other } = pickable(m.meal);
+  $("pickList").innerHTML = auto.map(pick).join("") + `<li><p class="mini">다른 메뉴</p></li>` + other.map(pick).join("")
+    + `<li><button class="pick" data-dish="" aria-pressed="${m.auto}">자동으로 (정해진 차례대로)</button></li>`;
   openSheet("mealSheet");
 }
 

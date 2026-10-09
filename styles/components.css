@@ -194,7 +194,8 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .slots .pill{margin:0}
 .meal-chip{align-self:stretch;display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--surface);text-align:left}
 .meal-chip .lbl{font-size:var(--fs-tiny);color:var(--faint);flex:none}
-.meal-chip .dish{font-size:var(--fs-body);font-weight:600;color:var(--ink)}
+.meal-chip .dish{font-size:var(--fs-body);font-weight:600;color:var(--ink);word-break:keep-all;min-width:0}
+.meal-chip .mark+.mark{margin-left:0}
 .meal-chip .mark{margin-left:auto;flex:none;white-space:nowrap;font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 6px}
 .work-note{font-size:var(--fs-tiny);color:var(--faint);padding-left:2px}
 
@@ -208,6 +209,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .ideas ol{margin:6px 0 0;padding-left:18px;font-size:var(--fs-small);color:var(--ink)}
 .picks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .pick{width:100%;text-align:left;min-height:48px;padding:10px 14px;border-radius:var(--r-card);border:1px solid var(--line);background:var(--surface);font-size:var(--fs-body);font-weight:500}
+.picks .mini{margin:6px 2px 0}
 .pick[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;font-weight:700}
 
 /* ---------- 레시피 ---------- */
@@ -614,7 +616,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gc-tier-sum{margin:6px 0 0;text-align:right;font-size:var(--fs-small);font-weight:600}
 /* 픽업 일정 (v2.7): '다음 픽업' 한 줄 · 새 일정 안내 · 고르는 창 · '직접' / '예정' 표시 */
 .gc .sub>span:empty+.mark{margin-left:0}
-.gc .mark,.pk-row .mark,.hs-pk .mark{margin-left:6px;white-space:nowrap;font-size:11px;font-weight:400;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
+.gc .mark,.pk-row .mark,.hs-pk .mark,.meal-link .mark{margin-left:6px;white-space:nowrap;font-size:11px;font-weight:400;color:var(--faint);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 6px;vertical-align:1px}
 .gc-new{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px;font-size:var(--fs-small);color:var(--sub)}
 .gc-new .btn{min-height:var(--touch)}
 .pk-row{display:flex;align-items:center;gap:10px}

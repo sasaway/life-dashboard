@@ -6,8 +6,7 @@
 import { ymd, parseDate, dayPlan, SHIFTS } from "./schedule.js";
 import { DAYS } from "./time.js";
 import { planFor, progressOf, EXERCISES } from "./workout.js";
-import { dishById, proteinSummary } from "./meals.js";
-import { proteinOf } from "./recipes.js";
+import { dishById, proteinSummary, mealProtein } from "./meals.js";
 import { reviewDay, answeredCount, mondayKey, QUESTIONS, WEEK_QUESTIONS } from "./review.js";
 import { leftTodos } from "./warframe.js";
 
@@ -71,7 +70,7 @@ export function dayRow(day, { settings, workoutLog, mealLog, reviews, hobbyLog, 
 
 // 식단 기록: 날짜 | 끼니 | 메뉴 | 단백질(g). 알바 중 끼니는 '점심 (알바)', '안 먹음 · 외식' 은 단백질 빈칸
 export const mealRows = (mealLog, days) => days.flatMap((day) => (mealLog[day] ?? []).map((m) => [
-  day, m.work ? `${m.label} (알바)` : m.label, dishById(m.dish)?.short ?? m.dish, String(proteinOf(m.dish) ?? ""),
+  day, m.work ? `${m.label} (알바)` : m.label, dishById(m.dish)?.short ?? m.dish, String(mealProtein(m) ?? ""),
 ]));
 
 // 운동 기록: 날짜 | 부위 | 운동 이름 | 한 세트/기본 세트. 한 세트라도 한 운동만, 최근 날이 먼저 (workoutLog 에 남은 만큼)
