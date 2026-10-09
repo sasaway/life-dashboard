@@ -131,8 +131,8 @@ test("핫픽스 v3.0.8 볶음밥 둘은 어남선생 영상 방식: 출처에 '�
     assert.match(r.source, /분 · 양은 .*제안/, `${r.id}: 영상에 숫자가 없어 제안이라고 밝힌다`);
     assert.match(r.source, /틀린 글자/, `${r.id}: 자동 자막이라는 한계`);
     const ing = Object.fromEntries(r.ingredients);
-    for (const gone of ["굴소스", "버터", "후추", "진간장"]) assert.ok(!(gone in ing), `${r.id}: ${gone} 줄은 없다`);
-    assert.match(ing["멸치액젓"], /^1스푼 \(없으면 진간장 1스푼/, `${r.id}: 은월 선택 — 액젓, 없으면 간장`);
+    for (const gone of ["굴소스", "버터", "후추", "멸치액젓"]) assert.ok(!(gone in ing), `${r.id}: ${gone} 줄은 없다`);
+    assert.match(ing["진간장"], r.id === "rice" ? /^1스푼/ : /^0\.5스푼/, `${r.id}: 양념은 진간장 (핫픽스 v3.0.9, 은월 선택)`);
     assert.match(ing["밥"], /데우지 않고/);
     assert.match(ing["계란"], /^2개 \(오픈반 날 아침은 3개\)/);
     assert.match(r.why, /계란을 3개/);
@@ -143,8 +143,8 @@ test("핫픽스 v3.0.8 볶음밥 둘은 어남선생 영상 방식: 출처에 '�
   // 이름 · id · 단백질 · 식단 연결은 그대로
   assert.deepEqual([soy.id, soy.name, soy.protein, kimchi.id, kimchi.name, kimchi.protein], ["rice", "간장 계란 볶음밥", 18, "rice-kimchi", "김치 계란 볶음밥", 20]);
   assert.deepEqual([DISH_RECIPES["rice-soy"], DISH_RECIPES.rice, DISH_RECIPES["rice-kimchi"]], [["rice"], ["rice"], ["rice-kimchi"]]);
-  // 간장 계란 볶음밥: 파기름 → 액젓 + 설탕 → 밥 → 스크램블 → 얹기. 이름과 재료가 달라 보이는 걸 설명 한 줄로
-  assert.match(soy.why, /이름은 간장이지만.*멸치액젓/);
+  // 간장 계란 볶음밥: 파기름 → 진간장 + 설탕 → 밥 → 스크램블 → 얹기. 영상과 양념이 다른 걸 설명 한 줄로
+  assert.match(soy.why, /영상은 멸치액젓.*지금은 진간장/);
   assert.deepEqual(soy.steps.filter(hasTimer).map((st) => [HEATS[st.heat].label, st.sec]), [["약불", 120], ["약불", 20], ["중강불", 180], ["약불", 90]]);
   assert.match(soy.steps.at(-1).text, /얹는다 \(섞지 않는다\).*참기름/);
   assert.equal(totalMinutes(soy), 9);
@@ -158,4 +158,27 @@ test("핫픽스 v3.0.8 볶음밥 둘은 어남선생 영상 방식: 출처에 '�
   const fry = RECIPES.find((r) => r.id === "ramen-chapa").steps[0];
   assert.deepEqual([kimchi.steps[6].heat, kimchi.steps[6].sec], [fry.heat, fry.sec]);
   assert.ok(kimchi.steps.findIndex((st) => /김치 국물 2스푼/.test(st.text)) > kimchi.steps.findIndex((st) => /밥을 데우지 않고/.test(st.text)));
+});
+
+test("핫픽스 v3.0.9 볶음밥 양념은 진간장: 재료 · 단계 어디에도 액젓이 없고, 멸치액젓은 '참고' 글 끝의 메모로만 남는다", () => {
+  const [soy, kimchi] = ["rice", "rice-kimchi"].map((id) => RECIPES.find((r) => r.id === id));
+  for (const r of [soy, kimchi]) {
+    const shown = [...r.ingredients.flat(), ...r.steps.flatMap((st) => [st.text, st.note])].join(" | ");
+    assert.doesNotMatch(shown, /액젓/, `${r.id}: 재료 · 단계 글`);
+    assert.match(shown, /진간장/, r.id);
+    assert.match(r.source, /양념은 영상과 달리 진간장 \(은월이 고름\)/, r.id);
+    assert.match(r.source, /메모: 영상은 간장 대신 멸치액젓 — 나중에 써 보면 진간장 자리에 조금만/, `${r.id}: 나중에 써 볼 메모`);
+    assert.ok(r.source.indexOf("메모:") > r.source.indexOf("틀린 글자"), `${r.id}: 메모는 맨 끝`);
+    assert.match(r.source, /분 · 양은 .*제안/);
+  }
+  assert.deepEqual([Object.fromEntries(soy.ingredients)["진간장"], Object.fromEntries(kimchi.ingredients)["진간장"]], ["1스푼", "0.5스푼 (김치가 짜서 조금만)"]);
+  assert.match(soy.steps[2].text, /진간장 1스푼과 설탕 한 꼬집/);
+  assert.match(kimchi.steps[2].text, /진간장 0\.5스푼과 설탕 1\/2스푼/);
+  assert.match(soy.steps.at(-1).text, /짜면 다음엔 진간장을 줄인다/);
+  // 양념 말고는 v3.0.8 그대로: 순서(불 · 시간) · 단백질 · 계란 · 김치 국물
+  assert.deepEqual(soy.steps.map((st) => [st.heat, st.sec]), [["none", 0], ["low", 120], ["low", 20], ["midhigh", 180], ["low", 90], ["off", 0]]);
+  assert.deepEqual(kimchi.steps.map((st) => [st.heat, st.sec]), [["none", 0], ["low", 120], ["low", 30], ["mid", 240], ["mid", 120], ["mid", 60], ["mid", 150], ["off", 0]]);
+  assert.deepEqual([soy.protein, kimchi.protein, soy.name, kimchi.name], [18, 20, "간장 계란 볶음밥", "김치 계란 볶음밥"]);
+  for (const r of [soy, kimchi]) assert.match(Object.fromEntries(r.ingredients)["계란"], /^2개 \(오픈반 날 아침은 3개\)/);
+  assert.equal(Object.fromEntries(kimchi.ingredients)["김치 국물"], "2스푼");
 });
