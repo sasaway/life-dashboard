@@ -260,3 +260,22 @@ test("핫픽스 v3.0.7 첫 칸이 '취침' 인 옛 백업을 되살려도 안 �
   assert.deepEqual(loaded.templates.mid, DEFAULT_TEMPLATES.mid, "안 고친 반은 새 기본값");
   assert.equal(dayPlan(new Date(2026, 9, 12), loaded).blocks[0].name, "기상");
 });
+
+test("v3.1 유산소 분(cardioMin)도 백업 → 되살리기로 그대로 돌아온다 (코드가 저장하는 칸 목록에도 들어 있다)", async () => {
+  const dir = new URL("../js/", import.meta.url);
+  const src = readdirSync(dir).map((f) => readFileSync(new URL(f, dir), "utf8")).join("\n");
+  assert.match(src, /store\.save\("cardioMin"/);
+  const mins = { "2026-10-09": 22, "2026-10-10": 30 };
+  const phone = fakeStorage({ "ld:cardioMin": JSON.stringify(mins), "ld:workoutLog": JSON.stringify({ "2026-10-09": { cardio: 1 }, "2026-10-10": { cardio: 1, chest: 3 } }) });
+  const backup = await makeBackup({ storage: phone, photos: [], appVersion: "v3.1 · 10월 10일" });
+  const out = readBackupText(JSON.stringify(backup));
+  assert.equal(out.error, undefined);
+  const later = fakeStorage({ "ld:cardioMin": "{}" });
+  restoreItems(later, out.backup.items);
+  assert.deepEqual(later.dump(), phone.dump());
+  assert.deepEqual(JSON.parse(later.getItem("ld:cardioMin")), mins);
+  // 분 칸이 없는 옛 백업을 되살리면 분 칸은 비고, 운동 기록은 그대로
+  const old = await makeBackup({ storage: fakeStorage({ "ld:workoutLog": "{}" }), photos: [], appVersion: "v3.0.9 핫픽스 · 10월 10일" });
+  restoreItems(later, readBackupText(JSON.stringify(old)).backup.items);
+  assert.equal(later.getItem("ld:cardioMin"), null);
+});

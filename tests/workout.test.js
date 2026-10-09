@@ -2,8 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import {
-  EXERCISES, ROUTINES, WEEK, planFor, planIds, doneSets, tapSet, progressOf, pruneLog, searchUrl,
+  EXERCISES, ROUTINES, WEEK, planFor, planIds, doneSets, tapSet, progressOf, pruneLog, searchUrl, CARDIO_MINUTES, cardioMinutes, tapCardio,
 } from "../js/workout.js";
+import { workoutReport } from "../js/weekly-report.js";
 
 const day = (d) => new Date(2026, 8, d); // 2026-09-21 월 ~ 27 일
 
@@ -72,4 +73,60 @@ test("오늘 진행률은 기본 세트 기준, 더 한 세트로 100% 를 넘�
 test("60일 넘은 기록은 정리한다", () => {
   const log = { "2026-07-01": { walk: 1 }, "2026-07-27": { walk: 1 }, "2026-09-25": { walk: 1 } };
   assert.deepEqual(Object.keys(pruneLog(log, day(25))), ["2026-07-27", "2026-09-25"]);
+});
+
+// ---------- v3.1 유산소 몇 분 달렸는지 ----------
+test("v3.1 유산소 분 칩은 은월이 고른 여섯 개: 12 · 15 · 17 · 22 · 27 · 30", () => {
+  assert.deepEqual(CARDIO_MINUTES, [12, 15, 17, 22, 27, 30]);
+});
+
+test("v3.1 분 칩을 누르면 분이 적히고 유산소를 한 것으로, 같은 칩을 다시 누르면 지워지고 안 한 것으로", () => {
+  const d = "2026-09-25";
+  const plan = planFor(day(25));
+  let s = tapCardio({}, {}, d, 22);
+  assert.equal(cardioMinutes(s.mins, d), 22);
+  assert.equal(doneSets(s.log, d, "cardio"), 1);
+  assert.equal(progressOf(s.log, d, plan).done, 1, "분을 적으면 오늘 진행률에도 한 세트로");
+  s = tapCardio(s.log, s.mins, d, 30); // 다른 칩으로 바꾸기
+  assert.equal(cardioMinutes(s.mins, d), 30);
+  assert.equal(doneSets(s.log, d, "cardio"), 1);
+  s = tapCardio(s.log, s.mins, d, 30); // 같은 칩 다시
+  assert.equal(cardioMinutes(s.mins, d), null);
+  assert.deepEqual(s.mins, {}, "지운 날은 칸에서 사라진다");
+  assert.equal(doneSets(s.log, d, "cardio"), 0);
+  assert.equal(progressOf(s.log, d, plan).done, 0);
+});
+
+test("v3.1 다른 운동 기록 · 다른 날의 분은 건드리지 않고, 목록에 없는 분은 무시한다", () => {
+  const d = "2026-09-25";
+  const log = { [d]: { legpress: 3 }, "2026-09-24": { cardio: 1 } };
+  const mins = { "2026-09-23": 15 };
+  const s = tapCardio(log, mins, d, 12);
+  assert.deepEqual(s.log, { [d]: { legpress: 3, cardio: 1 }, "2026-09-24": { cardio: 1 } });
+  assert.deepEqual(s.mins, { "2026-09-23": 15, [d]: 12 });
+  assert.deepEqual(log, { [d]: { legpress: 3 }, "2026-09-24": { cardio: 1 } }, "받은 값은 안 바꾼다");
+  for (const bad of [0, 1, 31, 120, -5, NaN]) {
+    const same = tapCardio(log, mins, d, bad);
+    assert.equal(same.log, log, `${bad}분`);
+    assert.equal(same.mins, mins, `${bad}분`);
+  }
+});
+
+test("v3.1 옛 기록 (분 없이 한 것으로만 있는 날): 한 것은 그대로, 분은 없음. 칩을 누르면 분이 붙는다", () => {
+  const d = "2026-09-25";
+  const old = { [d]: { cardio: 1 } };
+  assert.equal(cardioMinutes({}, d), null);
+  assert.equal(doneSets(old, d, "cardio"), 1);
+  const s = tapCardio(old, {}, d, 17);
+  assert.equal(doneSets(s.log, d, "cardio"), 1);
+  assert.equal(cardioMinutes(s.mins, d), 17);
+});
+
+test("v3.1 분 기록도 60일 넘으면 정리하고, 주간리뷰 운동 숫자는 분 때문에 바뀌지 않는다", () => {
+  assert.deepEqual(Object.keys(pruneLog({ "2026-07-01": 30, "2026-09-25": 12 }, day(25))), ["2026-09-25"]);
+  const d = "2026-09-25";
+  const before = workoutReport({ [d]: { cardio: 1 } }, [d]);
+  const s = tapCardio({}, {}, d, 30);
+  assert.deepEqual(workoutReport(s.log, [d]), before, "30분이 30세트로 세어지지 않는다");
+  assert.equal(before.avgSets, 1);
 });

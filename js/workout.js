@@ -81,6 +81,21 @@ export function progressOf(log, day, plan) {
   return { done, total, pct: total ? Math.round((done / total) * 100) : 0 };
 }
 
+// ---------- 유산소 몇 분 달렸는지 (v3.1): { "2026-10-10": 22 } — 운동 기록과 따로 둔다 (세트로 세어지지 않게) ----------
+export const CARDIO_MINUTES = [12, 15, 17, 22, 27, 30]; // 은월이 고른 자주 쓰는 분
+export const cardioMinutes = (mins, day) => mins[day] ?? null;
+
+// 분 칩을 누르면 그 분을 적고 유산소를 한 것으로. 같은 칩을 다시 누르면 분을 지우고 안 한 것으로
+export function tapCardio(log, mins, day, m) {
+  if (!CARDIO_MINUTES.includes(m)) return { log, mins };
+  const off = mins[day] === m;
+  const { [day]: _, ...rest } = mins;
+  return {
+    log: { ...log, [day]: { ...(log[day] ?? {}), cardio: off ? 0 : 1 } },
+    mins: off ? rest : { ...mins, [day]: m },
+  };
+}
+
 // 오래된 기록은 정리한다 (60일)
 export function pruneLog(log, today, keepDays = 60) {
   const from = ymd(new Date(today.getFullYear(), today.getMonth(), today.getDate() - keepDays));

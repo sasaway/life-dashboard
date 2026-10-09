@@ -261,6 +261,9 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .set{min-width:var(--touch);min-height:var(--touch);border-radius:var(--r-btn);border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-variant-numeric:tabular-nums;color:var(--sub)}
 .set.extra{border-style:dashed}
 .set.single{padding:0 16px}
+.sets.cardio{display:grid;grid-template-columns:repeat(6,1fr)} /* 유산소 달린 분 칩 (v3.1) */
+.sets.cardio .cardio-h{grid-column:1/-1}
+@media (max-width:359px){.sets.cardio{grid-template-columns:repeat(3,1fr)}}
 .set[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .ex .yt{display:inline-block;margin-top:6px;text-decoration:none;min-height:var(--touch);line-height:calc(var(--touch) - 16px)}
 .gym-week{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}

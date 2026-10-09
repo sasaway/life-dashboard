@@ -4,13 +4,14 @@ import { getScheduleSettings } from "./schedule-view.js";
 import { dayPlan, ymd, blockRange } from "./schedule.js";
 import { DAYS } from "./time.js";
 import {
-  EXERCISES, ROUTINES, WEEK, VIDEO_URL, REST_BETWEEN_SETS, planFor, doneSets, tapSet, progressOf, pruneLog, searchUrl,
+  EXERCISES, ROUTINES, WEEK, VIDEO_URL, REST_BETWEEN_SETS, planFor, doneSets, tapSet, progressOf, pruneLog, searchUrl, CARDIO_MINUTES, cardioMinutes, tapCardio,
 } from "./workout.js";
 import { markSyncDirty } from "./hobby-sync-view.js";
 import { $, esc } from "./dom.js";
 
 
 let log = pruneLog(store.load("workoutLog", {}), new Date());
+let cardioMin = pruneLog(store.load("cardioMin", {}), new Date()); // 유산소 달린 분 (v3.1)
 
 // 일과표의 오늘 운동 칸 (없으면 null)
 const exerciseTime = (date) => blockRange(dayPlan(date, getScheduleSettings()).blocks, "exercise");
@@ -18,6 +19,12 @@ const exerciseTime = (date) => blockRange(dayPlan(date, getScheduleSettings()).b
 function setButtons(id, day) {
   const ex = EXERCISES[id];
   const done = doneSets(log, day, id);
+  if (id === "cardio") {
+    // 유산소는 '완료' 대신 달린 분 칩 (v3.1): 고르면 한 것, 같은 칩을 다시 누르면 지운다
+    const cur = cardioMinutes(cardioMin, day);
+    return `<span class="mini cardio-h">달린 시간 (분)</span>${CARDIO_MINUTES.map((m) =>
+      `<button class="set" data-cardio="${m}" aria-pressed="${cur === m}" aria-label="유산소 ${m}분">${m}</button>`).join("")}`;
+  }
   if (ex.maxSets === 1) {
     // 글자는 늘 '완료', 했는지는 색으로만 (사용자 요청). 화면 읽기 프로그램은 aria-pressed 로 안다
     return `<button class="set single" data-set="${id}" data-n="1" aria-pressed="${done >= 1}" aria-label="${esc(ex.name)} 완료">완료</button>`;
@@ -36,7 +43,7 @@ function exerciseCard(id, day) {
     <div class="card-h"><h2>${esc(ex.name)}</h2><span class="tag">${esc(ex.part)}</span></div>
     <p class="mini amount">${esc(ex.amount)}</p>
     <ul class="ex-tips">${ex.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-    <div class="sets">${setButtons(id, day)}</div>
+    <div class="sets${id === "cardio" ? " cardio" : ""}">${setButtons(id, day)}</div>
     <a class="btn btn-text yt" href="${searchUrl(id)}" target="_blank" rel="noopener">유튜브에서 찾아보기</a>
   </article>`;
 }
@@ -88,10 +95,13 @@ export function renderWorkout() {
 export function startWorkout() {
   renderWorkout();
   $("gymGroups").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-set]");
+    const b = e.target.closest("button[data-set], button[data-cardio]");
     if (!b) return;
-    const id = b.dataset.set;
-    log = tapSet(log, ymd(new Date()), id, Number(b.dataset.n));
+    const id = b.dataset.cardio ? "cardio" : b.dataset.set;
+    if (b.dataset.cardio) {
+      ({ log, mins: cardioMin } = tapCardio(log, cardioMin, ymd(new Date()), Number(b.dataset.cardio)));
+      store.save("cardioMin", cardioMin);
+    } else log = tapSet(log, ymd(new Date()), id, Number(b.dataset.n));
     store.save("workoutLog", log);
     markSyncDirty(); // 기록 시트에도 (연결했으면)
     // 누른 카드의 칸만 바꾸고(스크롤이 튀지 않게), 요약을 다시 그린다
@@ -101,7 +111,7 @@ export function startWorkout() {
     $("gymProgress").innerHTML = `${p.done}<span> / ${p.total} 세트</span>`;
     $("gymBar").style.width = `${p.pct}%`;
     renderGymMain();
-    document.querySelector(`[data-set="${CSS.escape(id)}"][data-n="${b.dataset.n}"]`)?.focus();
+    document.querySelector(b.dataset.cardio ? `[data-cardio="${b.dataset.cardio}"]` : `[data-set="${CSS.escape(id)}"][data-n="${b.dataset.n}"]`)?.focus();
   });
   document.addEventListener("schedule-change", renderWorkout);
   $("gymCredit").innerHTML = `사진·운동 순서: 보통트레이너 「헬스장 처음? 초보자 '기구 사용법' 완벽가이드 루틴」 <a href="${VIDEO_URL}" target="_blank" rel="noopener">영상 보기</a>`;

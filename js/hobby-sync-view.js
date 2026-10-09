@@ -130,6 +130,7 @@ function readAll() {
     settings: getScheduleSettings(),
     overrides: store.load("mealOverrides", {}),
     workoutLog: store.load("workoutLog", {}),
+    cardioMin: store.load("cardioMin", {}),
     mealLog: store.load("mealLog", {}),
     reviews: store.load("reviews", {}),
     weekReviews: store.load("weekReviews", {}),

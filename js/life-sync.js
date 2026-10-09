@@ -74,9 +74,11 @@ export const mealRows = (mealLog, days) => days.flatMap((day) => (mealLog[day] ?
 ]));
 
 // 운동 기록: 날짜 | 부위 | 운동 이름 | 한 세트/기본 세트. 한 세트라도 한 운동만, 최근 날이 먼저 (workoutLog 에 남은 만큼)
-export const workoutRows = (log) => Object.keys(log).sort().reverse().flatMap((day) =>
+// 유산소는 달린 분을 적었으면 같은 칸 뒤에 붙인다: '1/1 · 22분' (v3.1 — 칸 수는 그대로)
+export const workoutRows = (log, cardioMin = {}) => Object.keys(log).sort().reverse().flatMap((day) =>
   Object.keys(EXERCISES).filter((id) => log[day][id] > 0).map((id) => [
-    day, EXERCISES[id].part, EXERCISES[id].name, `${log[day][id]}/${EXERCISES[id].sets}`,
+    day, EXERCISES[id].part, EXERCISES[id].name,
+    `${log[day][id]}/${EXERCISES[id].sets}${id === "cardio" && cardioMin[day] ? ` · ${cardioMin[day]}분` : ""}`,
   ]));
 
 // 취미 체크: 날짜 | 명조 일일 | 명조 주간 | 워프레임 (기록이 있는 날만)
@@ -93,14 +95,14 @@ export function reviewRows(reviews, weekReviews, days) {
   return [...rows(reviews, days, "하루 회고", QUESTIONS), ...rows(weekReviews, weeks, "주간회고", WEEK_QUESTIONS)];
 }
 
-// 시트로 보낼 한 벌. data = { settings, workoutLog, mealLog, reviews, weekReviews, hobbyLog, todos }
+// 시트로 보낼 한 벌. data = { settings, workoutLog, cardioMin, mealLog, reviews, weekReviews, hobbyLog, todos }
 export function lifeSnapshot(data, now) {
   const days = recentDays(now);
   return {
     today: [dayRow(days[0], data)],
     recent: days.map((day, i) => dayRow(day, { ...data, todos: i === 0 ? data.todos : null })),
     meals: mealRows(data.mealLog, days),
-    workouts: workoutRows(data.workoutLog),
+    workouts: workoutRows(data.workoutLog, data.cardioMin),
     hobby: hobbyRows(data.hobbyLog, days),
     reviews: reviewRows(data.reviews, data.weekReviews, days),
   };

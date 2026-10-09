@@ -4,7 +4,7 @@ import {
   DAILY, WEEKLY, BUILD, gameDay, dailyKey, weeklyKey, dailyDone, weeklyDone, toggleDaily, tapWeekly,
   dailyCount, weeklyCount, cleanCharacters, searchCharacters, addParty, renameParty, removeParty,
   placeCharacter, clearSlot, placesOf, maxUses, TWO_COST, toggleBuild, buildCount, ELEMENTS, elementKey, filterCharacters,
-  partyMembers, filledCount, WEAPONS, needsRefresh, UPCOMING, withUpcoming, isPlaceholder, adoptRealIds,
+  partyMembers, filledCount, buildPct, partyPct, WEAPONS, needsRefresh, UPCOMING, withUpcoming, isPlaceholder, adoptRealIds,
 } from "../js/wuwa.js";
 
 const at = (d, h, m = 0) => new Date(2026, 8, d, h, m); // 2026-09-21 월
@@ -193,4 +193,31 @@ test("3.7 공명자: 진짜가 올라오면 파티 칸·육성 체크를 진짜 
   assert.deepEqual(moved.builds, { 1510: { lv: 1, skill: 1 }, 4: { lv: 1 } });
   assert.deepEqual(parties[0].slots, ["pre-hsin", "4", null]); // 원본은 안 바뀜
   assert.equal(adoptRealIds(moved.parties, moved.builds, [{ id: "1510", name: "여우의 별자리" }]), null); // 두 번째는 할 일 없음
+});
+
+// ---------- v3.1 육성 진행도 퍼센트 ----------
+test("v3.1 육성 진행도: 다섯 단계가 같은 비중 — 0 · 20 · 40 · 60 · 80 · 100%", () => {
+  let builds = {};
+  assert.equal(buildPct(builds, "a"), 0);
+  const seen = [];
+  for (const b of BUILD) {
+    builds = toggleBuild(builds, "a", b.id);
+    seen.push(buildPct(builds, "a"));
+  }
+  assert.deepEqual(seen, [20, 40, 60, 80, 100]);
+  assert.equal(buildPct(toggleBuild(builds, "a", "skill"), "a"), 80, "체크를 풀면 내려간다");
+  assert.equal(buildPct({ a: { lv: 1, 옛칸: 1 } }, "a"), 20, "모르는 칸은 세지 않는다");
+});
+
+test("v3.1 파티 평균: 넣은 공명자만으로, 정수로 반올림, 빈 파티는 null", () => {
+  const builds = { a: { lv: 1, weapon: 1, skill: 1, echo1: 1, echo2: 1 }, b: { lv: 1, weapon: 1, skill: 1 }, c: {} };
+  assert.equal(partyPct({ slots: ["a", "b", "c"] }, builds), 53); // (100 + 60 + 0) / 3 = 53.3
+  assert.equal(partyPct({ slots: ["a", null, "b"] }, builds), 80, "빈 칸은 세지 않는다");
+  assert.equal(partyPct({ slots: ["a", "b", "d"] }, { ...builds, d: { lv: 1 } }), 60);
+  assert.equal(partyPct({ slots: [null, "a", null] }, builds), 100);
+  assert.equal(partyPct({ slots: ["x", null, null] }, builds), 0, "체크가 없는 공명자는 0%");
+  assert.equal(partyPct({ slots: [null, null, null] }, builds), null);
+  assert.equal(partyPct({ slots: ["b", "b", "a"].slice(0, 2).concat("c") }, builds), 40); // (60 + 60 + 0) / 3
+  assert.equal(partyPct({ slots: ["a", "b", "b"] }, builds), 73); // 73.3
+  assert.equal(partyPct({ slots: ["a", "a", "b"] }, builds), 87); // 86.7
 });

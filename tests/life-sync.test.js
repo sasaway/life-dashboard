@@ -119,3 +119,28 @@ test("몸무게·키는 어디에도 없다 · 가챠도 보내지 않는다", (
   assert.deepEqual(Object.keys(snap), ["today", "recent", "meals", "workouts", "hobby", "reviews"]);
   assert.doesNotMatch(JSON.stringify(snap), /kg|cm|몸무게|체중|키|별소|연/);
 });
+
+// ---------- v3.1 유산소 분 ----------
+test("v3.1 운동 기록 탭: 유산소 줄의 마지막 칸에 달린 분이 붙는다 ('1/1 · 22분'), 분이 없으면 예전처럼 '1/1' — 칸 수는 그대로", () => {
+  const log = { "2026-10-09": { cardio: 1, chest: 3 }, "2026-10-08": { cardio: 1 }, "2026-10-07": { walk: 1 } };
+  const rows = workoutRows(log, { "2026-10-09": 22, "2026-10-07": 30 });
+  assert.deepEqual(rows, [
+    ["2026-10-09", "가슴", "체스트 프레스", "3/3"],
+    ["2026-10-09", "마무리", "유산소", "1/1 · 22분"],
+    ["2026-10-08", "마무리", "유산소", "1/1"],
+    ["2026-10-07", "준비", "걷기 웜업", "1/1"], // 유산소를 안 한 날의 분은 어디에도 안 나간다
+  ]);
+  assert.ok(rows.every((r) => r.length === 4));
+  assert.deepEqual(workoutRows(log), workoutRows(log, {}), "분 칸이 없는 옛 폰도 그대로");
+});
+
+test("v3.1 시트 한 벌: 유산소 분은 '운동 기록' 에만 나가고 '오늘 요약' · '최근 14일' 은 15칸 그대로", () => {
+  const now = new Date(2026, 9, 9, 20, 0);
+  const data = { ...empty, workoutLog: { "2026-10-09": { cardio: 1 } }, cardioMin: { "2026-10-09": 12 } };
+  const snap = lifeSnapshot(data, now);
+  assert.deepEqual(snap.workouts, [["2026-10-09", "마무리", "유산소", "1/1 · 12분"]]);
+  assert.equal(snap.today[0].length, 15);
+  assert.ok(snap.recent.every((r) => r.length === 15));
+  assert.deepEqual(snap.today, lifeSnapshot({ ...data, cardioMin: undefined }, now).today);
+  assert.deepEqual(lifeSnapshot({ ...empty, workoutLog: data.workoutLog }, now).workouts, [["2026-10-09", "마무리", "유산소", "1/1"]]);
+});
