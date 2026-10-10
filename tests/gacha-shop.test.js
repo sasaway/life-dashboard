@@ -96,10 +96,13 @@ test("페이즈 힌트: 픽업 일정에서 남은 페이즈 수 × 구매 제�
     row("3.8", "1페이즈", "2026-11-12 11:00", "2026-12-03 09:59", "다"), row("3.8", "1페이즈", "2026-11-12 11:00", "2026-12-03 09:59", "라"),
   ] });
   const now = new Date(2026, 9, 4, 12);
-  assert.deepEqual(phasesUntil(list, now, "2026-10-20"), { phases: 1, versions: 1 });
-  assert.deepEqual(phasesUntil(list, now, "2026-10-21"), { phases: 2, versions: 1 }, "픽업 날에 시작하는 페이즈도 센다");
-  assert.deepEqual(phasesUntil(list, now, "2026-11-12"), { phases: 3, versions: 2 }, "한 페이즈 두 줄은 한 번");
-  assert.deepEqual(phasesUntil(list.slice(1), now, "2026-10-25"), { phases: 2, versions: 1 }, "진행 중인 페이즈가 시트에 없으면 하나 더");
+  assert.deepEqual(phasesUntil(list, now, "2026-10-20"), { phases: 1, versions: 1, starts: 0 });
+  assert.deepEqual(phasesUntil(list, now, "2026-10-21"), { phases: 2, versions: 1, starts: 0 }, "픽업 날에 시작하는 페이즈도 센다");
+  assert.deepEqual(phasesUntil(list, now, "2026-11-12"), { phases: 3, versions: 2, starts: 0 }, "한 페이즈 두 줄은 한 번");
+  // starts (핫픽스 v3.1.1): 픽업 날 '전에' 새로 시작하는 버전만 — 픽업 날이 새 버전 첫날이면 아직 0, 다음 날부터 1
+  assert.equal(phasesUntil(list, now, "2026-11-13").starts, 1);
+  assert.equal(phasesUntil(list, new Date(2026, 10, 12, 12), "2026-11-20").starts, 0, "이미 시작한 버전은 지금 버전이다");
+  assert.deepEqual(phasesUntil(list.slice(1), now, "2026-10-25"), { phases: 2, versions: 1, starts: 0 }, "진행 중인 페이즈가 시트에 없으면 하나 더");
   assert.equal(phasesUntil([], now, "2026-10-21"), null);
   assert.equal(phasesUntil(list, now, ""), null);
 });
@@ -174,7 +177,10 @@ test("옛 데이터 옮기기: 월정액 · 패스 값은 기본 상품으로, �
   assert.deepEqual(g.paid.items.pass, { name: "패스", count: 1, price: 12000, astrite: 680, charPulls: 2, date: "2026-09-20" }, "켜 둔 패스의 캐릭뽑 2 는 그대로");
   const r = income(g, 14);
   assert.deepEqual(r.paid, { astrite: 90 * 14 + 680 + 500, char: 2, weap: 0 }, "v2.7 의 계산과 같다");
-  assert.equal(pullsOf(r.withPaid), Math.floor((17840 + 2440) / 160) + 7 + 1);
+  // 핫픽스 v3.1.1: 옛 저장에는 무과금 줄이 없어 기본 줄이 켜진 채 더해진다 (적어 둔 '그 밖에' 1000 · 2 는 그대로)
+  assert.deepEqual(r.free, { astrite: 60 * 14 + 1000 + r.items.total.astrite, char: 2 + r.items.total.char, weap: r.items.total.weap });
+  const off = income({ ...g, free: { ...g.free, items: Object.fromEntries(Object.keys(g.free.items).map((id) => [id, { amount: g.free.items[id].amount, on: false }])) } }, 14);
+  assert.equal(pullsOf(off.withPaid), Math.floor((17840 + 2440) / 160) + 7 + 1, "무과금 줄을 다 끄면 '모두 합쳐 n연' 은 예전 그대로");
   // 한 번 옮긴 걸 저장했다가 다시 열어도 그대로
   const again = normalizeGacha(JSON.parse(JSON.stringify(g)));
   assert.deepEqual(again, g);

@@ -43,6 +43,7 @@ const FILES = [
   "js/wuwa-view.js",
   "js/gacha.js",
   "js/gacha-view.js",
+  "js/gacha-free.js",
   "js/gacha-shop.js",
   "js/gacha-shop-view.js",
   "js/warframe.js",

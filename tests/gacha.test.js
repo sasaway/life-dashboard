@@ -4,6 +4,10 @@ import {
   PULL_COST, HARD_PITY, AVG_PER_FIVE, defaultGacha, normalizeGacha, count, astriteOf, pullsOf, daysUntil, dLabel, income,
 } from "../js/gacha.js";
 import { passCharDate, passCharCounts } from "../js/gacha-shop.js";
+import { FREE_ITEMS } from "../js/gacha-free.js";
+
+// 무과금 줄(v3.1.1)을 다 끈 것 — 그 전부터 있던 계산(일일 의뢰 · 그 밖에 · 과금)만 볼 때
+const itemsOff = Object.fromEntries(FREE_ITEMS.map((x) => [x.id, { on: false }]));
 
 // 옛 모양으로 저장된 패스도 옮긴 뒤 같은 답이 나오는지 (계산은 gacha-shop.js)
 const passCharDay = (g) => passCharDate(g.paid.items.pass);
@@ -64,7 +68,7 @@ test("저장 칸이 비었거나 옛 모양이어도 기본값으로 채워 연�
 test("재화 합계: 무과금만 / 과금 포함", () => {
   const g = normalizeGacha({
     have: { astrite: 16000, char: 3, weap: 1 },
-    free: { daily: 60, astrite: 1000, char: 2 },
+    free: { daily: 60, astrite: 1000, char: 2, items: itemsOff },
     paid: { monthly: true, pass: true, passDate: "2026-09-20", topup: 500 },
     plan: { date: "2026-10-14" },
   });

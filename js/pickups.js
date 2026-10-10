@@ -72,7 +72,14 @@ export function phasesUntil(list, now, date) {
   if (!list.length || !end) return null;
   const live = livePickups(list, now).filter((p) => p.from <= end);
   const ongoing = live.some((p) => p.from <= now);
+  // 픽업 날 전에 새로 시작하는 버전 (핫픽스 v3.1.1, 무과금 '버전마다' 줄): 그 버전의 가장 이른 픽업이 지금보다 뒤 · 픽업 날 0시보다 앞.
+  // 지금 버전은 뺀다 — 진행 중인 픽업의 버전, 시트에 진행 중인 줄이 없으면 남은 줄 중 가장 이른 버전을 지금 버전으로 본다
+  const first = new Map();
+  for (const p of list) if (!first.has(p.version) || p.from < first.get(p.version)) first.set(p.version, p.from);
+  const current = (live.find((p) => p.from <= now) ?? livePickups(list, now)[0])?.version;
+  const day = parseWhen(date);
   return {
+    starts: [...first].filter(([version, from]) => version !== current && from > now && from < day).length,
     phases: new Set(live.map((p) => `${p.version}|${p.phase}`)).size + (ongoing ? 0 : 1),
     versions: Math.max(1, new Set(live.map((p) => p.version)).size),
   };

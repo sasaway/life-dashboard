@@ -265,9 +265,10 @@
           <div class="card-h"><h2 id="gcFreeH">무과금으로 받을 것</h2><small class="mono" id="gcFreeDays"></small></div>
           <ul class="money-rows">
             <li><span class="name">일일 의뢰<span class="sub num" id="gcDailyCalc"></span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="free.daily" placeholder="0" aria-label="일일 의뢰 하루 별소"></li>
-            <li><span class="name">그 밖에 별소<span class="sub">이벤트 · 탐사 · 주간 등</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="free.astrite" placeholder="0" aria-label="그 밖에 받을 별소"></li>
+            <li id="gcFreeMore"><span class="name">그 밖에 별소<span class="sub">위 줄에 없는 것만</span></span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="free.astrite" placeholder="0" aria-label="그 밖에 받을 별소"></li>
             <li><span class="name">그 밖에 캐릭뽑</span><input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" data-g="free.char" placeholder="0" aria-label="그 밖에 받을 캐릭뽑"></li>
           </ul>
+          <ul class="gc-sum gc-free-sum" id="gcFreeSum"></ul>
           <p class="mini gc-hint" id="gcFreeHint"></p>
         </section>
         <section class="card gc-paid" aria-labelledby="gcPaidH">

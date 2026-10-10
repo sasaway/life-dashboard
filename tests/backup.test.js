@@ -279,3 +279,21 @@ test("v3.1 유산소 분(cardioMin)도 백업 → 되살리기로 그대로 돌�
   restoreItems(later, readBackupText(JSON.stringify(old)).backup.items);
   assert.equal(later.getItem("ld:cardioMin"), null);
 });
+
+test("핫픽스 v3.1.1 가챠 무과금 줄(wuwaGacha.free.items)도 백업 → 되살리기로 그대로, 줄이 없는 옛 백업은 기본 줄로 열린다", async () => {
+  const g = normalizeGacha({ free: { daily: 60, astrite: 1200, char: 1, items: { explore: { amount: 4600, on: true }, event: { amount: 3450, on: false } } }, plan: { date: "2026-10-22" } });
+  const phone = fakeStorage({ "ld:wuwaGacha": JSON.stringify(g) });
+  const out = readBackupText(JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v3.1.1 핫픽스 · 10월 10일" })));
+  assert.equal(out.error, undefined);
+  const later = fakeStorage({});
+  restoreItems(later, out.backup.items);
+  const back = normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha")));
+  assert.deepEqual(back, g);
+  assert.deepEqual([back.free.items.explore.amount, back.free.items.event.on, back.free.astrite], [4600, false, 1200]);
+  // v3.1 까지의 백업 (items 없음)
+  const oldPhone = fakeStorage({ "ld:wuwaGacha": JSON.stringify({ have: { astrite: 320 }, free: { daily: 60, astrite: 700, char: 2 } }) });
+  const old = readBackupText(JSON.stringify(await makeBackup({ storage: oldPhone, photos: [], appVersion: "v3.1 · 10월 10일" })));
+  restoreItems(later, old.backup.items);
+  const opened = normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha")));
+  assert.deepEqual([opened.free.astrite, opened.free.char, opened.free.items.weekly], [700, 2, { amount: 160, on: true }]);
+});

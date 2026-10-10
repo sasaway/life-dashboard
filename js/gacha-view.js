@@ -7,6 +7,7 @@ import {
   normalizeGacha, count, pullsOf, daysUntil, dLabel, income, FREE_HINT,
   CHAINS, chainLabel, expectation, astriteNeeded, verdict,
 } from "./gacha.js";
+import { FREE_ITEMS, KIND_LABEL, CYCLE_LABEL, versionTotal } from "./gacha-free.js";
 import { startShop, renderShop } from "./gacha-shop-view.js";
 import { openGachaPicker, findChar, charByName, face, elTag } from "./wuwa-view.js";
 import {
@@ -49,6 +50,29 @@ function paintToggle(b) {
   b.textContent = on ? "켬" : "끔";
 }
 
+// ---------- 무과금 줄 (핫픽스 v3.1.1): 줄마다 이름 · 숫자 칸 · 켬/끔. 칸은 한 번만 그리고, 아래 작은 글만 다시 쓴다 ----------
+const freeName = (x) => (x.kind === "astrite" ? x.name : `${x.name} ${KIND_LABEL[x.kind]}`);
+function drawFreeItems() {
+  $("gcFreeMore").insertAdjacentHTML("beforebegin", FREE_ITEMS.map((x) => {
+    const it = g.free.items[x.id];
+    return `<li class="gc-free-row"><span class="name">${esc(freeName(x))}<span class="sub num" data-free-sub="${x.id}"></span></span>
+      <input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" data-free="${x.id}" placeholder="0" value="${it.amount || ""}" aria-label="${esc(freeName(x))} ${CYCLE_LABEL[x.cycle]} 받는 수">
+      <button class="pin" data-free-on="${x.id}" aria-pressed="${it.on}" aria-label="${esc(freeName(x))} 계산에 넣기">${it.on ? "켬" : "끔"}</button></li>`;
+  }).join(""));
+}
+const setFree = (id, patch) => { g = { ...g, free: { ...g.free, items: { ...g.free.items, [id]: { ...g.free.items[id], ...patch } } } }; };
+const mdOf = (date) => { const d = parseDate(date); return `${d.getMonth() + 1}/${d.getDate()}`; };
+function renderFree(r, has) {
+  for (const l of r.items.lines) {
+    const cycle = l.cycle === "once" ? `${mdOf(l.date)} 한 번` : `${CYCLE_LABEL[l.cycle]}${l.rough ? " · 어림" : ""}`;
+    const calc = !has || !l.on ? "" : l.times > 1 ? ` · ${l.times}번 = ${num(l.got)}` : l.times ? " · 1번" : " · 안 세";
+    document.querySelector(`[data-free-sub="${l.id}"]`).textContent = cycle + calc;
+  }
+  const v = versionTotal(g.free.items, g.free.daily);
+  $("gcFreeSum").innerHTML = `<li><span class="name"><b>한 버전 다 받으면</b><span class="sub num">${esc(bundle(v))} · 켠 줄만</span></span>
+    <span class="gc-pulls">약 <span class="mono">${num(pullsOf(v))}</span>연</span></li>`;
+}
+
 const bundle = (x) => `별소 ${num(x.astrite)} · 캐릭뽑 ${num(x.char)} · 무기뽑 ${num(x.weap)}`;
 
 // 픽업 일정으로 공명자·날짜를 채운다 (직접 고친 계획은 그대로). 바뀌었으면 저장하고 날짜 칸도 맞춘다
@@ -75,6 +99,7 @@ export function renderGacha() {
   $("gcFreeDays").textContent = has ? `남은 ${days}일` : "";
   $("gcDailyCalc").textContent = `하루 별소${has ? ` × ${days}일 = ${num(g.free.daily * days)}` : ""}`;
   $("gcFreeHint").textContent = FREE_HINT;
+  renderFree(r, has && days > 0);
   renderShop(r, has, days); // 과금 상품 줄 · 과금 합계 (v2.8)
 
   $("gcSumD").textContent = left;
@@ -216,12 +241,22 @@ export function startGacha() {
     planDate: () => g.plan.date,
     change: (paid) => { g = { ...g, paid }; save(); renderGacha(); },
   });
+  drawFreeItems();
   fillInputs();
   renderGacha();
 
   for (const id of ["ww-page-cash", "ww-page-pickup"]) {
     const page = $(id);
     page.addEventListener("input", (e) => {
+      const fr = e.target.closest("[data-free]");
+      if (fr) { // 무과금 줄 숫자
+        const digits = fr.value.replace(/\D/g, "");
+        if (digits !== fr.value) fr.value = digits;
+        setFree(fr.dataset.free, { amount: count(digits) });
+        save();
+        renderGacha();
+        return;
+      }
       const el = e.target.closest("[data-g]");
       if (!el) return;
       if (el.type === "date") {
@@ -244,7 +279,15 @@ export function startGacha() {
       const go = e.target.closest("[data-ww-go]");
       const chain = e.target.closest("[data-gc-chain]");
       const mode = e.target.closest("#gcMode [data-mode]");
-      if (mode) {
+      const freeOn = e.target.closest("[data-free-on]");
+      if (freeOn) { // 무과금 줄 켬/끔
+        const on = !g.free.items[freeOn.dataset.freeOn].on;
+        setFree(freeOn.dataset.freeOn, { on });
+        freeOn.setAttribute("aria-pressed", String(on));
+        freeOn.textContent = on ? "켬" : "끔";
+        save();
+        renderGacha();
+      } else if (mode) {
         setMode(mode.dataset.mode);
       } else if (e.target.closest("#gcNewGo")) {
         // 다음 픽업에 공명자가 한 명이면 바로 바꾸고, 여럿이면 고르는 창

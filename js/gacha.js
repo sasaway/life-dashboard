@@ -2,6 +2,7 @@
 // 재화 이름은 줄여 부른다: 별의소리 = 별소 / 금빛 파도의 무늬 = 캐릭뽑 / 울린 조수의 무늬 = 무기뽑
 import { parseDate } from "./schedule.js";
 import { defaultPaid, normalizePaid, paidIncome } from "./gacha-shop.js";
+import { defaultFreeItems, normalizeFreeItems, freeIncome } from "./gacha-free.js";
 
 // ---------- 가챠 규칙 (여기 한 곳에만 둔다) ----------
 // 공식 수치: 게임 안 '획득 확률 안내' (1연 160 별소, 5성 기본 0.8% — 계산에는 안 쓴다, 80연째 5성 확정, 캐릭 픽업 50%·놓치면 다음 5성 확정,
@@ -15,14 +16,15 @@ export const AVG_PER_FIVE = 56;
 // 받는 재화 기본값 (모두 화면에서 고칠 수 있다)
 export const DAILY_ASTRITE = 60;       // 일일 의뢰 하루 별소
 // 과금 상품(월정액 · 패스 · 팩 · 루나이트 충전)의 숫자는 js/gacha-shop.js 에 있다 (v2.8)
-// 무과금 '그 밖에 받을 것' 칸 아래 참고 글 (커뮤니티 추정)
-export const FREE_HINT = "3.7 한 버전(43일) 추정: 주간 약 960 · 이벤트 약 3,680 · 탐사·퀘스트 약 4,192 · 로그인·상점 약 925 (커뮤니티 추정)";
+// 무과금 줄(주간 · 해역 · 이벤트 …)의 숫자는 js/gacha-free.js 에 있다 (핫픽스 v3.1.1). 카드 아래 참고 글
+export const FREE_HINT = "기본값은 3.7 기준 커뮤니티 어림이야 (공식 수치 아님). 버전마다 달라서 고쳐 써. 이미 받아서 가진 것에 들어간 줄은 꺼 줘.";
 
 const MAX_COUNT = 9_999_999;
 
 // ---------- 저장 칸 wuwaGacha ----------
 // { have: { astrite, char, weap },                       ← 지금 가진 것
-//   free: { daily, astrite, char },                      ← 무과금: 일일 의뢰 하루 값, 그 밖에 받을 것
+//   free: { daily, astrite, char,                        ← 무과금: 일일 의뢰 하루 값, 그 밖에 받을 것 (직접 적는 두 칸)
+//           items: { 줄 id: { amount, on } } },          ← v3.1.1 주간 · 버전마다 · 달마다 받는 줄 (js/gacha-free.js)
 //   paid: { items: { 기본 상품 id: { name, count, price, … } }, custom: [직접 추가 상품] },  ← 과금 (v2.8, js/gacha-shop.js. 옛 모양은 열 때 옮긴다)
 //   plan: { date,                                        ← 픽업 날짜 "2026-10-14" (없으면 "")
 //           char, charName, chain, owned, weapon,        ← v2.5 공명자(번호 · 이름), 목표 체인 0~6, 가진 체인(-1 = 없음), 전무 켬/끔
@@ -31,7 +33,7 @@ const MAX_COUNT = 9_999_999;
 //                                                           채운 픽업 줄, 직접 고칠 때 본 일정 (js/pickups.js)
 export const defaultGacha = () => ({
   have: { astrite: 0, char: 0, weap: 0 },
-  free: { daily: DAILY_ASTRITE, astrite: 0, char: 0 },
+  free: { daily: DAILY_ASTRITE, astrite: 0, char: 0, items: defaultFreeItems() },
   paid: defaultPaid(),
   plan: { date: "", char: "", charName: "", chain: 0, owned: -1, weapon: false, stack: 0, guaranteed: false, wStack: 0,
     charBy: "", dateBy: "", autoKey: "", seenKey: "" },
@@ -43,6 +45,7 @@ export function normalizeGacha(saved) {
   if (!saved || typeof saved !== "object") return base;
   const out = {};
   for (const [group, fields] of Object.entries(base)) out[group] = { ...fields, ...(saved[group] ?? {}) };
+  out.free.items = normalizeFreeItems(saved.free?.items); // 옛 저장에는 없다 → 기본 줄 (적어 둔 '그 밖에' 숫자는 그대로)
   out.paid = normalizePaid(saved.paid); // 옛 월정액·패스·직접 충전 값은 새 상품 모양으로 옮긴다 (숫자는 그대로)
   // v2.6 까지 적어 둔 공명자·날짜는 은월이 직접 넣은 것 → 픽업 일정(v2.7)이 덮어쓰지 않게 '직접' 으로 옮긴다
   if (saved.plan && !("charBy" in saved.plan)) {
@@ -77,15 +80,18 @@ export const dLabel = (days) => (days > 0 ? `D-${days}` : days === 0 ? "D-day" :
 
 // ---------- 픽업 날까지 모이는 재화 ----------
 // days = 남은 날. 날짜가 없거나 지났으면(null · 음수) 앞으로 받을 것은 계산하지 않는다
-// sched = { phases, versions }: 픽업 일정(v2.7)에서 센 남은 페이즈·버전 수 (과금 상품의 '최대 n개' 힌트용, 모르면 비워 둔다)
+// sched = { phases, versions, starts }: 픽업 일정(v2.7)에서 센 남은 페이즈·버전 수 (과금 상품의 '최대 n개' 힌트용, 모르면 비워 둔다),
+//         starts = 픽업 날 전에 새로 시작하는 버전 수 (무과금 '버전마다' 줄, 모르면 42일마다 하나로 어림)
+// items = 무과금 줄별 계산 (gacha-free.js freeIncome)
 // shop = 과금 상품별 계산 (gacha-shop.js paidIncome)
 export function income(g, days, sched = {}) {
   const d = days > 0 ? days : 0;
-  const free = { astrite: g.free.daily * d + g.free.astrite, char: g.free.char, weap: 0 };
+  const items = freeIncome(g.free.items, { days, planDate: g.plan.date, starts: sched.starts ?? null });
+  const free = { astrite: g.free.daily * d + items.total.astrite + g.free.astrite, char: items.total.char + g.free.char, weap: items.total.weap };
   const shop = paidIncome(g.paid, { days, planDate: g.plan.date, phases: sched.phases ?? null, versions: sched.versions ?? null });
   const add = (a, b) => ({ astrite: a.astrite + b.astrite, char: a.char + b.char, weap: a.weap + b.weap });
   const freeOnly = add(g.have, free);
-  return { free, paid: shop.total, shop, freeOnly, withPaid: add(freeOnly, shop.total) };
+  return { free, items, paid: shop.total, shop, freeOnly, withPaid: add(freeOnly, shop.total) };
 }
 
 // ---------- v2.5 픽업 계산 ----------
