@@ -4,7 +4,7 @@
 // 일과표 · 끼니는 새로 계산하지 않고 schedule.js · meals.js 것을 그대로 쓴다 (앱 화면과 늘 같게).
 import { SHIFTS, SHIFT_IDS, OFF, DAY_OFF_MEAL, DEFAULT_TEMPLATES, CHURCH, dayPlan, withDayShifts, endOf, parseDate, ymd, toMin, toHHMM } from "./schedule.js";
 import { DAYS, WEEK_ORDER } from "./time.js";
-import { reviewDay } from "./review.js";
+import { reviewDay, DAY_START } from "./review.js";
 import { dayMeals, workMeal, dishById, autoDishes, LEFTOVER, WORK_DISH, BREAKFAST } from "./meals.js";
 
 export const NEXT_DAYS = 7;
@@ -16,8 +16,13 @@ const offMeal = (id) => {
   const m = DAY_OFF_MEAL[id];
   return ["규칙", `쉬는 날 (${SHIFTS[id].label} 일과)`, m.start, toHHMM(toMin(m.start) + 60), m.name, "알바 중에 먹던 끼니를 집에서 먹는다 (그 1시간이 통째로 휴식 칸일 때)"];
 };
-const amAt = DEFAULT_TEMPLATES.open.findIndex((x) => x.kind === "breakfast");
-const breakfast = { start: DEFAULT_TEMPLATES.open[amAt].start, end: endOf(DEFAULT_TEMPLATES.open, amAt) };
+// 아침은 반마다 시각이 다르다 (핫픽스 v3.1.1: 오픈반 06:00, 중간반 · 마감반 08:00) → 규칙 줄의 시작 · 끝은 비우고 글로 적는다 (정확한 시각은 일과표 줄에)
+const amOf = (id) => DEFAULT_TEMPLATES[id].find((x) => x.kind === "breakfast").start;
+const breakfastAt = () => {
+  const byTime = new Map();
+  for (const id of SHIFT_IDS) byTime.set(amOf(id), [...(byTime.get(amOf(id)) ?? []), SHIFTS[id].label]);
+  return [...byTime].map(([t, labels]) => `${labels.join(" · ")} ${t}`).join(", ");
+};
 // 끼니별 메뉴 규칙 (핫픽스 v3.0.5). 한 칸 100자 안 (심부름꾼이 자른다)
 const CELL = 100;
 function mealRules() {
@@ -37,10 +42,10 @@ const rules = () => [
   ["규칙", "캘린더", "", "", "캘린더 알바가 먼저", "캘린더에서 받은 날은 요일별 알바 대신 그 반. 받은 기간 안에 알바가 없는 날은 쉬는 날"],
   ["규칙", "알바 중 끼니", "", "", `늘 ${WORK_DISH.short}`, ""],
   ["규칙", "집 끼니", "", "", ...mealRules()],
-  ["규칙", "하루", "", "", "06:00 에 바뀐다", "06:00 전이면 '앞으로 7일' 의 첫 날은 어제"],
+  ["규칙", "하루", "", "", `${DAY_START} 에 바뀐다`, `${DAY_START} 전이면 '앞으로 7일' 의 첫 날은 어제`],
   // 핫픽스 v3.0.4: 맨 아래에 더한다 (위 줄들의 순서는 그대로)
-  ["규칙", "아침", breakfast.start, breakfast.end, "월~토 아침", "일요일은 없음. 오픈반 알바 날은 계란 3개"],
-  ["규칙", "일요일", CHURCH.start, CHURCH.end, CHURCH.name, `겹치는 칸을 덮는다. 아침 취미(마감반 · 중간반 일과)는 ${breakfast.start} 부터. 알바 · 출근 준비와 겹치는 일요일(중간반 · 오픈반 알바)은 교회 칸 없음`],
+  ["규칙", "아침", "", "", `월~토 아침 30분 · ${breakfastAt()}`, "일요일은 없음. 오픈반 알바 날은 계란 3개"],
+  ["규칙", "일요일", CHURCH.start, CHURCH.end, CHURCH.name, "겹치는 칸을 덮는다. 알바 · 출근 준비와 겹치는 일요일(중간반 · 오픈반 알바)은 교회 칸 없음"],
 ];
 
 // 일정 설정: 구분 | 반/요일 | 시작 | 끝 | 칸 이름 | 설명
@@ -62,7 +67,7 @@ export function settingRows(settings, now) {
 }
 
 // 앞으로 7일: 날짜 | 요일 | 반 | 반 출처 | 시작 | 끝 | 칸 이름 | 설명 | 끼니 메뉴
-// 오늘(06:00 전이면 어제)부터 7일, 메인 일과표가 보여 주는 칸 그대로 (쉬는 날 · 일요일 바뀜 포함).
+// 오늘(05:30 전이면 어제)부터 7일, 메인 일과표가 보여 주는 칸 그대로 (쉬는 날 · 일요일 바뀜 포함).
 // 아침 · 식사 칸에는 그 끼니 메뉴 (직접 바꾼 칸 · '안 먹음 · 외식' 그대로. 아침 메뉴는 핫픽스 v3.0.5 부터). 알바 중 끼니는 알바 칸 바로 아래 '알바 중 점심/저녁' 줄 — 시각은 정해진 게 없어 빈칸
 export function weekRows(settings, overrides, now) {
   const first = parseDate(reviewDay(now));

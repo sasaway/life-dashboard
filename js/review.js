@@ -1,5 +1,5 @@
 // 회고: 저녁 4가지 질문, 하루·주간 회고. 규칙은 Notion '루틴화'.
-import { ymd, mondayOf, parseDate, weekDates } from "./schedule.js";
+import { ymd, mondayOf, parseDate, weekDates, toMin } from "./schedule.js";
 import { DAYS } from "./time.js";
 
 export const QUESTIONS = [
@@ -17,20 +17,20 @@ export const WEEK_QUESTIONS = [
   "다음 주 처음으로 할 일은?",
 ];
 
-// 하루는 06:00 에 바뀐다 (취침 23:00~06:00). 새벽 1시에 쓰면 어제 회고다.
-const DAY_START_HOUR = 6;
+// 하루는 05:30 에 바뀐다 (취침 22:30~05:30, 핫픽스 v3.1.1 — 그 전에는 06:00). 새벽 1시에 쓰면 어제 회고다.
+export const DAY_START = "05:30";
+const beforeDayStart = (now) => now.getHours() * 60 + now.getMinutes() < toMin(DAY_START);
 const WEEKLY_START_HOUR = 18; // 일요일 저녁 ('좋은 저녁' 과 같은 시각)
 
 export function reviewDay(now) {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (now.getHours() < DAY_START_HOUR) d.setDate(d.getDate() - 1);
+  if (beforeDayStart(now)) d.setDate(d.getDate() - 1);
   return ymd(d);
 }
 
-// 주간리뷰 시간: 일요일 18시 ~ 월요일 새벽 6시 전 (새벽은 어제 회고라는 규칙 그대로 → 월요일 새벽도 일요일 주간리뷰)
+// 주간리뷰 시간: 일요일 18시 ~ 월요일 새벽 05:30 전 (새벽은 어제 회고라는 규칙 그대로 → 월요일 새벽도 일요일 주간리뷰)
 export function isWeeklyTime(now) {
-  const h = now.getHours();
-  return parseDate(reviewDay(now)).getDay() === 0 && (h >= WEEKLY_START_HOUR || h < DAY_START_HOUR);
+  return parseDate(reviewDay(now)).getDay() === 0 && (now.getHours() >= WEEKLY_START_HOUR || beforeDayStart(now));
 }
 
 export function answeredCount(entry) {

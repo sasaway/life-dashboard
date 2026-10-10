@@ -87,8 +87,8 @@ test("고른 걸 되돌리면 자동으로 돌아간다", () => {
 // 2026-09-21 주 = 마감반 (점심만 집), 다음 주 = 오픈반 (저녁만 집)
 test("집 끼니는 일과표 식사 칸에서: 마감반 주는 점심, 오픈반 주는 저녁", () => {
   assert.deepEqual(homeMeals(new Date(2026, 8, 25), DEFAULT_SETTINGS).map((m) => [m.key, m.start]),
-    [["2026-09-25 아침", "06:30"], ["2026-09-25 점심", "12:00"]]); // 아침은 핫픽스 v3.0.5 부터. 점심은 10:00 운동 1시간 30분 + 샤워 30분 뒤
-  assert.deepEqual(homeMeals(new Date(2026, 8, 29), DEFAULT_SETTINGS).map((m) => m.label), ["아침", "저녁"]);
+    [["2026-09-25 아침", "08:00"], ["2026-09-25 점심", "12:00"]]); // 아침은 핫픽스 v3.0.5 부터, 마감반은 취미 뒤 08:00 (v3.1.1). 점심은 운동 · 샤워 뒤
+  assert.deepEqual(homeMeals(new Date(2026, 8, 29), DEFAULT_SETTINGS).map((m) => [m.label, m.start]), [["아침", "06:00"], ["저녁", "20:00"]], "오픈반은 아침 06:00, 저녁은 취미 뒤 20:00 (v3.1.1)");
   // 마감반은 알바 중 저녁 · 집 점심 다음, 오픈반은 알바 중 점심 · 집 저녁보다 먼저 (시각 글은 핫픽스 v3.0.3 에서 뺌)
   assert.deepEqual(workMeal(new Date(2026, 8, 25), DEFAULT_SETTINGS),
     { label: "저녁", dish: WORK_DISH, first: false });
@@ -222,7 +222,7 @@ test("추천은 2개까지만, 가장 최근에 가져온 재료 것부터", () 
 test("중간반 날 (v2.8.1): 집 끼니는 10:00 점심, 알바 중 끼니는 저녁 닭가슴살 + 햇반 (먹는 차례는 점심 다음)", () => {
   const s = { ...DEFAULT_SETTINGS, dayShifts: ["mid", "mid", "mid", "mid", "mid", "mid", "mid"] };
   const wed = new Date(2026, 9, 7);
-  assert.deepEqual(homeMeals(wed, s).map((m) => [m.label, m.start]), [["아침", "06:30"], ["점심", "10:00"]]);
+  assert.deepEqual(homeMeals(wed, s).map((m) => [m.label, m.start]), [["아침", "08:00"], ["점심", "10:00"]]);
   assert.deepEqual([workMeal(wed, s).label, workMeal(wed, s).dish.id, workMeal(wed, s).first], ["저녁", "chicken", false]);
   assert.deepEqual(dayMeals(wed, s).map((m) => [m.label, Boolean(m.work)]), [["아침", false], ["점심", false], ["저녁", true]]);
 });

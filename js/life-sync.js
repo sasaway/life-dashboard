@@ -12,7 +12,7 @@ import { leftTodos } from "./warframe.js";
 
 export const SYNC_DAYS = 14;
 
-// 보낼 날들: 오늘부터 13일 전까지, 최근 날이 먼저. 하루는 회고처럼 06:00 에 바뀐다 (새벽 2시는 아직 어제)
+// 보낼 날들: 오늘부터 13일 전까지, 최근 날이 먼저. 하루는 회고처럼 05:30 에 바뀐다 (새벽 2시는 아직 어제)
 export function recentDays(now, n = SYNC_DAYS) {
   const t = parseDate(reviewDay(now));
   return Array.from({ length: n }, (_, i) => ymd(new Date(t.getFullYear(), t.getMonth(), t.getDate() - i)));

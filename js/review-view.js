@@ -16,7 +16,7 @@ let weekly = store.load("weekly", {});           // { "2026-09-21": "이번 주 
 let weekReviews = store.load("weekReviews", {}); // { "2026-09-28": { answers: [4개] } } — 주간회고 (v2.3)
 
 // ---------- 메인 카드 ----------
-// 일요일 18시 ~ 월요일 새벽 6시 전에는 일일 회고 대신 주간리뷰 (Notion '주간리뷰')
+// 일요일 18시 ~ 월요일 새벽 05:30 전에는 일일 회고 대신 주간리뷰 (Notion '주간리뷰')
 export function renderReviewCard() {
   const now = new Date();
   const weeklyTime = isWeeklyTime(now);

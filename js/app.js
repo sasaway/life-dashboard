@@ -28,7 +28,7 @@ function renderClock() {
   $("greet").textContent = greeting(d.getHours());
   $("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   renderToday();
-  renderReviewCard(); // 06:00 에 오늘 회고로 넘어간다
+  renderReviewCard(); // 05:30 에 오늘 회고로 넘어간다
   renderMeals();      // 자정에 오늘 식단으로 넘어간다
   renderWorkout();    // 자정에 오늘 운동으로 넘어간다
   renderWuwa();       // 새벽 5시에 명조 체크가 비워진다

@@ -21,6 +21,7 @@ function loadSettings() {
   // 핫픽스 v2.8.1: '한 주씩 번갈아' · '알바 하는 요일' 을 요일별 알바로 옮긴다 (지금 주의 반 그대로, 꺼 둔 요일은 쉬는 날)
   // 핫픽스 v3.0.3: 저장된 칸 설명을 한 번 비운다
   // 핫픽스 v3.0.7: 저장된 첫 칸(06:00) 이름 '취침' 을 한 번 '기상' 으로
+  // 핫픽스 v3.1.1: 옛 기본값 그대로인 반은 새벽형(05:30 기상 · 22:30 취침)으로 — 위 upgradeTemplates 가 한다
   const next = renameWakeOnce(clearNotesOnce(withDayShifts(alignCloseOnce({ ...DEFAULT_SETTINGS, ...saved, templates }, new Date()), new Date())));
   if (JSON.stringify(next) !== JSON.stringify({ ...DEFAULT_SETTINGS, ...saved })) {
     store.save(KEY, next);

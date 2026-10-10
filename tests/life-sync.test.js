@@ -16,9 +16,10 @@ test("보낼 날: 오늘부터 14일, 최근 날이 먼저", () => {
   assert.equal(days[13], "2026-09-20", "달을 넘어도");
 });
 
-test("새벽 경계: 06시 전은 아직 어제 (회고와 같은 하루)", () => {
+test("새벽 경계: 05:30 전은 아직 어제 (회고와 같은 하루, 핫픽스 v3.1.1 — 그 전에는 06:00)", () => {
   assert.equal(recentDays(at(2026, 10, 3, 2, 0))[0], "2026-10-02");
-  assert.equal(recentDays(at(2026, 10, 3, 5, 59))[0], "2026-10-02");
+  assert.equal(recentDays(at(2026, 10, 3, 5, 29))[0], "2026-10-02");
+  assert.equal(recentDays(at(2026, 10, 3, 5, 30))[0], "2026-10-03");
   assert.equal(recentDays(at(2026, 10, 3, 6, 0))[0], "2026-10-03");
   assert.equal(lifeSnapshot(empty, at(2026, 10, 1, 1, 30)).today[0][0], "2026-09-30");
 });

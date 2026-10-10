@@ -244,7 +244,16 @@ test("핫픽스 v3.0.6 식단 메뉴 설정(mealMenu)도 백업 → 되살리기
 
 test("핫픽스 v3.0.7 첫 칸이 '취침' 인 옛 백업을 되살려도 안 깨지고, 앱이 불러올 때 '기상' 으로 읽힌다", async () => {
   const { upgradeTemplates, clearNotesOnce, renameWakeOnce, DEFAULT_TEMPLATES, dayPlan } = await import("../js/schedule.js");
-  const oldTemplates = Object.fromEntries(Object.entries(DEFAULT_TEMPLATES).map(([k, blocks]) => [k, blocks.map((x, i) => (i === 0 ? { ...x, name: "취침" } : x))]));
+  // v3.0.4 ~ v3.0.6 기본값 그대로 (첫 칸 06:00 '취침', 밤 23:00 취침)
+  const V306 = {
+    open: "06:00 sleep 취침|06:30 breakfast 아침|07:00 rest 휴식|07:30 prep 출근 준비|08:30 work 알바 · 오픈반|15:30 rest 휴식|16:00 exercise 운동|17:30 shower 샤워|18:00 meal 저녁|19:00 hobby 취미|21:00 chores 가사|21:30 rest 휴식|22:30 review 리뷰|23:00 sleep 취침",
+    mid: "06:00 sleep 취침|06:30 breakfast 아침|07:00 hobby 취미|09:00 chores 가사|09:30 rest 휴식|10:00 meal 점심|11:00 prep 출근 준비|12:00 work 알바 · 중간반|19:00 rest 휴식|19:30 exercise 운동|21:00 shower 샤워|21:30 rest 휴식|22:30 review 리뷰|23:00 sleep 취침",
+    close: "06:00 sleep 취침|06:30 breakfast 아침|07:00 hobby 취미|09:00 chores 가사|09:30 rest 휴식|10:00 exercise 운동|11:30 shower 샤워|12:00 meal 점심|13:00 rest 휴식|14:00 prep 출근 준비|15:00 work 알바 · 마감반|22:00 rest 휴식|22:30 review 리뷰|23:00 sleep 취침",
+  };
+  const oldTemplates = Object.fromEntries(Object.entries(V306).map(([k, text]) => [k, text.split("|").map((x) => {
+    const [start, kind, ...name] = x.split(" ");
+    return { start, kind, name: name.join(" "), note: "" };
+  })]));
   oldTemplates.open = oldTemplates.open.map((x) => (x.kind === "exercise" ? { ...x, name: "운동 (헬스장)" } : x)); // 한 반은 직접 고친 것
   const old = { ...DEFAULT_SETTINGS, dayShifts: ["off", "open", "open", "mid", "close", "close", "off"], notesCleared: "3.0.3", templates: oldTemplates };
   const phone = fakeStorage({ "ld:schedule": JSON.stringify(old) });
@@ -258,6 +267,9 @@ test("핫픽스 v3.0.7 첫 칸이 '취침' 인 옛 백업을 되살려도 안 �
   for (const shift of ["open", "mid", "close"]) assert.equal(loaded.templates[shift][0].name, "기상", shift);
   assert.equal(loaded.templates.open.find((x) => x.kind === "exercise").name, "운동 (헬스장)", "직접 고친 칸은 그대로");
   assert.deepEqual(loaded.templates.mid, DEFAULT_TEMPLATES.mid, "안 고친 반은 새 기본값");
+  // 핫픽스 v3.1.1: 안 고친 반은 새벽형(05:30 · 22:30)으로, 직접 고친 오픈반은 옛 시각(06:00 · 23:00) 그대로
+  assert.deepEqual([loaded.templates.mid[0].start, loaded.templates.close.at(-1).start], ["05:30", "22:30"]);
+  assert.deepEqual([loaded.templates.open[0].start, loaded.templates.open.at(-1).start], ["06:00", "23:00"]);
   assert.equal(dayPlan(new Date(2026, 9, 12), loaded).blocks[0].name, "기상");
 });
 

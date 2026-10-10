@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   QUESTIONS, reviewDay, answeredCount, statusLabel, pastDays, mondayKey,
   weekDays, shiftWeek, dayLabel, weekLabel, withAnswer, WEEK_QUESTIONS, isWeeklyTime,
-} from "../js/review.js";
+ DAY_START } from "../js/review.js";
 
 test("Notion 의 4가지 질문 그대로다", () => {
   assert.deepEqual(QUESTIONS, [
@@ -11,10 +11,13 @@ test("Notion 의 4가지 질문 그대로다", () => {
   ]);
 });
 
-test("새벽(06시 전)에 쓰면 어제 회고, 06시부터는 오늘 회고", () => {
+test("새벽(05:30 전)에 쓰면 어제 회고, 05:30 부터는 오늘 회고 (핫픽스 v3.1.1 — 그 전에는 06:00)", () => {
+  assert.equal(DAY_START, "05:30");
   assert.equal(reviewDay(new Date(2026, 8, 25, 22, 40)), "2026-09-25");
   assert.equal(reviewDay(new Date(2026, 8, 26, 1, 10)), "2026-09-25");
-  assert.equal(reviewDay(new Date(2026, 8, 26, 5, 59)), "2026-09-25");
+  assert.equal(reviewDay(new Date(2026, 8, 26, 5, 29)), "2026-09-25");
+  assert.equal(reviewDay(new Date(2026, 8, 26, 5, 30)), "2026-09-26");
+  assert.equal(reviewDay(new Date(2026, 8, 26, 5, 59)), "2026-09-26", "05:30 ~ 06:00 은 이제 오늘");
   assert.equal(reviewDay(new Date(2026, 8, 26, 6, 0)), "2026-09-26");
   assert.equal(reviewDay(new Date(2026, 9, 1, 2, 0)), "2026-09-30"); // 달이 바뀌어도
 });
@@ -69,11 +72,13 @@ test("원래 기록은 건드리지 않는다", () => {
 });
 
 // ---------- 주간리뷰 (v2.3) ----------
-test("주간리뷰 시간은 일요일 18시 ~ 월요일 새벽 6시 전", () => {
+test("주간리뷰 시간은 일요일 18시 ~ 월요일 새벽 05:30 전", () => {
   assert.equal(isWeeklyTime(new Date(2026, 9, 4, 17, 59)), false); // 일 17:59
   assert.equal(isWeeklyTime(new Date(2026, 9, 4, 18, 0)), true);   // 일 18:00
   assert.equal(isWeeklyTime(new Date(2026, 9, 4, 23, 30)), true);
   assert.equal(isWeeklyTime(new Date(2026, 9, 5, 3, 0)), true);    // 월 새벽 3시 = 아직 일요일
+  assert.equal(isWeeklyTime(new Date(2026, 9, 5, 5, 29)), true);   // 월 05:29 = 아직 일요일
+  assert.equal(isWeeklyTime(new Date(2026, 9, 5, 5, 30)), false);  // 월 05:30 부터 월요일
   assert.equal(isWeeklyTime(new Date(2026, 9, 5, 6, 0)), false);   // 월 06:00
   assert.equal(isWeeklyTime(new Date(2026, 9, 4, 3, 0)), false);   // 일 새벽 3시 = 토요일
   assert.equal(isWeeklyTime(new Date(2026, 9, 3, 20, 0)), false);  // 토 저녁
