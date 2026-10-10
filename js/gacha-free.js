@@ -4,6 +4,8 @@
 import { parseDate } from "./schedule.js";
 import { firstsUntil } from "./gacha-shop.js";
 
+// 아래 기본값이 어느 버전 것인지. 버전이 바뀌면 Cowork 가 조사한 새 표로 이 줄과 FREE_ITEMS 를 고치고, 은월은 화면의 '채우기' 버튼으로 받는다
+export const FREE_VERSION = "3.7";
 export const VERSION_DAYS = 42; // 한 버전 (픽업 일정에 다음 버전이 없을 때 어림으로 쓴다)
 const MAX_AMOUNT = 999_999;
 

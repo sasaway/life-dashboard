@@ -7,14 +7,14 @@ import {
   normalizeGacha, count, pullsOf, daysUntil, dLabel, income, FREE_HINT,
   CHAINS, chainLabel, expectation, astriteNeeded, verdict,
 } from "./gacha.js";
-import { FREE_ITEMS, KIND_LABEL, CYCLE_LABEL, versionTotal } from "./gacha-free.js";
+import { FREE_ITEMS, FREE_VERSION, KIND_LABEL, CYCLE_LABEL, versionTotal, defaultFreeItems } from "./gacha-free.js";
 import { startShop, renderShop } from "./gacha-shop-view.js";
 import { openGachaPicker, findChar, charByName, face, elTag } from "./wuwa-view.js";
 import {
   pickupsOf, nextPhase, livePickups, autoFill, applyPickup, markByHand, hasNewPickup, byHand, toManual, toAuto, rowKey, rangeLabel,
   isTentative, isRerun, isOngoing, phasesUntil,
 } from "./pickups.js";
-import { openSheet, closeSheet } from "./sheet.js";
+import { openSheet, closeSheet, askConfirm } from "./sheet.js";
 import { ICON } from "./icons.js";
 import { ymd, parseDate } from "./schedule.js";
 import { DAYS } from "./time.js";
@@ -59,6 +59,19 @@ function drawFreeItems() {
       <input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" data-free="${x.id}" placeholder="0" value="${it.amount || ""}" aria-label="${esc(freeName(x))} ${CYCLE_LABEL[x.cycle]} 받는 수">
       <button class="pin" data-free-on="${x.id}" aria-pressed="${it.on}" aria-label="${esc(freeName(x))} 계산에 넣기">${it.on ? "켬" : "끔"}</button></li>`;
   }).join(""));
+}
+// '이번 버전 값으로 채우기': 무과금 줄의 숫자 · 켬/끔만 앱에 든 버전 값으로 (일일 의뢰 · '그 밖에' 두 칸 · 과금은 그대로)
+async function fillFree() {
+  if (!(await askConfirm(`무과금 줄을 ${FREE_VERSION} 버전 값으로 다시 채울까? 고친 숫자와 꺼 둔 줄이 처음대로 돌아가.`, "채우기"))) return;
+  g = { ...g, free: { ...g.free, items: defaultFreeItems() } };
+  save();
+  for (const x of FREE_ITEMS) {
+    document.querySelector(`[data-free="${x.id}"]`).value = String(x.amount);
+    const pin = document.querySelector(`[data-free-on="${x.id}"]`);
+    pin.setAttribute("aria-pressed", "true");
+    pin.textContent = "켬";
+  }
+  renderGacha();
 }
 const setFree = (id, patch) => { g = { ...g, free: { ...g.free, items: { ...g.free.items, [id]: { ...g.free.items[id], ...patch } } } }; };
 const mdOf = (date) => { const d = parseDate(date); return `${d.getMonth() + 1}/${d.getDate()}`; };
@@ -242,6 +255,7 @@ export function startGacha() {
     change: (paid) => { g = { ...g, paid }; save(); renderGacha(); },
   });
   drawFreeItems();
+  $("gcFreeFill").textContent = `${FREE_VERSION} 버전 값으로 채우기`;
   fillInputs();
   renderGacha();
 
@@ -280,7 +294,9 @@ export function startGacha() {
       const chain = e.target.closest("[data-gc-chain]");
       const mode = e.target.closest("#gcMode [data-mode]");
       const freeOn = e.target.closest("[data-free-on]");
-      if (freeOn) { // 무과금 줄 켬/끔
+      if (e.target.closest("#gcFreeFill")) {
+        fillFree();
+      } else if (freeOn) { // 무과금 줄 켬/끔
         const on = !g.free.items[freeOn.dataset.freeOn].on;
         setFree(freeOn.dataset.freeOn, { on });
         freeOn.setAttribute("aria-pressed", String(on));

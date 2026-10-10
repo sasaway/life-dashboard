@@ -102,3 +102,19 @@ test("옛 저장 호환: items 가 없으면 기본 줄, 적어 둔 '그 밖에'
   for (const bad of [null, undefined, "x", 3]) assert.deepEqual(normalizeFreeItems(bad), defaultFreeItems());
   assert.equal(VERSION_DAYS, 42);
 });
+
+test("'이번 버전 값으로 채우기': 기본 줄이 어느 버전 값인지 적혀 있고, 채우면 고친 숫자 · 꺼 둔 줄만 처음대로 ('그 밖에' · 일일 의뢰는 그대로)", async () => {
+  const { FREE_VERSION } = await import("../js/gacha-free.js");
+  assert.equal(FREE_VERSION, "3.7");
+  const g = normalizeGacha({ free: { daily: 80, astrite: 500, char: 2, items: { explore: { amount: 1, on: false }, weekly: { amount: 999, on: true } } } });
+  const filled = { ...g, free: { ...g.free, items: defaultFreeItems() } }; // 화면 버튼이 하는 일
+  assert.deepEqual(filled.free.items, defaultGacha().free.items);
+  assert.deepEqual([filled.free.daily, filled.free.astrite, filled.free.char], [80, 500, 2]);
+  assert.deepEqual(filled.paid, g.paid);
+  assert.deepEqual(normalizeGacha(JSON.parse(JSON.stringify(filled))), filled);
+  // 화면 코드가 이 값을 쓰는지 (버튼 글자 · 확인 창)
+  const { readFileSync } = await import("node:fs");
+  const view = readFileSync(new URL("../js/gacha-view.js", import.meta.url), "utf8");
+  assert.match(view, /askConfirm\(`무과금 줄을 \$\{FREE_VERSION\} 버전 값으로/);
+  assert.match(view, /items: defaultFreeItems\(\)/);
+});

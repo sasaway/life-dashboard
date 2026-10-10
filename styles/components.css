@@ -584,6 +584,7 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .gc .money-rows .gc-free-row .field.won{width:84px}
 .gc-free-row:has(.pin[aria-pressed="false"]) .field{color:var(--faint)}
 .gc-free-sum{margin:4px 0 8px;padding-top:10px;border-top:1px solid var(--line)}
+.gc-free-fill{width:100%;min-height:var(--touch);margin-top:10px}
 .gc-sum{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .gc-sum li{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
 .gc-sum li:first-child{border-top:0;padding-top:0}
