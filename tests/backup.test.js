@@ -308,6 +308,11 @@ test("핫픽스 v3.1.1 가챠 무과금 줄(wuwaGacha.free.items)도 백업 → 
   restoreItems(later, old.backup.items);
   const opened = normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha")));
   assert.deepEqual([opened.free.astrite, opened.free.char, opened.free.items.weekly], [700, 2, { amount: 160, on: true }]);
+  // 핫픽스 v3.2.1: 지운 줄(on: false)도 백업에 그대로, v3.2 까지의 백업에 든 '7일 접속 무기뽑' · '3.7 선물' 줄은 열 때 버려진다
+  const cut = fakeStorage({ "ld:wuwaGacha": JSON.stringify({ free: { daily: 60, astrite: 0, char: 0, items: { mail: { amount: 900, on: false }, "login-weap": { amount: 5, on: true }, gift37: { amount: 10, on: false } } } }) });
+  restoreItems(later, readBackupText(JSON.stringify(await makeBackup({ storage: cut, photos: [], appVersion: "v3.2 · 10월 11일" }))).backup.items);
+  const kept = normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha")));
+  assert.deepEqual([kept.free.items.mail, "login-weap" in kept.free.items, "gift37" in kept.free.items], [{ amount: 900, on: false }, false, false]);
 });
 
 test("v3.2 결산의 전체 사용금액 · 기타 소비(settlements)도 백업 → 되살리기로 그대로, 그 칸이 없는 옛 백업도 열린다 (숫자는 지어낸 것)", async () => {

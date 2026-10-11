@@ -17,7 +17,7 @@ export const AVG_PER_FIVE = 56;
 export const DAILY_ASTRITE = 60;       // 일일 의뢰 하루 별소
 // 과금 상품(월정액 · 패스 · 팩 · 루나이트 충전)의 숫자는 js/gacha-shop.js 에 있다 (v2.8)
 // 무과금 줄(주간 · 해역 · 이벤트 …)의 숫자는 js/gacha-free.js 에 있다 (핫픽스 v3.1.1). 카드 아래 참고 글
-export const FREE_HINT = "기본값은 3.7 기준 커뮤니티 어림이야 (공식 수치 아님). 버전마다 달라서 고쳐 써. 이미 받아서 가진 것에 들어간 줄은 꺼 줘.";
+export const FREE_HINT = "기본값은 3.7 기준 커뮤니티 어림이야 (공식 수치 아님). 버전마다 달라서 고쳐 써. 이미 받아서 가진 것에 들어간 줄은 지워 줘. 버전 한정 선물은 '그 밖에 캐릭뽑' 에 직접 적어.";
 
 const MAX_COUNT = 9_999_999;
 

@@ -7,7 +7,7 @@ import {
   normalizeGacha, count, pullsOf, daysUntil, dLabel, income, FREE_HINT,
   CHAINS, chainLabel, expectation, astriteNeeded, verdict,
 } from "./gacha.js";
-import { FREE_ITEMS, FREE_VERSION, KIND_LABEL, CYCLE_LABEL, versionTotal, defaultFreeItems } from "./gacha-free.js";
+import { FREE_ITEMS, KIND_LABEL, CYCLE_LABEL, versionTotal, defaultFreeItems } from "./gacha-free.js";
 import { startShop, renderShop } from "./gacha-shop-view.js";
 import { openGachaPicker, findChar, charByName, face, elTag } from "./wuwa-view.js";
 import {
@@ -50,39 +50,43 @@ function paintToggle(b) {
   b.textContent = on ? "켬" : "끔";
 }
 
-// ---------- 무과금 줄 (핫픽스 v3.1.1): 줄마다 이름 · 숫자 칸 · 켬/끔. 칸은 한 번만 그리고, 아래 작은 글만 다시 쓴다 ----------
+// ---------- 무과금 줄 (핫픽스 v3.1.1 · v3.2.1): 줄마다 이름 · 숫자 칸 · 휴지통. 지운 줄(on: false)은 안 그린다.
+// 숫자를 치는 동안에는 줄을 다시 그리지 않고 아래 작은 글만 다시 쓴다 — 줄은 처음 · 지울 때 · 되돌릴 때만 그린다
 const freeName = (x) => (x.kind === "astrite" ? x.name : `${x.name} ${KIND_LABEL[x.kind]}`);
 function drawFreeItems() {
-  $("gcFreeMore").insertAdjacentHTML("beforebegin", FREE_ITEMS.map((x) => {
+  document.querySelectorAll(".gc-free-row").forEach((li) => li.remove());
+  $("gcFreeMore").insertAdjacentHTML("beforebegin", FREE_ITEMS.filter((x) => g.free.items[x.id].on).map((x) => {
     const it = g.free.items[x.id];
     return `<li class="gc-free-row"><span class="name">${esc(freeName(x))}<span class="sub num" data-free-sub="${x.id}"></span></span>
       <input class="field mono won" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" data-free="${x.id}" placeholder="0" value="${it.amount || ""}" aria-label="${esc(freeName(x))} ${CYCLE_LABEL[x.cycle]} 받는 수">
-      <button class="pin" data-free-on="${x.id}" aria-pressed="${it.on}" aria-label="${esc(freeName(x))} 계산에 넣기">${it.on ? "켬" : "끔"}</button></li>`;
+      <button class="icon-btn del" data-free-del="${x.id}" aria-label="${esc(freeName(x))} 줄 지우기">${ICON.trash}</button></li>`;
   }).join(""));
 }
-// '이번 버전 값으로 채우기': 무과금 줄의 숫자 · 켬/끔만 앱에 든 버전 값으로 (일일 의뢰 · '그 밖에' 두 칸 · 과금은 그대로)
-async function fillFree() {
-  if (!(await askConfirm(`무과금 줄을 ${FREE_VERSION} 버전 값으로 다시 채울까? 고친 숫자와 꺼 둔 줄이 처음대로 돌아가.`, "채우기"))) return;
+// 줄 지우기 (앱 안 확인 창). 되살리려면 '되돌리기'
+async function removeFree(id) {
+  const x = FREE_ITEMS.find((it) => it.id === id);
+  if (!x || !(await askConfirm(`'${freeName(x)}' 줄을 지울까? 계산에서 빠져. '되돌리기' 로 다시 살릴 수 있어.`, "지우기"))) return;
+  setFree(id, { on: false });
+  save();
+  drawFreeItems();
+  renderGacha();
+}
+// '되돌리기': 무과금 줄만 앱에 든 값으로 — 지운 줄이 돌아오고 고친 숫자도 처음대로 (일일 의뢰 · '그 밖에' 두 칸 · 과금은 그대로)
+async function resetFree() {
+  if (!(await askConfirm("무과금 줄을 처음 값으로 되돌릴까? 지운 줄이 돌아오고 고친 숫자도 처음대로 돼.", "되돌리기"))) return;
   g = { ...g, free: { ...g.free, items: defaultFreeItems() } };
   save();
-  for (const x of FREE_ITEMS) {
-    document.querySelector(`[data-free="${x.id}"]`).value = String(x.amount);
-    const pin = document.querySelector(`[data-free-on="${x.id}"]`);
-    pin.setAttribute("aria-pressed", "true");
-    pin.textContent = "켬";
-  }
+  drawFreeItems();
   renderGacha();
 }
 const setFree = (id, patch) => { g = { ...g, free: { ...g.free, items: { ...g.free.items, [id]: { ...g.free.items[id], ...patch } } } }; };
-const mdOf = (date) => { const d = parseDate(date); return `${d.getMonth() + 1}/${d.getDate()}`; };
 function renderFree(r, has) {
-  for (const l of r.items.lines) {
-    const cycle = l.cycle === "once" ? `${mdOf(l.date)} 한 번` : `${CYCLE_LABEL[l.cycle]}${l.rough ? " · 어림" : ""}`;
-    const calc = !has || !l.on ? "" : l.times > 1 ? ` · ${l.times}번 = ${num(l.got)}` : l.times ? " · 1번" : " · 안 세";
-    document.querySelector(`[data-free-sub="${l.id}"]`).textContent = cycle + calc;
+  for (const l of r.items.lines.filter((x) => x.on)) {
+    const calc = !has ? "" : l.times > 1 ? ` · ${l.times}번 = ${num(l.got)}` : " · 1번";
+    document.querySelector(`[data-free-sub="${l.id}"]`).textContent = `${CYCLE_LABEL[l.cycle]}${l.rough ? " · 어림" : ""}${calc}`;
   }
   const v = versionTotal(g.free.items, g.free.daily);
-  $("gcFreeSum").innerHTML = `<li><span class="name"><b>한 버전 다 받으면</b><span class="sub num">${esc(bundle(v))} · 켠 줄만</span></span>
+  $("gcFreeSum").innerHTML = `<li><span class="name"><b>한 버전 다 받으면</b><span class="sub num">${esc(bundle(v))}</span></span>
     <span class="gc-pulls">약 <span class="mono">${num(pullsOf(v))}</span>연</span></li>`;
 }
 
@@ -255,7 +259,6 @@ export function startGacha() {
     change: (paid) => { g = { ...g, paid }; save(); renderGacha(); },
   });
   drawFreeItems();
-  $("gcFreeFill").textContent = `${FREE_VERSION} 버전 값으로 채우기`;
   fillInputs();
   renderGacha();
 
@@ -293,16 +296,11 @@ export function startGacha() {
       const go = e.target.closest("[data-ww-go]");
       const chain = e.target.closest("[data-gc-chain]");
       const mode = e.target.closest("#gcMode [data-mode]");
-      const freeOn = e.target.closest("[data-free-on]");
+      const freeDel = e.target.closest("[data-free-del]");
       if (e.target.closest("#gcFreeFill")) {
-        fillFree();
-      } else if (freeOn) { // 무과금 줄 켬/끔
-        const on = !g.free.items[freeOn.dataset.freeOn].on;
-        setFree(freeOn.dataset.freeOn, { on });
-        freeOn.setAttribute("aria-pressed", String(on));
-        freeOn.textContent = on ? "켬" : "끔";
-        save();
-        renderGacha();
+        resetFree();
+      } else if (freeDel) {
+        removeFree(freeDel.dataset.freeDel);
       } else if (mode) {
         setMode(mode.dataset.mode);
       } else if (e.target.closest("#gcNewGo")) {

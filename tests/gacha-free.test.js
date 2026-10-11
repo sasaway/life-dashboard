@@ -10,20 +10,22 @@ test("핫픽스 v3.1.1 무과금 줄 기본값: 주간 160 · 해역·탑 2,400 
   assert.deepEqual(FREE_ITEMS.map((x) => [x.id, x.kind, x.amount, x.cycle]), [
     ["weekly", "astrite", 160, "week"], ["tower", "astrite", 2400, "version"], ["matrix", "astrite", 400, "version"],
     ["explore", "astrite", 4000, "version"], ["event", "astrite", 3450, "version"], ["mail", "astrite", 900, "version"],
-    ["login-char", "char", 5, "version"], ["login-weap", "weap", 5, "version"],
-    ["shop-char", "char", 7, "month"], ["shop-weap", "weap", 7, "month"], ["gift37", "char", 10, "once"],
+    ["login-char", "char", 5, "version"], ["shop-char", "char", 7, "month"], ["shop-weap", "weap", 7, "month"],
   ]);
-  assert.equal(item("gift37").date, "2026-10-22");
+  // 핫픽스 v3.2.1 (은월 2026-10-10): '7일 접속 무기뽑' · '3.7 선물 캐릭뽑' 은 기본 줄에서 뺐다. 날짜가 붙은 '한 번' 줄은 이제 없다
+  assert.deepEqual([item("login-weap"), item("gift37")], [undefined, undefined]);
+  assert.ok(FREE_ITEMS.every((x) => ["week", "version", "month"].includes(x.cycle) && !("date" in x)));
+  assert.equal(FREE_ITEMS.length, 9);
   assert.deepEqual(FREE_ITEMS.filter((x) => x.rough).map((x) => x.id), ["explore", "event"], "어림이 큰 줄은 가운데 값 (은월 선택)");
   assert.equal(new Set(FREE_ITEMS.map((x) => x.id)).size, FREE_ITEMS.length);
 });
 
-test("한 버전을 다 받으면 약 125연 (조사한 범위 110~120연 근처)", () => {
+test("한 버전을 다 받으면 약 110연 (핫픽스 v3.2.1 — 두 줄을 빼기 전에는 125연)", () => {
   const t = versionTotal(defaultFreeItems(), 60);
-  assert.deepEqual(t, { astrite: 60 * 42 + 160 * 6 + 2400 + 400 + 4000 + 3450 + 900, char: 22, weap: 12 });
-  assert.equal(pullsOf(t), 125);
+  assert.deepEqual(t, { astrite: 60 * 42 + 160 * 6 + 2400 + 400 + 4000 + 3450 + 900, char: 12, weap: 7 });
+  assert.equal(pullsOf(t), 110);
   const off = { ...defaultFreeItems(), event: { amount: 3450, on: false } };
-  assert.equal(versionTotal(off, 60).astrite, t.astrite - 3450, "꺼 둔 줄은 뺀다");
+  assert.equal(versionTotal(off, 60).astrite, t.astrite - 3450, "지운 줄은 뺀다");
 });
 
 test("주기별 세기: 주마다 = 이번 주 + 남은 주, 버전마다 = 지금 버전 + 새로 시작하는 버전, 달마다 = 이번 달 + 오는 1일 수", () => {
@@ -38,14 +40,6 @@ test("주기별 세기: 주마다 = 이번 주 + 남은 주, 버전마다 = 지�
   assert.equal(timesOf(item("shop-char"), ctx("2026-11-01", 22)), 2, "픽업 날이 1일이면 그 달 것도");
 });
 
-test("한 번만 받는 줄(3.7 선물 10/22): 그 날이 오늘 ~ 픽업 날 사이일 때만 센다 — 지나면 저절로 0", () => {
-  const gift = item("gift37");
-  assert.equal(timesOf(gift, ctx("2026-10-22", 12)), 1, "픽업 날 당일에 들어와도 센다");
-  assert.equal(timesOf(gift, ctx("2026-10-21", 11)), 0, "픽업이 그 전이면 못 받는다");
-  assert.equal(timesOf(gift, ctx("2026-11-11", 20)), 1, "오늘(10/22) 들어오는 날");
-  assert.equal(timesOf(gift, ctx("2026-11-11", 19)), 0, "지난 뒤(10/23)에는 이미 가진 것에 들어 있다");
-});
-
 test("날짜가 없거나 오늘 · 지난 날이면 모든 줄이 0", () => {
   for (const days of [null, 0, -3]) {
     const r = freeIncome(defaultFreeItems(), ctx(days === null ? "" : "2026-10-22", days));
@@ -54,25 +48,26 @@ test("날짜가 없거나 오늘 · 지난 날이면 모든 줄이 0", () => {
   }
 });
 
-test("전 / 후 예시 (2026-10-10, 가진 것 0, 기본값): 10/22 픽업 4연 → 110연, 11/11 픽업 12연 → 134연", () => {
+test("전 / 후 예시 (2026-10-10, 가진 것 0, 기본값): 10/22 픽업 4연 → 95연, 11/11 픽업 12연 → 119연 (v3.1.1 에서는 110 · 134연)", () => {
   const at = (date, days) => income(normalizeGacha({ plan: { date } }), days, { starts: 0 });
   const a = at("2026-10-22", 12);
-  assert.deepEqual(a.free, { astrite: 720 + 320 + 11150, char: 5 + 7 + 10, weap: 5 + 7 });
-  assert.equal(pullsOf(a.freeOnly), 110);
+  assert.deepEqual(a.free, { astrite: 720 + 320 + 11150, char: 5 + 7, weap: 7 });
+  assert.equal(pullsOf(a.freeOnly), 95);
   const b = at("2026-11-11", 32);
-  assert.deepEqual(b.free, { astrite: 1920 + 800 + 11150, char: 5 + 14 + 10, weap: 5 + 14 });
-  assert.equal(pullsOf(b.freeOnly), 134);
+  assert.deepEqual(b.free, { astrite: 1920 + 800 + 11150, char: 5 + 14, weap: 14 });
+  assert.equal(pullsOf(b.freeOnly), 119);
   // 보강 전 값: 일일 의뢰만
   const g = normalizeGacha({ plan: { date: "2026-10-22" } });
   const none = { ...g, free: { ...g.free, items: normalizeFreeItems(Object.fromEntries(FREE_ITEMS.map((x) => [x.id, { on: false }]))) } };
   assert.equal(pullsOf(income(none, 12).freeOnly), 4);
 });
 
-test("숫자를 고치거나 끄면 바로 반영되고, 줄마다 몇 번 · 얼마인지 알려 준다", () => {
+test("숫자를 고치거나 줄을 지우면(on: false) 바로 반영되고, 줄마다 몇 번 · 얼마인지 알려 준다", () => {
   const items = { ...defaultFreeItems(), explore: { amount: 4600, on: true }, event: { amount: 3450, on: false }, "shop-weap": { amount: 0, on: true } };
   const r = freeIncome(items, ctx("2026-10-22", 12, 0));
   assert.equal(r.total.astrite, 320 + 2400 + 400 + 4600 + 900);
-  assert.equal(r.total.weap, 5);
+  assert.equal(r.total.weap, 0, "상점 교환 무기뽑을 0 으로 적었고, 7일 접속 무기뽑 줄은 이제 없다");
+  assert.equal(r.total.char, 12);
   const line = (id) => r.lines.find((l) => l.id === id);
   assert.deepEqual([line("weekly").times, line("weekly").got], [2, 320]);
   assert.deepEqual([line("event").on, line("event").times, line("event").got], [false, 1, 0]);
@@ -103,18 +98,37 @@ test("옛 저장 호환: items 가 없으면 기본 줄, 적어 둔 '그 밖에'
   assert.equal(VERSION_DAYS, 42);
 });
 
-test("'이번 버전 값으로 채우기': 기본 줄이 어느 버전 값인지 적혀 있고, 채우면 고친 숫자 · 꺼 둔 줄만 처음대로 ('그 밖에' · 일일 의뢰는 그대로)", async () => {
+test("핫픽스 v3.2.1 '되돌리기': 지운 줄이 돌아오고 고친 숫자도 처음대로 — '그 밖에' · 일일 의뢰 · 과금은 그대로, 기본값에서 뺀 두 줄은 안 돌아온다", async () => {
   const { FREE_VERSION } = await import("../js/gacha-free.js");
   assert.equal(FREE_VERSION, "3.7");
   const g = normalizeGacha({ free: { daily: 80, astrite: 500, char: 2, items: { explore: { amount: 1, on: false }, weekly: { amount: 999, on: true } } } });
-  const filled = { ...g, free: { ...g.free, items: defaultFreeItems() } }; // 화면 버튼이 하는 일
-  assert.deepEqual(filled.free.items, defaultGacha().free.items);
-  assert.deepEqual([filled.free.daily, filled.free.astrite, filled.free.char], [80, 500, 2]);
-  assert.deepEqual(filled.paid, g.paid);
-  assert.deepEqual(normalizeGacha(JSON.parse(JSON.stringify(filled))), filled);
-  // 화면 코드가 이 값을 쓰는지 (버튼 글자 · 확인 창)
+  assert.equal(freeIncome(g.free.items, ctx("2026-10-22", 12, 0)).lines.find((l) => l.id === "explore").got, 0, "지운 줄은 합계에서 빠진다");
+  const reset = { ...g, free: { ...g.free, items: defaultFreeItems() } }; // 화면 버튼이 하는 일
+  assert.deepEqual(reset.free.items, defaultGacha().free.items);
+  assert.deepEqual(Object.keys(reset.free.items), FREE_ITEMS.map((x) => x.id));
+  assert.ok(!("login-weap" in reset.free.items) && !("gift37" in reset.free.items));
+  assert.deepEqual([reset.free.daily, reset.free.astrite, reset.free.char], [80, 500, 2]);
+  assert.deepEqual(reset.paid, g.paid);
+  assert.deepEqual(normalizeGacha(JSON.parse(JSON.stringify(reset))), reset);
+  // 화면 코드: 휴지통 → 확인 창 → on: false, 지운 줄은 안 그린다, 버튼은 '되돌리기'
   const { readFileSync } = await import("node:fs");
   const view = readFileSync(new URL("../js/gacha-view.js", import.meta.url), "utf8");
-  assert.match(view, /askConfirm\(`무과금 줄을 \$\{FREE_VERSION\} 버전 값으로/);
-  assert.match(view, /items: defaultFreeItems\(\)/);
+  assert.match(view, /askConfirm\(`'\$\{freeName\(x\)\}' 줄을 지울까\?/);
+  assert.match(view, /setFree\(id, \{ on: false \}\)/);
+  assert.match(view, /FREE_ITEMS\.filter\(\(x\) => g\.free\.items\[x\.id\]\.on\)/);
+  assert.match(view, /askConfirm\("무과금 줄을 처음 값으로 되돌릴까\?[^"]*", "되돌리기"\)/);
+  assert.ok(!/켬|끔/.test(view.slice(view.indexOf("무과금 줄 (핫픽스"), view.indexOf("const setFree"))), "무과금 줄에 켬/끔 버튼이 없다");
+  assert.match(readFileSync(new URL("../index.html", import.meta.url), "utf8"), /id="gcFreeFill">되돌리기</);
+});
+
+test("핫픽스 v3.2.1 옛 저장 (v3.1.1 · v3.2): '끔' 으로 둔 줄은 지운 줄이 되고 계산은 그대로, 기본값에서 뺀 두 줄은 버려진다", () => {
+  const old = { free: { daily: 60, astrite: 0, char: 0, items: {
+    weekly: { amount: 160, on: true }, tower: { amount: 2400, on: false }, explore: { amount: 4600, on: true },
+    "login-weap": { amount: 5, on: true }, gift37: { amount: 10, on: true } } }, plan: { date: "2026-10-22" } };
+  const g = normalizeGacha(old);
+  assert.deepEqual(Object.keys(g.free.items), FREE_ITEMS.map((x) => x.id));
+  assert.deepEqual([g.free.items.tower, g.free.items.explore], [{ amount: 2400, on: false }, { amount: 4600, on: true }]);
+  const r = income(g, 12, { starts: 0 });
+  assert.deepEqual(r.free, { astrite: 720 + 320 + 400 + 4600 + 3450 + 900, char: 12, weap: 7 }, "꺼 둔 해역 · 탑은 빠지고, 두 줄(무기뽑 5 · 캐릭뽑 10)은 더 안 센다");
+  assert.deepEqual(normalizeGacha(JSON.parse(JSON.stringify(g))), g, "다시 열어도 그대로");
 });
