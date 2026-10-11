@@ -6,7 +6,7 @@ import { openSheet, closeSheet } from "./sheet.js";
 import {
   DAILY, WEEKLY, BUILD, PARTY_SIZE, dailyDone, weeklyDone, toggleDaily, tapWeekly, dailyCount, weeklyCount,
   cleanCharacters, withUpcoming, isPlaceholder, adoptRealIds, findByName, pickupPlaceholder, ELEMENTS, WEAPONS, elementKey, filterCharacters, needsRefresh, addParty, renameParty, removeParty,
-  placeCharacter, clearSlot, placesOf, maxUses, partyMembers, filledCount, toggleBuild, buildCount, buildPct, partyPct,
+  placeCharacter, clearSlot, placesOf, maxUses, partyMembers, filledCount, toggleBuild, buildCount, buildPct,
 } from "./wuwa.js";
 import { $, esc } from "./dom.js";
 import { ICON } from "./icons.js";
@@ -108,19 +108,13 @@ function slotHtml(p, i) {
     ${no}${face(c, 52)}<span class="pt-name">${esc(c.name)}</span>${elTag(c.element)}</button></li>`;
 }
 
-// 파티 이름 줄의 육성 평균 (v3.1). 빈 파티는 아무 글자도 안 둔다
-function partyAvg(p) {
-  const pct = partyPct(p, builds);
-  return pct === null ? "" : `<span class="party-cnt" aria-label="육성 평균 ${pct}%, ${filledCount(p)}명 들어 있음">평균 <b class="mono">${pct}%</b></span>`;
-}
-
 function renderParties() {
   if (openGrow && !partyMembers(parties).some((m) => `${m.pid}:${m.id}` === openGrow)) openGrow = null;
   $("wwParties").innerHTML = parties.map((p) => `
     <section class="card party" aria-label="${esc(p.name)}">
       <div class="party-h">
         <input class="field party-name" data-rename="${p.id}" value="${esc(p.name)}" maxlength="20" aria-label="파티 이름">
-        ${partyAvg(p)}
+        <span class="mono party-cnt" aria-label="${filledCount(p)}명 들어 있음">${filledCount(p)} / ${PARTY_SIZE}</span>
         <button class="icon-btn" data-remove-party="${p.id}" aria-label="${esc(p.name)} 지우기">${ICON.trash}</button>
       </div>
       <ol class="pt-slots">${Array.from({ length: PARTY_SIZE }, (_, i) => slotHtml(p, i)).join("")}</ol>

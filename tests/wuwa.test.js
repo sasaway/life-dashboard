@@ -4,7 +4,7 @@ import {
   DAILY, WEEKLY, BUILD, gameDay, dailyKey, weeklyKey, dailyDone, weeklyDone, toggleDaily, tapWeekly,
   dailyCount, weeklyCount, cleanCharacters, searchCharacters, addParty, renameParty, removeParty,
   placeCharacter, clearSlot, placesOf, maxUses, TWO_COST, toggleBuild, buildCount, ELEMENTS, elementKey, filterCharacters,
-  partyMembers, filledCount, buildPct, partyPct, WEAPONS, needsRefresh, UPCOMING, withUpcoming, isPlaceholder, adoptRealIds,
+  partyMembers, filledCount, buildPct, WEAPONS, needsRefresh, UPCOMING, withUpcoming, isPlaceholder, adoptRealIds,
 } from "../js/wuwa.js";
 
 const at = (d, h, m = 0) => new Date(2026, 8, d, h, m); // 2026-09-21 월
@@ -209,15 +209,14 @@ test("v3.1 육성 진행도: 다섯 단계가 같은 비중 — 0 · 20 · 40 ·
   assert.equal(buildPct({ a: { lv: 1, 옛칸: 1 } }, "a"), 20, "모르는 칸은 세지 않는다");
 });
 
-test("v3.1 파티 평균: 넣은 공명자만으로, 정수로 반올림, 빈 파티는 null", () => {
-  const builds = { a: { lv: 1, weapon: 1, skill: 1, echo1: 1, echo2: 1 }, b: { lv: 1, weapon: 1, skill: 1 }, c: {} };
-  assert.equal(partyPct({ slots: ["a", "b", "c"] }, builds), 53); // (100 + 60 + 0) / 3 = 53.3
-  assert.equal(partyPct({ slots: ["a", null, "b"] }, builds), 80, "빈 칸은 세지 않는다");
-  assert.equal(partyPct({ slots: ["a", "b", "d"] }, { ...builds, d: { lv: 1 } }), 60);
-  assert.equal(partyPct({ slots: [null, "a", null] }, builds), 100);
-  assert.equal(partyPct({ slots: ["x", null, null] }, builds), 0, "체크가 없는 공명자는 0%");
-  assert.equal(partyPct({ slots: [null, null, null] }, builds), null);
-  assert.equal(partyPct({ slots: ["b", "b", "a"].slice(0, 2).concat("c") }, builds), 40); // (60 + 60 + 0) / 3
-  assert.equal(partyPct({ slots: ["a", "b", "b"] }, builds), 73); // 73.3
-  assert.equal(partyPct({ slots: ["a", "a", "b"] }, builds), 87); // 86.7
+test("핫픽스 v3.2.1 파티 이름 줄: 파티 평균 % 는 없고 v3.1 전처럼 'n / 3' (몇 명 들어 있는지) — 공명자별 % 는 그대로", async () => {
+  const wuwa = await import("../js/wuwa.js");
+  assert.equal("partyPct" in wuwa, false, "파티 평균 계산은 지웠다");
+  assert.equal(typeof wuwa.buildPct, "function");
+  assert.deepEqual([{ slots: ["a", "b", "c"] }, { slots: ["a", null, "b"] }, { slots: [null, null, null] }].map(filledCount), [3, 2, 0]);
+  const { readFileSync } = await import("node:fs");
+  const view = readFileSync(new URL("../js/wuwa-view.js", import.meta.url), "utf8");
+  assert.match(view, /<span class="mono party-cnt" aria-label="\$\{filledCount\(p\)\}명 들어 있음">\$\{filledCount\(p\)\} \/ \$\{PARTY_SIZE\}<\/span>/);
+  assert.ok(!view.includes("평균") && !view.includes("partyPct"));
+  assert.match(view, /grow-cnt[^`]*\$\{buildPct\(builds, m\.id\)\}%/, "공명자 줄의 퍼센트는 그대로");
 });

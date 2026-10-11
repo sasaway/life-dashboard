@@ -209,10 +209,5 @@ export function toggleBuild(builds, charId, key) {
 
 export const buildCount = (builds, charId) => BUILD.filter((b) => builds[charId]?.[b.id]).length;
 
-// 육성 진행도 (v3.1): 다섯 단계가 같은 비중 — 한 단계에 20%
+// 육성 진행도 (v3.1): 다섯 단계가 같은 비중 — 한 단계에 20%. 공명자마다만 보여 준다 (파티 평균은 핫픽스 v3.2.1 에서 뺌, 은월 결정)
 export const buildPct = (builds, charId) => Math.round((buildCount(builds, charId) / BUILD.length) * 100);
-// 파티 평균: 넣은 공명자만으로 (은월 선택). 아무도 없으면 null
-export function partyPct(party, builds) {
-  const ids = party.slots.filter(Boolean);
-  return ids.length ? Math.round(ids.reduce((s, id) => s + buildPct(builds, id), 0) / ids.length) : null;
-}
