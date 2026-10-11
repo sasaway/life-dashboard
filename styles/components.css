@@ -451,8 +451,20 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 /* 워프레임: 장비 목록 */
 .gear{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .gear-row{width:100%;text-align:left;display:flex;flex-direction:column;gap:6px;padding:10px 12px;min-height:var(--touch);border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
+/* v3.3: 카드 안 장비 줄 — 명조 육성 줄(.grow-item) 그대로, 얼굴 칸만 없다. 펼치면 체크 두 칸 · 목표 모딩 · 포르마 */
+.gear-row .grow,.gear-others{margin-top:4px}
+.gear-others{margin:0 0 10px}
+.gear-h{grid-template-columns:1fr auto 20px}
+.gear-h .who{display:flex;flex-direction:column;min-width:0}
+.gear-h .who b{overflow-wrap:anywhere;font-weight:600}
+.gear-h .sub{font-size:var(--fs-tiny);color:var(--faint)}
+.gear-h .tag{margin:0}
+.gear-edit{margin-left:auto;min-height:var(--touch);padding:0 4px}
+.gear-goal,.gear-forma{display:grid;grid-template-columns:72px 1fr;gap:8px;align-items:center;font-size:var(--fs-small);color:var(--sub)}
+.gear-forma .gc-step{justify-self:start}
+.gear-del{align-self:flex-start;min-height:var(--touch);padding:0;color:var(--sub)}
 .gear-row.wish{border-style:dashed}
-.gear-top{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 8px}
+.gear-top{display:flex;align-items:center;flex-wrap:wrap;gap:0 8px}
 .gear-top .sub{font-size:var(--fs-tiny);color:var(--faint)}
 .gear-styles{display:flex;flex-wrap:wrap;gap:4px}
 .gear-styles .tag{margin:0}

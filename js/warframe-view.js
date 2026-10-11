@@ -7,6 +7,7 @@ import {
   DAILY, PLAYSTYLES, SORTIE_TYPES, GEAR_FIELDS, DEFAULT_GEAR, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo,
   removeTodo, moveTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame, isBlankFrame,
   addOther, removeOther, sortieView, invasionView, alertView, timeLeft,
+  gearItems, buildOf, setBuild, MAX_FORMA,
   liveDue, liveAtLabel,
 } from "./warframe.js";
 import { $, esc, X_SVG } from "./dom.js";
@@ -186,29 +187,91 @@ async function loadLive(force = false) {
 }
 
 // ---------- 장비 목록 (워프레임 기준) ----------
-// 주무기 바로 아래에 Sortie 분류를 둔다
-const slotsOf = (f) => [
-  ["주무기", f.primary], ["Sortie 분류", f.sortie],
-  ...GEAR_FIELDS.slice(1).map(([k, label]) => [label, f[k]]),
-].filter(([, v]) => v);
+// v3.3: 카드마다 장비 줄(워프레임 · 주무기 · 보조 · 근접 · 동반자 중 이름이 적힌 것) — 줄을 누르면 그 장비의 육성 칸이 펼쳐진다 (한 번에 하나, 명조 육성 줄과 같은 부품).
+// 이름 · 플레이스타일을 고치는 창은 카드 머리의 [고치기] 로 연다
+let openBuild = null; // 펼친 장비 줄의 열쇠 ("워프레임id:자리" · "o:그 외 무기 이름")
+
+function buildRow(x) {
+  const open = openBuild === x.key;
+  const b = x.build;
+  const sub = `${esc(x.label)}${x.sortie ? ` · <span class="tag">${esc(x.sortie)}</span>` : ""}${b.forma ? ` · 포르마 ${b.forma}` : ""}`;
+  return `<li class="grow-item${open ? " open" : ""}">
+    <button class="grow-h gear-h" data-build-open="${esc(x.key)}" aria-expanded="${open}">
+      <span class="who"><b>${esc(x.name)}</b><span class="sub">${sub}</span></span>
+      <span class="mono grow-cnt${x.pct === 100 ? " done" : ""}" aria-label="육성 ${x.pct}%">${x.pct}%</span>
+      <span class="chev">${ICON.chevronDown}</span>
+    </button>
+    ${open ? `<div class="grow-body">
+      <div class="meter"><i style="width:${x.pct}%"></i></div>
+      <div class="build">
+        ${chip(`data-build-flag="cat" data-key="${esc(x.key)}"`, `${x.cat} 장착`, b.cat, true)}
+        ${chip(`data-build-flag="done" data-key="${esc(x.key)}"`, "모딩 완료", b.done, true)}
+      </div>
+      <label class="gear-goal"><span>목표 모딩</span>
+        <input class="field" data-build-goal="${esc(x.key)}" value="${esc(b.goal)}" maxlength="40" placeholder="예: 부식 세팅" autocomplete="off"></label>
+      <div class="gear-forma"><span>쓴 포르마</span>
+        <div class="gc-step" role="group" aria-label="${esc(x.name)} 포르마 수">
+          <button data-forma="-1" data-key="${esc(x.key)}" aria-label="포르마 하나 빼기"${b.forma <= 0 ? " disabled" : ""}>−</button>
+          <span class="mono">${b.forma}</span>
+          <button data-forma="1" data-key="${esc(x.key)}" aria-label="포르마 하나 더하기"${b.forma >= MAX_FORMA ? " disabled" : ""}>+</button>
+        </div></div>
+      ${x.slot === "other" ? `<button class="btn btn-text gear-del" data-del-other="${x.index}">'${esc(x.name)}' 목록에서 지우기</button>` : ""}
+    </div>` : ""}
+  </li>`;
+}
 
 function renderGear() {
+  const items = gearItems(gear);
+  if (openBuild && !items.some((x) => x.key === openBuild)) openBuild = null;
   // 위시리스트(구매할 예정)는 맨 아래로
   const list = [...gear.frames.filter((f) => !f.wish), ...gear.frames.filter((f) => f.wish)];
   $("wfGear").innerHTML = list.map((f) => {
-    // Sortie 분류는 플레이스타일처럼 작은 알약으로
-    const slots = slotsOf(f).map(([label, v]) => `<span class="k">${label}</span>${label === "Sortie 분류"
-      ? `<span><span class="tag">${esc(v)}</span></span>` : `<span>${esc(v)}</span>`}`).join("");
+    const rows = items.filter((x) => x.frameId === f.id);
     const styles = f.styles.map((st) => `<span class="tag">${esc(st)}</span>`).join("");
-    return `<li><button class="gear-row${f.wish ? " wish" : ""}" data-gear="${esc(f.id)}">
-      <span class="gear-top"><b>${esc(f.frame || "이름 없는 워프레임")}</b>${f.wish ? '<span class="sub">위시리스트 · 구매 예정</span>' : ""}</span>
-      ${styles ? `<span class="gear-styles">${styles}</span>` : ""}
-      ${slots ? `<span class="gear-slots">${slots}</span>` : '<span class="empty">비어 있어. 눌러서 채워 봐.</span>'}
-    </button></li>`;
+    return `<li class="gear-row${f.wish ? " wish" : ""}">
+      <div class="gear-top"><b>${esc(f.frame || "이름 없는 워프레임")}</b>${f.wish ? '<span class="sub">위시리스트 · 구매 예정</span>' : ""}
+        <button class="btn btn-text gear-edit" data-gear="${esc(f.id)}" aria-label="${esc(f.frame || "이름 없는 워프레임")} 고치기">고치기</button></div>
+      ${styles ? `<div class="gear-styles">${styles}</div>` : ""}
+      ${rows.length ? `<ul class="grow">${rows.map(buildRow).join("")}</ul>` : '<p class="empty">비어 있어. 고치기를 눌러 채워 봐.</p>'}
+    </li>`;
   }).join("");
-  $("wfOthers").innerHTML = gear.others.map((n, i) =>
-    `<li><span>${esc(n)}</span><button data-del-other="${i}" aria-label="${esc(n)} 지우기">${X_SVG}</button></li>`).join("");
+  $("wfOthers").innerHTML = items.filter((x) => x.slot === "other").map(buildRow).join("");
   renderHub();
+}
+
+// 장비 줄 누르기: 펼치기 · 체크 두 칸 · 포르마 − / + · (그 외 무기) 지우기
+function onBuildClick(e) {
+  const open = e.target.closest("[data-build-open]");
+  const flag = e.target.closest("[data-build-flag]");
+  const forma = e.target.closest("[data-forma]");
+  const del = e.target.closest("[data-del-other]");
+  if (open) {
+    openBuild = openBuild === open.dataset.buildOpen ? null : open.dataset.buildOpen;
+    renderGear();
+    return document.querySelector(`[data-build-open="${CSS.escape(open.dataset.buildOpen)}"]`)?.focus();
+  }
+  let focus = "";
+  if (flag) {
+    const { key, buildFlag } = flag.dataset;
+    gear = setBuild(gear, key, { [buildFlag]: !buildOf(gear, key)[buildFlag] });
+    focus = `[data-build-flag="${buildFlag}"][data-key="${CSS.escape(key)}"]`;
+  } else if (forma) {
+    const { key } = forma.dataset;
+    gear = setBuild(gear, key, { forma: buildOf(gear, key).forma + Number(forma.dataset.forma) });
+    focus = `[data-forma="${forma.dataset.forma}"][data-key="${CSS.escape(key)}"]`;
+  } else if (del) {
+    gear = removeOther(gear, Number(del.dataset.delOther));
+  } else return;
+  saveGear();
+  renderGear();
+  if (focus) document.querySelector(focus)?.focus();
+}
+// 목표 모딩 글: 쓰는 대로 저장하고 줄은 다시 그리지 않는다 (쓰던 자리가 안 튀게)
+function onBuildInput(e) {
+  const key = e.target.dataset.buildGoal;
+  if (!key) return;
+  gear = setBuild(gear, key, { goal: e.target.value });
+  saveGear();
 }
 
 // 저장할 때마다 기록 시트에도 (연결했으면)
@@ -299,7 +362,11 @@ export function startWarframe() {
   $("wfGear").addEventListener("click", (e) => {
     const b = e.target.closest("[data-gear]");
     if (b) openGear(b.dataset.gear);
+    else onBuildClick(e);
   });
+  $("wfGear").addEventListener("input", onBuildInput);
+  $("wfOthers").addEventListener("click", onBuildClick);
+  $("wfOthers").addEventListener("input", onBuildInput);
   $("wfAddRow").addEventListener("click", () => {
     gear = addFrame(gear);
     saveGear();
@@ -347,13 +414,6 @@ export function startWarframe() {
     gear = addOther(gear, $("wfOtherInput").value);
     saveGear();
     $("wfOtherInput").value = "";
-    renderGear();
-  });
-  $("wfOthers").addEventListener("click", (e) => {
-    const b = e.target.closest("[data-del-other]");
-    if (!b) return;
-    gear = removeOther(gear, Number(b.dataset.delOther));
-    saveGear();
     renderGear();
   });
 }

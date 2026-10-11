@@ -107,7 +107,7 @@ export function migrateGear(gear) {
     frames.push(frame(r.id, r.frame, wish ? [] : style, wish, SORTIE_TYPES.includes(r.sortie) ? r.sortie : "",
       r.primary, r.secondary, r.melee, r.companion));
   }
-  return { frames, others: gear.others ?? [] };
+  return { frames, others: gear.others ?? [], ...(gear.build ? { build: gear.build } : {}) };
 }
 
 const sortStyles = (list) => PLAYSTYLES.filter((p) => list.includes(p));
@@ -120,7 +120,7 @@ export const toggleStyle = (gear, id, style) =>
   patchFrame(gear, id, (f) => ({ styles: f.styles.includes(style) ? f.styles.filter((s) => s !== style) : sortStyles([...f.styles, style]) }));
 export const setSortie = (gear, id, type) => patchFrame(gear, id, (f) => ({ sortie: f.sortie === type ? "" : type }));
 export const toggleWish = (gear, id) => patchFrame(gear, id, (f) => ({ wish: !f.wish }));
-export const removeFrame = (gear, id) => ({ ...gear, frames: gear.frames.filter((f) => f.id !== id) });
+export const removeFrame = (gear, id) => dropBuild({ ...gear, frames: gear.frames.filter((f) => f.id !== id) }, (k) => k.startsWith(`${id}:`));
 // '워프레임 추가' 를 누르고 아무것도 안 적은 채 닫았는지
 export const isBlankFrame = (f) =>
   !f.wish && !f.styles.length && !["frame", "sortie", ...GEAR_FIELDS.map(([k]) => k)].some((k) => f[k]);
@@ -128,7 +128,55 @@ export function addOther(gear, name) {
   const n = name.trim();
   return n ? { ...gear, others: [...gear.others, n] } : gear;
 }
-export const removeOther = (gear, i) => ({ ...gear, others: gear.others.filter((_, k) => k !== i) });
+export function removeOther(gear, i) {
+  const others = gear.others.filter((_, k) => k !== i);
+  const name = gear.others[i];
+  // 같은 이름이 또 있으면 그 기록은 남긴다
+  return dropBuild({ ...gear, others }, (k) => k === otherKey(name) && !others.includes(name));
+}
+
+// ---------- 장비마다 육성 (v3.3, Notion '각 장비 아래에'): 리액터/카탈리스트 장착 · 목표 모딩 · 포르마 수 · 진행도 % ----------
+// gear.build = { "워프레임id:자리": { cat, goal, done, forma }, "o:그 외 무기 이름": {…} } — 없는 열쇠는 전부 0 (옛 저장에는 build 가 통째로 없다).
+// frames · others 의 모양은 그대로 둔다 (시트 '워프레임 장비' · '그 외 무기' 탭이 안 바뀌게).
+// 무기 이름을 고쳐도 그 자리의 기록은 남고, 워프레임 · 그 외 무기를 지우면 같이 지운다
+export const GEAR_SLOTS = [["frame", "워프레임"], ...GEAR_FIELDS];
+export const MAX_FORMA = 99;
+const GOAL_LEN = 40;
+const NO_BUILD = { cat: false, goal: "", done: false, forma: 0 };
+// 워프레임 · 동반자에는 오로킨 리액터, 무기에는 오로킨 카탈리스트를 꽂는다
+export const catLabel = (slot) => (slot === "frame" || slot === "companion" ? "리액터" : "카탈리스트");
+export const otherKey = (name) => `o:${name}`;
+export const buildOf = (gear, key) => ({ ...NO_BUILD, ...(gear.build?.[key] ?? {}) });
+
+export function setBuild(gear, key, patch) {
+  const next = buildOf(gear, key);
+  if ("cat" in patch) next.cat = Boolean(patch.cat);
+  if ("done" in patch) next.done = Boolean(patch.done);
+  if ("goal" in patch) next.goal = String(patch.goal ?? "").replace(/\s+/g, " ").trim().slice(0, GOAL_LEN);
+  if ("forma" in patch) next.forma = Number.isFinite(Number(patch.forma)) ? Math.max(0, Math.min(MAX_FORMA, Math.floor(Number(patch.forma)))) : next.forma;
+  return { ...gear, build: { ...(gear.build ?? {}), [key]: next } };
+}
+function dropBuild(gear, match) {
+  if (!gear.build || !Object.keys(gear.build).some(match)) return gear;
+  return { ...gear, build: Object.fromEntries(Object.entries(gear.build).filter(([k]) => !match(k))) };
+}
+
+// 진행도 (은월 선택): 장착 50% + 목표 모딩 완료 50%. 포르마는 숫자만 보여 주고 % 에는 넣지 않는다
+export const gearPct = (b) => (b.cat ? 50 : 0) + (b.done ? 50 : 0);
+
+// 화면과 시트가 같이 쓰는 장비 줄: 워프레임마다 이름이 적힌 자리만 (위시리스트는 맨 아래 — 화면 · '워프레임 장비' 탭과 같은 순서), 그다음 그 외 무기
+export function gearItems(gear) {
+  const frames = [...gear.frames.filter((f) => !f.wish), ...gear.frames.filter((f) => f.wish)];
+  const item = (key, frameId, frameName, slot, label, name, more = {}) => {
+    const build = buildOf(gear, key);
+    return { key, frameId, frame: frameName, slot, label, name, cat: catLabel(slot), build, pct: gearPct(build), ...more };
+  };
+  return [
+    ...frames.flatMap((f) => GEAR_SLOTS.filter(([slot]) => f[slot]).map(([slot, label]) =>
+      item(`${f.id}:${slot}`, f.id, f.frame, slot, label, f[slot], slot === "primary" && f.sortie ? { sortie: f.sortie } : {}))),
+    ...gear.others.map((name, index) => item(otherKey(name), "", "", "other", "그 외 무기", name, { index })),
+  ];
+}
 
 // ---------- 실시간 현황 (warframestat.us, 영어로만 온다) ----------
 // 미션 종류·세력만 한국어로 (사용자 결정). 사전에 없는 건 영어 그대로 둔다

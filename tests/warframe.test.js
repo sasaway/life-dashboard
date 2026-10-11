@@ -5,7 +5,7 @@ import {
   PLAYSTYLES, SORTIE_TYPES, DEFAULT_GEAR, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish,
   removeFrame, isBlankFrame, addOther, removeOther,
   sortieView, rewardHits, invasionView, alertView, timeLeft, missionKo, factionKo,
-  liveDue, liveAtLabel, moveTodo,
+  liveDue, liveAtLabel, moveTodo, GEAR_SLOTS, MAX_FORMA, catLabel, otherKey, buildOf, setBuild, gearPct, gearItems,
 } from "../js/warframe.js";
 
 const at = (d, h, m = 0) => new Date(2026, 8, d, h, m); // 2026-09-21 월
@@ -210,4 +210,78 @@ test("v3.3 순위를 바꿔도 체크 · 새벽 1시 규칙은 그대로: 체크
   assert.deepEqual(pruneTodos(todos, night).map((t) => t.id), ["c", "b", "a"], "같은 날에는 그대로");
   assert.deepEqual(pruneTodos(todos, new Date(2026, 9, 12, 1, 0)).map((t) => t.id), ["c", "a"], "새벽 1시 뒤: 체크한 것만 사라지고 순서 유지");
   assert.deepEqual(addTodo(todos, "새 일", "n").map((t) => t.id), ["c", "b", "a", "n"], "새 항목은 맨 아래");
+});
+
+// ---------- v3.3 장비마다 육성: 리액터/카탈리스트 · 목표 모딩 · 포르마 · % ----------
+test("v3.3 세 칸: 기록이 없는 장비는 전부 0, 켜고 끄기 · 글 다듬기 · 포르마는 0~99", () => {
+  const g0 = DEFAULT_GEAR;
+  assert.deepEqual(buildOf(g0, "inv:primary"), { cat: false, goal: "", done: false, forma: 0 });
+  let g = setBuild(g0, "inv:primary", { cat: true });
+  g = setBuild(g, "inv:primary", { goal: "  부식   세팅  " });
+  g = setBuild(g, "inv:primary", { forma: 3 });
+  assert.deepEqual(buildOf(g, "inv:primary"), { cat: true, goal: "부식 세팅", done: false, forma: 3 });
+  assert.deepEqual(buildOf(g, "inv:secondary"), { cat: false, goal: "", done: false, forma: 0 }, "다른 장비는 그대로");
+  assert.equal(buildOf(setBuild(g, "inv:primary", { cat: false }), "inv:primary").cat, false);
+  assert.deepEqual([-1, 0, 99, 100, 2.9, "7", "abc", NaN].map((n) => buildOf(setBuild(g, "inv:primary", { forma: n }), "inv:primary").forma), [0, 0, 99, 99, 2, 7, 3, 3]);
+  assert.equal(MAX_FORMA, 99);
+  assert.equal(buildOf(setBuild(g, "inv:primary", { goal: "가".repeat(60) }), "inv:primary").goal.length, 40);
+  assert.equal(g0.build, undefined, "받은 값은 안 바꾼다");
+  assert.deepEqual([g.frames, g.others], [g0.frames, g0.others], "frames · others 는 그대로 (시트 두 탭이 안 바뀐다)");
+});
+
+test("v3.3 진행도 % = 장착 50 + 목표 모딩 완료 50 (포르마는 안 넣는다): 0 · 50 · 100", () => {
+  assert.equal(gearPct({ cat: false, done: false, forma: 9, goal: "x" }), 0);
+  assert.equal(gearPct({ cat: true, done: false, forma: 0, goal: "" }), 50, "카탈리스트는 꽂았고 모딩은 아직");
+  assert.equal(gearPct({ cat: false, done: true, forma: 0, goal: "" }), 50);
+  assert.equal(gearPct({ cat: true, done: true, forma: 0, goal: "" }), 100);
+  assert.equal(gearPct(buildOf(DEFAULT_GEAR, "없는 열쇠")), 0);
+});
+
+test("v3.3 장비 줄: 이름이 적힌 자리만, 워프레임 · 동반자는 리액터 / 무기는 카탈리스트, 위시리스트는 아래 · 그 외 무기는 맨 아래", () => {
+  assert.deepEqual(GEAR_SLOTS.map(([k]) => k), ["frame", "primary", "secondary", "melee", "companion"]);
+  assert.deepEqual(["frame", "primary", "secondary", "melee", "companion", "other"].map(catLabel), ["리액터", "카탈리스트", "카탈리스트", "카탈리스트", "리액터", "카탈리스트"]);
+  const g = setBuild(setBuild(DEFAULT_GEAR, "inv:primary", { cat: true, forma: 2 }), otherKey("볼터"), { cat: true, done: true });
+  const items = gearItems(g);
+  assert.equal(items.length, 5 + 5 + 5 + 4 + 8, "나린(위시리스트)은 동반자가 비어 4줄");
+  assert.deepEqual(items.slice(0, 5).map((x) => `${x.label} ${x.name} ${x.pct}`), ["워프레임 오락시아 0", "주무기 쿠바 소백 50", "보조무기 사이오티드 0", "근접무기 스피너랙스 0", "동반자 스미타 카밧 0"]);
+  assert.deepEqual([items[1].key, items[1].frame, items[1].sortie, items[1].cat, items[1].build.forma], ["inv:primary", "오락시아", "Shotgun", "카탈리스트", 2]);
+  assert.equal(items[0].sortie, undefined, "Sortie 분류는 주무기 줄에만");
+  assert.deepEqual(items.slice(15, 19).map((x) => x.frame), ["나린", "나린", "나린", "나린"], "위시리스트는 다른 워프레임 뒤");
+  const volt = items.find((x) => x.key === "o:볼터");
+  assert.deepEqual([volt.slot, volt.label, volt.frame, volt.index, volt.pct], ["other", "그 외 무기", "", 1, 100]);
+  assert.deepEqual(gearItems({ frames: [], others: [] }), []);
+  assert.equal(gearItems(addFrame(DEFAULT_GEAR, "new")).length, items.length, "이름이 하나도 없는 새 카드는 줄이 없다");
+});
+
+test("v3.3 무기 이름을 고쳐도 그 자리의 기록은 남고, 워프레임 · 그 외 무기를 지우면 그 기록도 지운다", () => {
+  let g = setBuild(DEFAULT_GEAR, "inv:primary", { cat: true, goal: "부식", forma: 4 });
+  g = setBuild(g, "sup:frame", { done: true });
+  g = setBuild(g, otherKey("볼터"), { forma: 1 });
+  const renamed = updateFrame(g, "inv", { primary: "쿠바 소백 프라임" });
+  assert.deepEqual(buildOf(renamed, "inv:primary"), { cat: true, goal: "부식", done: false, forma: 4 });
+  assert.equal(gearItems(renamed).find((x) => x.key === "inv:primary").name, "쿠바 소백 프라임");
+  const noFrame = removeFrame(g, "inv");
+  assert.deepEqual(Object.keys(noFrame.build).sort(), ["o:볼터", "sup:frame"]);
+  const noOther = removeOther(g, g.others.indexOf("볼터"));
+  assert.deepEqual(Object.keys(noOther.build).sort(), ["inv:primary", "sup:frame"]);
+  // 같은 이름이 두 번 있으면 하나를 지워도 기록은 남는다
+  const twice = addOther(g, "볼터");
+  assert.ok("o:볼터" in removeOther(twice, twice.others.lastIndexOf("볼터")).build);
+  // 기록이 없는 장비를 지울 때는 받은 build 를 그대로
+  assert.equal(removeFrame(g, "cc").build, g.build);
+  assert.equal(removeFrame(DEFAULT_GEAR, "cc").build, undefined);
+});
+
+test("v3.3 옛 저장 호환: build 가 없는 장비 목록 · v16 모양도 그대로 열리고, 옮길 때 육성 기록은 남는다", () => {
+  const old = JSON.parse(JSON.stringify(DEFAULT_GEAR));
+  assert.equal(migrateGear(old), old);
+  assert.ok(gearItems(old).every((x) => x.pct === 0 && x.build.forma === 0));
+  const v16 = { rows: [{ id: "r1", style: "Damage", frame: "오락시아", sortie: "Shotgun", primary: "쿠바 소백", secondary: "", melee: "", companion: "" }], others: ["볼터"] };
+  const moved = migrateGear(v16);
+  assert.equal("build" in moved, false);
+  assert.deepEqual(gearItems(moved).map((x) => x.key), ["r1:frame", "r1:primary", "o:볼터"]);
+  assert.deepEqual(migrateGear({ ...v16, build: { "r1:primary": { cat: true, goal: "", done: false, forma: 1 } } }).build, { "r1:primary": { cat: true, goal: "", done: false, forma: 1 } });
+  // 저장됐다 읽혀도 같다
+  const g = setBuild(DEFAULT_GEAR, "inv:primary", { cat: true, goal: "부식", forma: 4 });
+  assert.deepEqual(gearItems(JSON.parse(JSON.stringify(g))), gearItems(g));
 });

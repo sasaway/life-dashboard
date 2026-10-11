@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { gearRows, otherRows, partyRows, payload, replyError, EMPTY_SLOT, SENT_TABS, TAB_GROUPS } from "../js/hobby-sync.js";
+import { gearRows, otherRows, buildRows, partyRows, payload, replyError, EMPTY_SLOT, SENT_TABS, TAB_GROUPS } from "../js/hobby-sync.js";
 import { DEFAULT_SETTINGS } from "../js/schedule.js";
 
 const gear = {
@@ -39,13 +39,13 @@ test("코스트 2 공명자가 두 파티에 있으면 두 줄 다, 육성 체�
   assert.deepEqual(rows, [["A", "1", "벨리나", "O", "", "", "", ""], ["B", "2", "벨리나", "O", "", "", "", ""]]);
 });
 
-test("주소나 암호 글자가 없으면 보내지 않는다 · 있으면 열한 탭과 암호만 보낸다", () => {
+test("주소나 암호 글자가 없으면 보내지 않는다 · 있으면 열두 탭과 암호만 보낸다", () => {
   const data = { gear, parties: [], builds: {}, chars, settings: DEFAULT_SETTINGS, workoutLog: {}, mealLog: {}, reviews: {}, weekReviews: {}, hobbyLog: {}, todos: [] };
   const now = new Date(2026, 9, 3, 20, 0);
   assert.equal(payload({ url: "", token: "t" }, data, now), null);
   assert.equal(payload({ url: "https://script.google.com/macros/s/x/exec", token: "" }, data, now), null);
   const body = JSON.parse(payload({ url: "https://script.google.com/macros/s/x/exec", token: "t" }, data, now));
-  assert.deepEqual(Object.keys(body), ["token", "warframe", "others", "wuwa", "today", "recent", "meals", "workouts", "hobby", "reviews", "plan", "next7"]);
+  assert.deepEqual(Object.keys(body), ["token", "warframe", "others", "wuwa", "wfBuild", "today", "recent", "meals", "workouts", "hobby", "reviews", "plan", "next7"]);
   assert.equal(body.token, "t");
   assert.equal(body.warframe.length, 2);
 });
@@ -59,7 +59,7 @@ test("심부름꾼의 탭 목록과 앱이 보내는 것이 같다 (이름 · �
   }));
   assert.deepEqual(tabs.map((t) => t.name), SENT_TABS);
   assert.ok(!SENT_TABS.includes("픽업 일정"));
-  assert.deepEqual(TAB_GROUPS.map((g) => `${g.name} ${g.tabs.length}`), ["취미 3", "기록 6", "일정 2"], "설정 화면의 세 묶음");
+  assert.deepEqual(TAB_GROUPS.map((g) => `${g.name} ${g.tabs.length}`), ["취미 4", "기록 6", "일정 2"], "설정 화면의 세 묶음");
   const data = {
     gear, parties: [{ id: "p", name: "x", slots: ["1102", null, null] }], builds: {}, chars, settings: DEFAULT_SETTINGS,
     workoutLog: { "2026-10-03": { legpress: 2 } }, mealLog: { "2026-10-03": [{ label: "저녁", dish: "jja" }] },
@@ -78,4 +78,39 @@ test("심부름꾼 답 읽기", () => {
   assert.match(replyError({ ok: false, error: "token" }), /암호/);
   assert.match(replyError({ ok: false, error: "no-setup" }), /setup/);
   assert.match(replyError(null), /이상해/);
+});
+
+// ---------- v3.3 새 탭 '워프레임 육성' ----------
+test("v3.3 워프레임 육성 탭: 장비마다 한 줄 8칸 (워프레임 · 자리 · 이름 · 리액터/카탈리스트 · 목표 모딩 · 모딩 완료 · 포르마 · 진행도), 위시리스트는 아래 · 그 외 무기는 맨 아래", () => {
+  const g = { ...gear, build: {
+    "a:frame": { cat: true, goal: "", done: true, forma: 2 },
+    "a:primary": { cat: true, goal: "부식 세팅", done: false, forma: 3 },
+    "o:볼터": { cat: false, goal: "치명타", done: true, forma: 0 },
+  } };
+  assert.deepEqual(buildRows(g), [
+    ["트리니티", "워프레임", "트리니티", "예", "", "예", "2", "100%"],
+    ["트리니티", "주무기", "볼토", "예", "부식 세팅", "아니오", "3", "50%"],
+    ["트리니티", "보조무기", "라토", "아니오", "", "아니오", "0", "0%"],
+    ["트리니티", "근접무기", "스컬", "아니오", "", "아니오", "0", "0%"],
+    ["트리니티", "동반자", "카밧", "아니오", "", "아니오", "0", "0%"],
+    ["나린", "워프레임", "나린", "아니오", "", "아니오", "0", "0%"],
+    ["나린", "주무기", "눈차사", "아니오", "", "아니오", "0", "0%"],
+    ["나린", "보조무기", "아크손돌", "아니오", "", "아니오", "0", "0%"],
+    ["나린", "근접무기", "데스트레자", "아니오", "", "아니오", "0", "0%"], // 동반자 칸이 빈 나린은 동반자 줄이 없다
+    ["", "그 외 무기", "쏜바크", "아니오", "", "아니오", "0", "0%"],
+    ["", "그 외 무기", "볼터", "아니오", "치명타", "예", "0", "50%"],
+  ]);
+  assert.ok(buildRows(g).every((r) => r.length === 8 && r.every((c) => typeof c === "string" && c.length <= 100)));
+  assert.deepEqual(buildRows({ frames: [], others: [] }), []);
+  assert.deepEqual(buildRows(gear).map((r) => r.slice(3)), Array(11).fill(["아니오", "", "아니오", "0", "0%"]), "육성 기록이 없는 옛 저장도 줄은 나간다");
+});
+
+test("v3.3 있던 두 탭('워프레임 장비' · '그 외 무기')은 육성 기록이 있어도 한 글자도 안 바뀐다", () => {
+  const g = { ...gear, build: { "a:primary": { cat: true, goal: "부식 세팅", done: true, forma: 5 }, "o:쏜바크": { cat: true, goal: "x", done: false, forma: 1 } } };
+  assert.deepEqual(gearRows(g), gearRows(gear));
+  assert.deepEqual(otherRows(g), otherRows(gear));
+  const gs = readFileSync(new URL("../apps-script/hobby-sync.gs", import.meta.url), "utf8");
+  assert.match(gs, /\{ key: "warframe", name: "워프레임 장비", header: \["워프레임", "플레이스타일", "주무기", "Sortie 분류", "보조무기", "근접무기", "동반자", "위시리스트"\] \}/);
+  assert.match(gs, /\{ key: "others", name: "그 외 무기", header: \["무기"\] \}/);
+  assert.match(gs, /\{ key: "wfBuild", name: "워프레임 육성", header: \["워프레임", "자리", "장비 이름", "리액터\/카탈리스트", "목표 모딩", "모딩 완료", "포르마", "진행도"\] \}/);
 });

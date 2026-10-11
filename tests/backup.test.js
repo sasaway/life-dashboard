@@ -331,3 +331,25 @@ test("v3.2 결산의 전체 사용금액 · 기타 소비(settlements)도 백업
   // 옛 달(실제로 쓴 돈만): 전체는 안 적은 것, 기타 소비는 없음
   assert.deepEqual([unknownOf(settlementRows(items, back["2026-08"]), back["2026-08"]).state, etcOf(back["2026-08"])], ["none", []]);
 });
+
+test("v3.3 워프레임 장비의 육성 기록(wfGear.build)과 옮긴 할 일 순서(wfTodos)도 백업 → 되살리기로 그대로, build 가 없는 옛 백업도 열린다", async () => {
+  const wf = await import("../js/warframe.js");
+  let gear = wf.setBuild(wf.DEFAULT_GEAR, "inv:primary", { cat: true, goal: "부식 \"세팅\"", forma: 3 });
+  gear = wf.setBuild(gear, wf.otherKey("볼터"), { done: true });
+  const todos = wf.moveTodo([{ id: "a", text: "가", done: null }, { id: "b", text: "나", done: "2026-10-11" }, { id: "c", text: "다", done: null }], "c", 0);
+  const phone = fakeStorage({ "ld:wfGear": JSON.stringify(gear), "ld:wfTodos": JSON.stringify(todos) });
+  const out = readBackupText(JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v3.3 · 10월 11일" })));
+  assert.equal(out.error, undefined);
+  const later = fakeStorage({ "ld:wfGear": "{}" });
+  restoreItems(later, out.backup.items);
+  assert.deepEqual(later.dump(), phone.dump());
+  const back = JSON.parse(later.getItem("ld:wfGear"));
+  assert.deepEqual(wf.buildOf(back, "inv:primary"), { cat: true, goal: "부식 \"세팅\"", done: false, forma: 3 });
+  assert.deepEqual(wf.gearItems(back), wf.gearItems(gear));
+  assert.deepEqual(JSON.parse(later.getItem("ld:wfTodos")).map((t) => t.id), ["c", "a", "b"]);
+  // v3.2.1 까지의 백업 (build 없음)
+  const old = readBackupText(JSON.stringify(await makeBackup({ storage: fakeStorage({ "ld:wfGear": JSON.stringify(wf.DEFAULT_GEAR) }), photos: [], appVersion: "v3.2.1 핫픽스 · 10월 11일" })));
+  restoreItems(later, old.backup.items);
+  const opened = wf.migrateGear(JSON.parse(later.getItem("ld:wfGear")));
+  assert.ok(wf.gearItems(opened).every((x) => x.pct === 0));
+});
