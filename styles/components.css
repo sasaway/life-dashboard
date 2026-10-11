@@ -429,6 +429,11 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .todos li{display:flex;gap:4px;align-items:center}
 .todos .chk{flex:1;min-width:0;text-align:left}
 .todos .lbl{overflow-wrap:anywhere}
+/* 오늘 할 일 순위 바꾸기 (v3.3): 손잡이를 누른 채 끈다. 손잡이 위에서는 화면이 같이 밀리지 않는다 */
+.todo-grip{flex:none;width:32px;min-height:var(--touch);border:0;background:none;color:var(--faint);display:grid;place-items:center;touch-action:none;cursor:grab}
+.todo-grip .ic{width:18px;height:18px}
+.todos li.dragging{opacity:.55}
+.todos li.dragging .todo-grip{cursor:grabbing;color:var(--ink)}
 
 /* 워프레임: 실시간 현황 */
 .live{display:flex;flex-direction:column;gap:16px}

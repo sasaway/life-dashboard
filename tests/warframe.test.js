@@ -5,7 +5,7 @@ import {
   PLAYSTYLES, SORTIE_TYPES, DEFAULT_GEAR, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish,
   removeFrame, isBlankFrame, addOther, removeOther,
   sortieView, rewardHits, invasionView, alertView, timeLeft, missionKo, factionKo,
-  liveDue, liveAtLabel,
+  liveDue, liveAtLabel, moveTodo,
 } from "../js/warframe.js";
 
 const at = (d, h, m = 0) => new Date(2026, 8, d, h, m); // 2026-09-21 월
@@ -178,4 +178,36 @@ test("실시간 현황은 하루 한 번, 아침 브리핑 시각(05:21)에 새�
   assert.equal(liveDue(at(4, 5, 21).getTime(), at(5, 5, 21)), true, "다음 날 05:21 에 새로");
   assert.equal(liveDue(at(3, 22, 0).getTime(), at(4, 2, 0)), false, "어제 저녁에 받았으면 새벽에는 안 받는다");
   assert.equal(liveDue(at(2, 22, 0).getTime(), at(4, 2, 0)), true, "어제 05:21 보다 앞이면 받는다");
+});
+
+// ---------- v3.3 오늘 할 일 순위 바꾸기 ----------
+test("v3.3 순위 바꾸기: 줄을 맨 위 · 맨 아래 · 가운데로, 범위를 벗어나면 끝으로, 없는 줄 · 같은 자리는 그대로", () => {
+  const todos = ["a", "b", "c", "d"].map((id) => ({ id, text: id, done: null }));
+  const ids = (list) => list.map((t) => t.id).join("");
+  assert.equal(ids(moveTodo(todos, "c", 0)), "cabd");
+  assert.equal(ids(moveTodo(todos, "a", 3)), "bcda");
+  assert.equal(ids(moveTodo(todos, "a", 2)), "bcad");
+  assert.equal(ids(moveTodo(todos, "d", 1)), "adbc");
+  assert.equal(ids(moveTodo(todos, "b", -5)), "bacd", "위로 넘치면 맨 위");
+  assert.equal(ids(moveTodo(todos, "b", 99)), "acdb", "아래로 넘치면 맨 아래");
+  assert.equal(moveTodo(todos, "b", 1), todos, "같은 자리면 받은 값 그대로");
+  assert.equal(moveTodo(todos, "없음", 0), todos);
+  assert.equal(moveTodo(todos, "a", NaN), todos);
+  assert.equal(ids(todos), "abcd", "받은 값은 안 바꾼다");
+  assert.deepEqual(moveTodo([], "a", 0), []);
+  assert.equal(moveTodo(todos, "c", 0)[0], todos[2], "줄 내용은 그대로 (id · 글 · 체크)");
+});
+
+test("v3.3 순위를 바꿔도 체크 · 새벽 1시 규칙은 그대로: 체크한 줄도 옮겨지고, 새벽 1시가 지나면 체크한 것만 사라지고 순서는 남는다", () => {
+  const night = new Date(2026, 9, 11, 22, 0);
+  let todos = [];
+  for (const [id, text] of [["a", "렐릭"], ["b", "포르마"], ["c", "평판"]]) todos = addTodo(todos, text, id);
+  todos = toggleTodo(todos, night, "b"); // 체크한 줄
+  todos = moveTodo(todos, "c", 0);
+  todos = moveTodo(todos, "b", 1);
+  assert.deepEqual(todos.map((t) => [t.id, Boolean(t.done)]), [["c", false], ["b", true], ["a", false]]);
+  assert.equal(leftTodos(todos), 2);
+  assert.deepEqual(pruneTodos(todos, night).map((t) => t.id), ["c", "b", "a"], "같은 날에는 그대로");
+  assert.deepEqual(pruneTodos(todos, new Date(2026, 9, 12, 1, 0)).map((t) => t.id), ["c", "a"], "새벽 1시 뒤: 체크한 것만 사라지고 순서 유지");
+  assert.deepEqual(addTodo(todos, "새 일", "n").map((t) => t.id), ["c", "b", "a", "n"], "새 항목은 맨 아래");
 });

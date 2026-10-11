@@ -49,6 +49,15 @@ export function addTodo(todos, text, id = newId()) {
 export const toggleTodo = (todos, now, id) =>
   todos.map((t) => (t.id === id ? { ...t, done: t.done ? null : dayKey(now) } : t));
 export const removeTodo = (todos, id) => todos.filter((t) => t.id !== id);
+// 순위 바꾸기 (v3.3): id 줄을 toIndex 자리로 (0 = 맨 위). 범위를 벗어나면 맨 위 · 맨 아래, 없는 id 면 그대로
+export function moveTodo(todos, id, toIndex) {
+  const from = todos.findIndex((t) => t.id === id);
+  if (from < 0 || !Number.isFinite(toIndex)) return todos;
+  const to = Math.max(0, Math.min(todos.length - 1, Math.round(toIndex)));
+  if (to === from) return todos;
+  const rest = todos.filter((t) => t.id !== id);
+  return [...rest.slice(0, to), todos[from], ...rest.slice(to)];
+}
 export const pruneTodos = (todos, now) => todos.filter((t) => !t.done || t.done === dayKey(now));
 export const leftTodos = (todos) => todos.filter((t) => !t.done).length;
 

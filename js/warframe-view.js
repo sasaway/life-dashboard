@@ -5,11 +5,12 @@ import { openSheet, closeSheet } from "./sheet.js";
 import { chip } from "./wuwa-view.js";
 import {
   DAILY, PLAYSTYLES, SORTIE_TYPES, GEAR_FIELDS, DEFAULT_GEAR, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo,
-  removeTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame, isBlankFrame,
+  removeTodo, moveTodo, pruneTodos, leftTodos, migrateGear, addFrame, updateFrame, toggleStyle, setSortie, toggleWish, removeFrame, isBlankFrame,
   addOther, removeOther, sortieView, invasionView, alertView, timeLeft,
   liveDue, liveAtLabel,
 } from "./warframe.js";
 import { $, esc, X_SVG } from "./dom.js";
+import { ICON } from "./icons.js";
 import { markSyncDirty } from "./hobby-sync-view.js";
 
 const LIVE_URL = "https://api.warframestat.us/pc/"; // 공식 worldState 는 브라우저에서 못 읽어서(CORS) 이걸 쓴다
@@ -65,14 +66,70 @@ function onCheckClick(e) {
 
 // ---------- 오늘 할 일 ----------
 function renderTodos() {
+  if (drag) return; // 끄는 중에는 줄을 다시 그리지 않는다 (분마다 도는 갱신이 끌던 줄을 놓치게 하지 않게)
   const kept = pruneTodos(todos, new Date()); // 새벽 1시가 지나면 체크한 것만 사라진다
   if (kept.length !== todos.length) store.save("wfTodos", (todos = kept));
-  $("wfTodos").innerHTML = todos.map((t) => `<li>
+  $("wfTodos").innerHTML = todos.map((t) => `<li data-row="${t.id}">
+    <button class="todo-grip" data-grip="${t.id}" aria-label="${esc(t.text)} 순서 바꾸기. 누른 채 끌거나 위아래 화살표 키">${ICON.grip}</button>
     ${chip(`data-todo="${t.id}"`, t.text, t.done)}
     <button class="icon-btn del" data-del-todo="${t.id}" aria-label="${esc(t.text)} 지우기">${X_SVG}</button>
   </li>`).join("");
   $("wfTodoLeft").textContent = todos.length ? `남은 일 ${leftTodos(todos)}` : "";
   renderHub();
+}
+
+// 순위 바꾸기 (v3.3): 손잡이를 누른 채 위아래로 끈다. 끄는 동안 줄이 따라 움직이고, 놓은 자리로 저장한다.
+// 포인터는 목록(ul)이 잡는다 — 줄을 옮겨 붙여도 놓치지 않게. 손잡이는 touch-action: none 이라 화면이 같이 밀리지 않는다
+let drag = null; // { id, li, pointer }
+function saveTodos() {
+  store.save("wfTodos", todos);
+  markSyncDirty();
+  renderTodos();
+}
+function endDrag(keep) {
+  if (!drag) return;
+  const { id, li, pointer } = drag;
+  const index = [...$("wfTodos").children].indexOf(li);
+  li.classList.remove("dragging");
+  if ($("wfTodos").hasPointerCapture?.(pointer)) $("wfTodos").releasePointerCapture(pointer);
+  drag = null;
+  if (keep) todos = moveTodo(todos, id, index);
+  saveTodos();
+}
+function startTodoDrag() {
+  const list = $("wfTodos");
+  list.addEventListener("pointerdown", (e) => {
+    const grip = e.target.closest("[data-grip]");
+    if (!grip || drag || (e.pointerType === "mouse" && e.button !== 0)) return;
+    e.preventDefault();
+    drag = { id: grip.dataset.grip, li: grip.closest("li"), pointer: e.pointerId };
+    drag.li.classList.add("dragging");
+    list.setPointerCapture(e.pointerId);
+  });
+  list.addEventListener("pointermove", (e) => {
+    if (!drag || e.pointerId !== drag.pointer) return;
+    // 손가락보다 아래에 있는 첫 줄 앞으로 (없으면 맨 아래)
+    const before = [...list.children].find((x) => {
+      if (x === drag.li) return false;
+      const r = x.getBoundingClientRect();
+      return e.clientY < r.top + r.height / 2;
+    });
+    if (before) { if (drag.li.nextElementSibling !== before) list.insertBefore(drag.li, before); }
+    else if (list.lastElementChild !== drag.li) list.appendChild(drag.li);
+  });
+  list.addEventListener("pointerup", (e) => { if (drag && e.pointerId === drag.pointer) endDrag(true); });
+  list.addEventListener("pointercancel", (e) => { if (drag && e.pointerId === drag.pointer) endDrag(false); });
+  // 키보드: 손잡이에서 ↑ ↓ 로 한 칸씩
+  list.addEventListener("keydown", (e) => {
+    const grip = e.target.closest("[data-grip]");
+    const step = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+    if (!grip || !step) return;
+    e.preventDefault();
+    const id = grip.dataset.grip;
+    todos = moveTodo(todos, id, todos.findIndex((t) => t.id === id) + step);
+    saveTodos();
+    list.querySelector(`[data-grip="${CSS.escape(id)}"]`)?.focus();
+  });
 }
 
 // ---------- 실시간 현황 ----------
@@ -235,10 +292,9 @@ export function startWarframe() {
     if (t) todos = toggleTodo(todos, new Date(), t.dataset.todo);
     else if (del) todos = removeTodo(todos, del.dataset.delTodo);
     else return;
-    store.save("wfTodos", todos);
-    markSyncDirty();
-    renderTodos();
+    saveTodos();
   });
+  startTodoDrag();
 
   $("wfGear").addEventListener("click", (e) => {
     const b = e.target.closest("[data-gear]");
