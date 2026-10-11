@@ -116,7 +116,7 @@ test("핫픽스 v3.0.5 새 레시피: 통밀빵 세트 · 김치 계란 볶음�
   assert.match(ing["계란"], /^2개.*3개/);
   assert.match(ing["우유"], /200ml/);
   const fry = RECIPES.find((r) => r.id === "ramen-chapa").steps[0];
-  assert.deepEqual([bread.steps[0].heat, bread.steps[0].sec], [fry.heat, fry.sec]);
+  assert.deepEqual([bread.steps[1].heat, bread.steps[1].sec], [fry.heat, fry.sec], "프라이는 팬 달구기 다음 단계 (핫픽스 v3.2.1)");
   assert.ok(bread.steps.filter(hasTimer).length >= 2);
   assert.match(Object.fromEntries(kimchi.ingredients)["익은 김치"], /^100g/);
   assert.deepEqual(["bread", "rice-kimchi", "rice-soy", "rice"].map(proteinOf), [26, 20, 18, 18]);
@@ -181,4 +181,38 @@ test("핫픽스 v3.0.9 볶음밥 양념은 진간장: 재료 · 단계 어디에
   assert.deepEqual([soy.protein, kimchi.protein, soy.name, kimchi.name], [18, 20, "간장 계란 볶음밥", "김치 계란 볶음밥"]);
   for (const r of [soy, kimchi]) assert.match(Object.fromEntries(r.ingredients)["계란"], /^2개 \(오픈반 날 아침은 3개\)/);
   assert.equal(Object.fromEntries(kimchi.ingredients)["김치 국물"], "2스푼");
+});
+
+test("핫픽스 v3.2.1 통밀빵 세트 보강: 단계 5개(팬 달구기 → 프라이 → 약불에 빵 → 곁들임 → 먹기), 소금, 불 세기 · 시간은 제안이라고 출처에", () => {
+  const bread = RECIPES.find((r) => r.id === "bread");
+  assert.deepEqual(bread.ingredients.map(([n]) => n), ["통밀빵", "계란", "우유", "식용유", "소금"]);
+  assert.deepEqual(bread.steps.map((x) => [x.heat, x.sec]), [["mid", 30], ["mid", 150], ["low", 120], ["none", 0], ["none", 0]]);
+  assert.deepEqual(bread.steps.map(hasTimer), [true, true, true, false, false]);
+  assert.match(bread.steps[0].text, /달군 뒤 식용유/);
+  assert.match(bread.steps[1].text, /소금 한 꼬집/);
+  assert.match(bread.steps[2].text, /약불.*앞뒤로 1분씩/);
+  assert.match(bread.steps[3].text, /곁들임/);
+  assert.equal(totalMinutes(bread), 7, "불 쓰는 5분 + 불 없는 단계 둘");
+  assert.match(bread.source, /불 세기 · 굽는 시간 · 소금은 영상에서 읽은 게 아니라 제안/);
+  assert.ok(bread.steps.every((x) => x.text && typeof x.note === "string"));
+});
+
+test("핫픽스 v3.2.1 곁들임: 땅콩버터 · 딸기잼 두 후보를 읽기만 하는 줄로 — 단백질 26g(오픈반 날 32g)에는 섞이지 않는다", async () => {
+  const bread = RECIPES.find((r) => r.id === "bread");
+  assert.equal(bread.sides.title, "곁들임 (있으면 하나)");
+  assert.deepEqual(bread.sides.items, [["땅콩버터", "1스푼(약 16g) · 약 100kcal · 단백질 약 4g"], ["딸기잼", "1스푼(20g) · 약 56kcal · 단백질 0g"]]);
+  assert.match(bread.sides.note, /제품마다 달라/);
+  assert.match(bread.sides.note, /26g 에는 안 들어가/);
+  assert.ok(!JSON.stringify(bread).includes("크림치즈"), "숫자를 확인하지 못한 크림치즈는 넣지 않는다");
+  assert.ok(!/원\b|가격/.test(JSON.stringify(bread.sides)), "가격은 적지 않는다");
+  // 단백질 숫자는 그대로 (식단 기록 · 시트가 쓰는 값)
+  assert.equal(bread.protein, 26);
+  const { mealProtein } = await import("../js/meals.js");
+  assert.deepEqual([mealProtein({ dish: "bread" }), mealProtein({ dish: "bread", eggs: 3 })], [26, 32]);
+  // 다른 레시피에는 곁들임 칸이 없다
+  assert.deepEqual(RECIPES.filter((r) => r.sides).map((r) => r.id), ["bread"]);
+  // 레시피 창은 곁들임이 있을 때만 그린다
+  const { readFileSync } = await import("node:fs");
+  const view = readFileSync(new URL("../js/recipe-view.js", import.meta.url), "utf8");
+  assert.match(view, /\$\("recipeSides"\)\.hidden = !sides;/);
 });

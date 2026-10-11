@@ -50,6 +50,12 @@ function render() {
   $("recipeSource").textContent = `참고: ${recipe.source}`;
   $("recipeIngredients").innerHTML = recipe.ingredients.map(([n, a]) =>
     `<li><span>${esc(n)}</span><span class="amt">${esc(a)}</span></li>`).join("");
+  // 곁들임 (핫픽스 v3.2.1): 있는 레시피만, 재료 아래 읽기만 하는 줄
+  const sides = recipe.sides;
+  $("recipeSides").hidden = !sides;
+  $("recipeSides").innerHTML = sides ? `<h3 class="sides-h">${esc(sides.title)}</h3>
+    <ul class="ingredients">${sides.items.map(([n, a]) => `<li><span>${esc(n)}</span><span class="amt">${esc(a)}</span></li>`).join("")}</ul>
+    <p class="mini">${esc(sides.note)}</p>` : "";
   $("recipeSteps").innerHTML = recipe.steps.map((st, i) => `
     <li class="${i === current ? "cur" : i < current ? "past" : ""}"${i === current ? ' aria-current="step"' : ""}>
       <div class="step-h"><span class="no mono">${i + 1}</span>${heatBadge(st.heat)}</div>
