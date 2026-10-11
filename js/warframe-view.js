@@ -1,7 +1,7 @@
 // 워프레임 화면: 위 [오늘 · 장비] 전환. 오늘 = 오늘 체크(출격·포르마)·할 일·실시간 현황, 장비 = 장비 목록. 메인 취미 카드의 워프레임 줄.
 import { store } from "./store.js";
 import { noteHobby } from "./hobby-log-view.js";
-import { openSheet, closeSheet } from "./sheet.js";
+import { openSheet, closeSheet, askConfirm } from "./sheet.js";
 import { chip } from "./wuwa-view.js";
 import {
   DAILY, PLAYSTYLES, SORTIE_TYPES, GEAR_FIELDS, DEFAULT_GEAR, dailyDone, toggleDaily, dailyCount, addTodo, toggleTodo,
@@ -260,11 +260,20 @@ function onBuildClick(e) {
     gear = setBuild(gear, key, { forma: buildOf(gear, key).forma + Number(forma.dataset.forma) });
     focus = `[data-forma="${forma.dataset.forma}"][data-key="${CSS.escape(key)}"]`;
   } else if (del) {
-    gear = removeOther(gear, Number(del.dataset.delOther));
+    return removeOtherAsk(Number(del.dataset.delOther));
   } else return;
   saveGear();
   renderGear();
   if (focus) document.querySelector(focus)?.focus();
+}
+// 그 외 무기 지우기: 육성 기록도 같이 사라지니 앱 안 확인 창으로 묻는다 (v3.4, 은월 요청)
+const BUILD_LOST = "적어 둔 육성 기록(장착 · 모딩 완료 · 포르마 · 목표 모딩)도 같이 지워져.";
+async function removeOtherAsk(index) {
+  const name = gear.others[index];
+  if (name === undefined || !(await askConfirm(`'${name}' 을(를) 목록에서 지울까? ${BUILD_LOST}`, "지우기"))) return;
+  gear = removeOther(gear, gear.others.indexOf(name)); // 묻는 사이 목록이 바뀌었어도 그 이름을 지운다
+  saveGear();
+  renderGear();
 }
 // 목표 모딩 글: 쓰는 대로 저장하고 줄은 다시 그리지 않는다 (쓰던 자리가 안 튀게)
 function onBuildInput(e) {
@@ -391,10 +400,10 @@ export function startWarframe() {
     renderGearChips();
   });
   $("gearForm").addEventListener("submit", (e) => e.preventDefault());
-  $("gearRemove").addEventListener("click", () => {
+  $("gearRemove").addEventListener("click", async () => {
     const f = editingFrame();
-    if (!f || !confirm(`'${f.frame || "이 워프레임"}' 을(를) 목록에서 지울까?`)) return;
-    gear = removeFrame(gear, editing);
+    if (!f || !(await askConfirm(`'${f.frame || "이 워프레임"}' 을(를) 목록에서 지울까? 이 카드 장비들에 ${BUILD_LOST}`, "지우기"))) return;
+    gear = removeFrame(gear, f.id);
     saveGear();
     closeSheet();
     renderGear();

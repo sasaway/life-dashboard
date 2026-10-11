@@ -285,3 +285,13 @@ test("v3.3 옛 저장 호환: build 가 없는 장비 목록 · v16 모양도 �
   const g = setBuild(DEFAULT_GEAR, "inv:primary", { cat: true, goal: "부식", forma: 4 });
   assert.deepEqual(gearItems(JSON.parse(JSON.stringify(g))), gearItems(g));
 });
+
+test("v3.4 장비를 지울 때는 앱 안 확인 창으로 묻는다: 그 외 무기 · 워프레임 카드 둘 다, 육성 기록도 같이 지워진다고 알린다", async () => {
+  const { readFileSync } = await import("node:fs");
+  const view = readFileSync(new URL("../js/warframe-view.js", import.meta.url), "utf8");
+  assert.match(view, /askConfirm\(`'\$\{name\}' 을\(를\) 목록에서 지울까\? \$\{BUILD_LOST\}`, "지우기"\)/);
+  assert.match(view, /askConfirm\(`'\$\{f\.frame \|\| "이 워프레임"\}' 을\(를\) 목록에서 지울까\? 이 카드 장비들에 \$\{BUILD_LOST\}`, "지우기"\)/);
+  assert.match(view, /const BUILD_LOST = "적어 둔 육성 기록\(장착 · 모딩 완료 · 포르마 · 목표 모딩\)도 같이 지워져\."/);
+  assert.ok(!/[^k]confirm\(/.test(view.replace(/askConfirm\(/g, "")), "브라우저 기본 확인 창은 안 쓴다");
+  assert.ok(!view.includes("gear = removeOther(gear, Number(del.dataset.delOther));"), "확인 없이 바로 지우지 않는다");
+});
