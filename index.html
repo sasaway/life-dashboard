@@ -356,6 +356,13 @@
         <div class="meter"><i id="wfDailyBar"></i></div>
         <div class="checks" id="wfDaily"></div>
       </section>
+      <section class="card" id="wfChoreCard" aria-label="숙제">
+        <div class="card-h"><h2>숙제</h2><small class="num" id="wfChoreCount"></small></div>
+        <div class="meter"><i id="wfChoreBar"></i></div>
+        <div class="chore-box" id="wfChores"></div>
+        <p class="mini">다 할 필요는 없어. 필요한 것만 챙겨. 매일 09:00 · 월요일 09:00 에 비워져.</p>
+        <button class="btn btn-text chore-edit-btn" id="wfChoreEdit">목록 고치기</button>
+      </section>
       <section class="card" aria-label="오늘 할 일">
         <div class="card-h"><h2>오늘 할 일</h2><small class="num" id="wfTodoLeft"></small></div>
         <form class="add-row" id="wfTodoForm" autocomplete="off">
@@ -636,6 +643,28 @@
 </div>
 
 <!-- 워프레임 장비 줄 고치기 -->
+<!-- 워프레임 숙제 목록 고치기 (v3.4): 더하기 · 지우기 · 되돌리기 -->
+<div class="sheet-wrap" id="choreSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="choreTitle">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="choreTitle">숙제 목록 고치기</h2>
+      <button class="btn btn-ghost" data-close>닫기</button>
+    </div>
+    <form class="chore-form" id="choreForm" autocomplete="off">
+      <div class="add-row">
+        <input class="field" id="choreName" maxlength="30" placeholder="새 숙제 이름" aria-label="새 숙제 이름">
+        <button class="btn btn-primary">추가</button>
+      </div>
+      <div class="seg four" id="choreTags" role="group" aria-label="새 숙제의 기호"></div>
+      <div class="seg" id="chorePeriods" role="group" aria-label="새 숙제를 비우는 때"></div>
+    </form>
+    <p class="msg" id="choreMsg" role="status"></p>
+    <ul class="money-rows chore-edit" id="choreEditList"></ul>
+    <button class="btn btn-ghost" id="choreReset">되돌리기</button>
+  </div>
+</div>
+
 <div class="sheet-wrap" id="gearSheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="gearTitle">
     <div class="grab"></div>

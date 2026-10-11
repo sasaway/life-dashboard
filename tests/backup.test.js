@@ -353,3 +353,28 @@ test("v3.3 워프레임 장비의 육성 기록(wfGear.build)과 옮긴 할 일 
   const opened = wf.migrateGear(JSON.parse(later.getItem("ld:wfGear")));
   assert.ok(wf.gearItems(opened).every((x) => x.pct === 0));
 });
+
+test("v3.4 워프레임 숙제(wfChores: 지운 줄 · 더한 줄 · 체크)도 백업 → 되살리기로 그대로, 칸이 없는 옛 백업은 기본 목록으로 열린다", async () => {
+  const wc = await import("../js/wf-chores.js");
+  const now = new Date(Date.UTC(2026, 9, 11, 5));
+  let chores = wc.removeChore({}, "c04");
+  chores = wc.addChore(chores, "렐릭 \"까기\"", "star", "week", "x1").chores;
+  chores = wc.toggleChore(chores, "c06", now);
+  chores = wc.toggleChore(chores, "x1", now);
+  const src = readdirSync(new URL("../js/", import.meta.url)).map((f) => readFileSync(new URL(`../js/${f}`, import.meta.url), "utf8")).join("\n");
+  assert.match(src, /^const KEY = "wfChores"/m, "코드가 저장하는 칸 목록에도 들어 있다");
+  const phone = fakeStorage({ "ld:wfChores": JSON.stringify(chores), "ld:wfChecks": JSON.stringify({ key: "2026-10-11", done: { sortie: 1 } }) });
+  const out = readBackupText(JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v3.4 · 10월 11일" })));
+  assert.equal(out.error, undefined);
+  const later = fakeStorage({ "ld:wfChores": "{}" });
+  restoreItems(later, out.backup.items);
+  assert.deepEqual(later.dump(), phone.dump());
+  const back = JSON.parse(later.getItem("ld:wfChores"));
+  assert.deepEqual(wc.choreSections(back, now), wc.choreSections(chores, now));
+  assert.deepEqual([wc.choreList(back).length, wc.choreSections(back, now).counts.must], [42, { done: 2, total: 20 }]);
+  // v3.3 까지의 백업 (wfChores 없음)
+  const old = readBackupText(JSON.stringify(await makeBackup({ storage: fakeStorage({ "ld:wfChecks": "{}" }), photos: [], appVersion: "v3.3 · 10월 11일" })));
+  restoreItems(later, old.backup.items);
+  assert.equal(later.getItem("ld:wfChores"), null);
+  assert.equal(wc.choreList(JSON.parse(later.getItem("ld:wfChores"))).length, 42);
+});

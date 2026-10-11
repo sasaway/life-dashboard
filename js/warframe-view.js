@@ -13,6 +13,7 @@ import {
 import { $, esc, X_SVG } from "./dom.js";
 import { ICON } from "./icons.js";
 import { markSyncDirty } from "./hobby-sync-view.js";
+import { startChores, renderChores } from "./wf-chores-view.js";
 
 const LIVE_URL = "https://api.warframestat.us/pc/"; // 공식 worldState 는 브라우저에서 못 읽어서(CORS) 이걸 쓴다
 
@@ -326,6 +327,7 @@ function showWfPage(page) {
 // ---------- 시작 ----------
 export function renderWarframe() {
   renderChecks();
+  renderChores(); // 매일 09:00 · 월요일 09:00 에 숙제 체크가 비워진다 (v3.4)
   renderTodos();
   if (wfOpen()) {
     renderLive(); // 출격 남은 시간·'n분 전' 을 분마다 맞춘다
@@ -335,6 +337,7 @@ export function renderWarframe() {
 
 export function startWarframe() {
   renderChecks();
+  startChores();
   renderTodos();
   renderGear();
   $("wfTodayCard").addEventListener("click", onCheckClick);

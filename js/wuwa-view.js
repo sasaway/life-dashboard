@@ -38,7 +38,7 @@ function adoptReal() {
   saveParties();
 }
 
-const CHECK_SVG = '<svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg>';
+export const CHECK_SVG = '<svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg>';
 // 체크 칩 (시안 .chk) — 워프레임 화면도 같이 쓴다
 export const chip = (attr, label, on, small = false) =>
   `<button class="chk${small ? " small" : ""}" ${attr} aria-pressed="${Boolean(on)}"><span class="box">${CHECK_SVG}</span><span class="lbl">${esc(label)}</span></button>`;

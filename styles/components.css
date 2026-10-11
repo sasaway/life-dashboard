@@ -429,6 +429,22 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .todos li{display:flex;gap:4px;align-items:center}
 .todos .chk{flex:1;min-width:0;text-align:left}
 .todos .lbl{overflow-wrap:anywhere}
+/* 워프레임 숙제 리스트 (v3.4): 체크 칩(.chk)을 한 줄 가득, 이름 아래 작은 글. 선택 숙제는 접어 둔다 */
+.chore-box{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.chore-h{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;font-size:var(--fs-small);color:var(--sub)}
+.chore-h b{font-weight:600}
+.chores{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.chk.chore{width:100%;text-align:left;align-items:center}
+.chore .lbl{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3;overflow-wrap:anywhere}
+.chore .sub{font-size:var(--fs-tiny);color:var(--faint);font-weight:400}
+.chore .tag{flex:none;margin-left:0}
+.chore-more{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:var(--touch);padding:0 4px;border:0;border-top:1px solid var(--line);background:none;color:var(--sub);font-size:var(--fs-small);font-weight:600;text-align:left}
+.chore-more[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.chore-edit-btn{align-self:flex-start;min-height:var(--touch);padding:0}
+.chore-form{display:flex;flex-direction:column;gap:8px}
+.chore-form .seg button{font-size:var(--fs-small);padding:0 2px}
+.chore-edit{margin:4px 0 12px}
+.chore-edit .del .ic{width:18px;height:18px}
 /* 오늘 할 일 순위 바꾸기 (v3.3): 손잡이를 누른 채 끈다. 손잡이 위에서는 화면이 같이 밀리지 않는다 */
 .todo-grip{flex:none;width:32px;min-height:var(--touch);border:0;background:none;color:var(--faint);display:grid;place-items:center;touch-action:none;cursor:grab}
 .todo-grip .ic{width:18px;height:18px}
