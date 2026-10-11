@@ -4,6 +4,7 @@ import {
   CATEGORIES, parseWon, formatWon, addBudgetItem, setBudgetAmount, removeBudgetItem, sumBy,
   monthKey, shiftMonth, monthLabel, settlementRows, setActual, settlementStats,
   toggleFixed, resolveMonth, withMonth, migrate, effective, sumEffective,
+  setTotal, etcOf, addEtc, setEtcAmount, removeEtc, unknownOf,
 } from "./budget.js";
 import { $, esc } from "./dom.js";
 
@@ -13,7 +14,8 @@ const thisMonth = () => monthKey(new Date());
 const lastMonth = () => shiftMonth(thisMonth(), -1);
 let month = lastMonth();
 
-// budgets: { "2026-09": [{ id, cat, name, amount, off, fixed }] } (off = 할인·적립) · settlements: { "2026-08": { actual } }
+// budgets: { "2026-09": [{ id, cat, name, amount, off, fixed }] } (off = 할인·적립)
+// settlements: { "2026-08": { actual, total, etc: [{ id, name, amount }] } } (total = 그 달에 나간 돈 전체 · etc = 기타 소비, v3.2)
 let { budgets, settlements } = migrate({
   budget: store.load("budget", null),
   settlements: store.load("settlements", {}),
@@ -99,7 +101,36 @@ function renderSettle() {
         </li>`).join("")}</ul>
     </section>`;
   }).join("");
+  $("spentTotal").value = settlements[month]?.total ? num(settlements[month].total) : "";
+  renderEtc();
   renderStats();
+}
+
+// 기타 소비 줄 (v3.2). 금액을 치는 동안에는 다시 그리지 않는다 — 추가 · 지우기 · 달 넘기기 때만
+function renderEtc() {
+  $("etcRows").innerHTML = etcOf(settlements[month]).map((x) => `
+    <li><span class="name">${esc(x.name)}</span>
+      ${amountInput(x.id, x.amount, `${x.name} 기타 소비`, "data-etc")}
+      <button class="icon-btn del" data-etc-remove="${esc(x.id)}" aria-label="${esc(x.name)} 지우기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </li>`).join("");
+}
+
+// 전체 사용금액 카드의 계산 글: 전체 − 기록한 돈 − 기타 소비 = 출처를 모르는 돈
+function renderUnknown(rows) {
+  const u = unknownOf(rows, settlements[month]);
+  $("etcSum").textContent = u.etc ? formatWon(u.etc) : "";
+  if (u.state === "none") {
+    $("spentOut").innerHTML = `<p class="mini">이 달에 나간 돈 전체를 적으면 어디에 썼는지 모르는 돈을 알려 줄게.</p>`;
+    return;
+  }
+  const result = u.state === "over"
+    ? `<p class="spent-note">적은 돈이 전체보다 <b class="mono">${formatWon(-u.unknown)}</b> 많아. 전체 금액이나 적은 항목을 확인해 줘.</p>`
+    : `<div class="spent-h">출처를 모르는 돈</div><div class="stat mono">${num(u.unknown)}<span>원</span></div>
+       ${u.unknown === 0 ? `<p class="mini">다 찾았어. 모르는 돈이 없어.</p>` : ""}`;
+  $("spentOut").innerHTML = `<ul class="spent-rows">
+      <li><span>기록한 돈</span><span class="mono">− ${formatWon(u.recorded)}</span></li>
+      <li><span>기타 소비</span><span class="mono">− ${formatWon(u.etc)}</span></li>
+    </ul>${result}`;
 }
 
 const meter = (pct, status) =>
@@ -108,11 +139,13 @@ const chip = (status) => (status.label ? `<span class="st-chip st-${status.key}"
 
 function renderStats() {
   const rows = settlementRows(resolveMonth(budgets, month), settlements[month]);
-  const { total, byCat } = settlementStats(rows);
+  const etc = sumBy(etcOf(settlements[month]), "amount");
+  const { total, byCat } = settlementStats(rows, etc); // 한 달 합계에는 기타 소비도 넣는다 (v3.2, 은월 선택)
+  renderUnknown(rows);
   $("statTotal").innerHTML = `
     <div class="card-h"><h2>한 달 합계</h2>${chip(total.status)}</div>
     <div class="stat mono">${num(total.actual)}<span> / ${formatWon(total.budget)}</span></div>
-    <p class="mini">예산의 <span class="mono">${total.pct}%</span> 를 썼어.</p>
+    <p class="mini">예산의 <span class="mono">${total.pct}%</span> 를 썼어.${etc ? ` 기타 소비 <span class="mono">${formatWon(etc)}</span> 포함.` : ""}</p>
     ${meter(total.pct, total.status)}`;
   $("statCats").innerHTML = byCat.map((c) => `
     <li><div class="row-h"><b>${c.label}</b><span>${chip(c.status)} <span class="mono">${c.pct}%</span></span></div>
@@ -189,6 +222,37 @@ export function startBudget() {
     settlements = r.settlements;
     saveAll("settleMsg");
     renderStats();
+  });
+  // 결산: 전체 사용금액 · 기타 소비 (v3.2)
+  const keepMonth = () => { if (!budgets[month]) budgets = withMonth(budgets, month, resolveMonth(budgets, month)); }; // 처음 적는 달이면 지금 보이는 예산을 그 달 예산으로 남긴다
+  const applySettle = (r) => {
+    $("settleMsg").textContent = r.error;
+    if (r.error) return false;
+    keepMonth();
+    settlements = r.settlements;
+    saveAll("settleMsg");
+    return true;
+  };
+  $("spentTotal").addEventListener("input", (e) => { if (applySettle(setTotal(settlements, month, e.target.value))) renderStats(); });
+  $("etcRows").addEventListener("input", (e) => {
+    const id = e.target.dataset.etc;
+    if (id && applySettle(setEtcAmount(settlements, month, id, e.target.value))) renderStats();
+  });
+  $("etcRows").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-etc-remove]");
+    if (!b) return;
+    applySettle({ settlements: removeEtc(settlements, month, b.dataset.etcRemove), error: "" });
+    renderEtc();
+    renderStats();
+  });
+  $("etcForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const f = e.target.elements;
+    if (!applySettle(addEtc(settlements, month, f.namedItem("etcName").value, f.namedItem("etcAmount").value))) return;
+    e.target.reset();
+    renderEtc();
+    renderStats();
+    f.namedItem("etcName").focus();
   });
   $("prevMonth").addEventListener("click", () => { month = shiftMonth(month, -1); renderSettle(); });
   $("nextMonth").addEventListener("click", () => { month = shiftMonth(month, 1); renderSettle(); });

@@ -88,7 +88,55 @@ export function setActual(settlements, month, id, amountText) {
   const amount = parseWon(amountText);
   if (Number.isNaN(amount)) return { settlements, error: "금액은 숫자만 적어 줘." };
   const actual = { ...(settlements[month]?.actual ?? {}), [id]: amount };
-  return { settlements: { ...settlements, [month]: { actual } }, error: "" };
+  return { settlements: { ...settlements, [month]: { ...settlements[month], actual } }, error: "" }; // 그 달의 전체 금액 · 기타 소비는 그대로 (v3.2)
+}
+
+// ---------- 전체 사용금액 · 기타 소비 · 출처를 모르는 돈 (v3.2, Notion '돈 › 지난달 결산') ----------
+// settlements[달] = { actual, total, etc: [{ id, name, amount }] } — total 이 없으면 아직 안 적은 것, etc 가 없으면 빈 목록 (옛 저장 그대로 열린다)
+const NOT_NUMBER = "금액은 숫자만 적어 줘.";
+const withSettle = (settlements, month, patch) => ({ ...settlements, [month]: { actual: {}, ...settlements[month], ...patch } });
+
+// 그 달에 실제로 나간 돈 전체. 빈칸이면 지운다 (안 적은 상태로)
+export function setTotal(settlements, month, amountText) {
+  const amount = parseWon(amountText);
+  if (Number.isNaN(amount)) return { settlements, error: NOT_NUMBER };
+  if (String(amountText).trim()) return { settlements: withSettle(settlements, month, { total: amount }), error: "" };
+  const { total: _, ...rest } = settlements[month] ?? {};
+  return { settlements: settlements[month] ? { ...settlements, [month]: rest } : settlements, error: "" };
+}
+
+export const etcOf = (settlement) => settlement?.etc ?? [];
+
+// 기타 소비: 예산에 없던 돈을 찾아서 이름 + 금액으로 적는다
+export function addEtc(settlements, month, name, amountText, id = newId()) {
+  const clean = name.trim().replace(/\s+/g, " ");
+  if (!clean) return { settlements, error: "항목 이름을 적어 줘." };
+  const amount = parseWon(amountText);
+  if (Number.isNaN(amount)) return { settlements, error: NOT_NUMBER };
+  const etc = etcOf(settlements[month]);
+  if (etc.some((x) => x.name === clean)) return { settlements, error: `'${clean}' 은(는) 이미 있어.` };
+  return { settlements: withSettle(settlements, month, { etc: [...etc, { id, name: clean, amount }] }), error: "" };
+}
+
+export function setEtcAmount(settlements, month, id, amountText) {
+  const amount = parseWon(amountText);
+  if (Number.isNaN(amount)) return { settlements, error: NOT_NUMBER };
+  const etc = etcOf(settlements[month]).map((x) => (x.id === id ? { ...x, amount } : x));
+  return { settlements: withSettle(settlements, month, { etc }), error: "" };
+}
+
+export const removeEtc = (settlements, month, id) =>
+  (settlements[month] ? withSettle(settlements, month, { etc: etcOf(settlements[month]).filter((x) => x.id !== id) }) : settlements);
+
+// 출처를 모르는 돈 = 전체 − 기록한 돈(항목마다 적은 '실제로 쓴 돈') − 기타 소비.
+// state: "none" 전체를 아직 안 적음 · "ok" · "over" 적은 돈이 전체보다 많음 (unknown 이 음수 — 화면이 차이를 알려 준다)
+export function unknownOf(rows, settlement) {
+  const recorded = sumBy(rows, "actual");
+  const etc = sumBy(etcOf(settlement), "amount");
+  const total = settlement?.total;
+  if (total == null) return { total: null, recorded, etc, unknown: null, state: "none" };
+  const unknown = total - recorded - etc;
+  return { total, recorded, etc, unknown, state: unknown < 0 ? "over" : "ok" };
 }
 
 // ---------- 옛 저장 형식(v6) 옮기기 ----------
@@ -115,16 +163,17 @@ export function budgetStatus(budget, actual) {
   return { key: "good", label: "예산 안" };
 }
 
-function summary(rows) {
+function summary(rows, more = 0) {
   const budget = sumBy(rows, "budget");
-  const actual = sumBy(rows, "actual");
+  const actual = sumBy(rows, "actual") + more;
   const pct = budget ? Math.round((actual / budget) * 100) : actual ? 100 : 0;
   return { budget, actual, pct, status: budgetStatus(budget, actual) };
 }
 
-export function settlementStats(rows) {
+// etc = 기타 소비 합: 한 달 합계의 '실제' 에 더한다 (v3.2, 은월 선택 — 예산은 그대로). 분류별은 예산 항목만
+export function settlementStats(rows, etc = 0) {
   return {
-    total: summary(rows),
+    total: summary(rows, etc),
     byCat: CATEGORIES.map((c) => ({ ...c, ...summary(rows.filter((x) => x.cat === c.key)) })),
   };
 }

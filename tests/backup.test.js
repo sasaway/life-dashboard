@@ -309,3 +309,20 @@ test("핫픽스 v3.1.1 가챠 무과금 줄(wuwaGacha.free.items)도 백업 → 
   const opened = normalizeGacha(JSON.parse(later.getItem("ld:wuwaGacha")));
   assert.deepEqual([opened.free.astrite, opened.free.char, opened.free.items.weekly], [700, 2, { amount: 160, on: true }]);
 });
+
+test("v3.2 결산의 전체 사용금액 · 기타 소비(settlements)도 백업 → 되살리기로 그대로, 그 칸이 없는 옛 백업도 열린다 (숫자는 지어낸 것)", async () => {
+  const { unknownOf, settlementRows, etcOf } = await import("../js/budget.js");
+  const items = [{ id: "a", cat: "fixed", name: "가", amount: 150000 }];
+  const settlements = { "2026-09": { actual: { a: 150000 }, total: 300000, etc: [{ id: "e1", name: "택시 \"밤\"", amount: 30000 }] }, "2026-08": { actual: { a: 140000 } } };
+  const phone = fakeStorage({ "ld:settlements": JSON.stringify(settlements), "ld:budgets": JSON.stringify({ "2026-09": items, "2026-08": items }) });
+  const out = readBackupText(JSON.stringify(await makeBackup({ storage: phone, photos: [], appVersion: "v3.2 · 10월 11일" })));
+  assert.equal(out.error, undefined);
+  const later = fakeStorage({ "ld:settlements": "{}" });
+  restoreItems(later, out.backup.items);
+  assert.deepEqual(later.dump(), phone.dump());
+  const back = JSON.parse(later.getItem("ld:settlements"));
+  assert.deepEqual(back, settlements);
+  assert.equal(unknownOf(settlementRows(items, back["2026-09"]), back["2026-09"]).unknown, 120000);
+  // 옛 달(실제로 쓴 돈만): 전체는 안 적은 것, 기타 소비는 없음
+  assert.deepEqual([unknownOf(settlementRows(items, back["2026-08"]), back["2026-08"]).state, etcOf(back["2026-08"])], ["none", []]);
+});

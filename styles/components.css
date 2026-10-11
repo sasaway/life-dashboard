@@ -148,6 +148,12 @@ textarea.field{resize:vertical;min-height:64px;line-height:1.5}
 .money-rows .sub,.cat-stats .sub{font-size:var(--fs-tiny);color:var(--faint)}
 .field.won{width:132px;flex:none;text-align:right}
 .money-rows .del{border-color:transparent;background:none;flex:none}
+/* 결산 › 전체 사용금액 (v3.2): 전체 − 기록한 돈 − 기타 소비 = 출처를 모르는 돈 */
+.spent-rows{list-style:none;margin:10px 0 0;padding:0 0 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px;font-size:var(--fs-small);color:var(--sub)}
+.spent-rows li{display:flex;justify-content:space-between;gap:8px}
+.spent-h{margin-top:10px;font-size:var(--fs-small);color:var(--sub)}
+.spent-note{margin:10px 0 0;font-size:var(--fs-small);line-height:1.5}
+#spentOut>.mini{margin-top:10px}
 .add-money{display:grid;grid-template-columns:1fr 112px auto;gap:8px;margin-top:10px}
 .add-money .field.won{width:100%}
 .add-money .btn{min-height:var(--touch)}

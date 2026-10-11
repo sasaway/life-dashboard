@@ -145,6 +145,13 @@
         <button class="icon-btn" id="nextMonth" aria-label="다음 달"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
       <section class="card" id="statTotal" aria-label="한 달 합계"></section>
+      <section class="card" aria-labelledby="spentH">
+        <div class="card-h"><h2 id="spentH">전체 사용금액</h2></div>
+        <ul class="money-rows">
+          <li><span class="name">이 달에 나간 돈<span class="sub">통장 · 카드에서 빠진 돈 전부</span></span><input class="field mono won" inputmode="numeric" id="spentTotal" placeholder="0" aria-label="이 달에 나간 돈 전체"></li>
+        </ul>
+        <div id="spentOut"></div>
+      </section>
       <section class="card" aria-label="분류별 사용률">
         <div class="card-h"><h2>분류별</h2></div>
         <ul class="cat-stats" id="statCats"></ul>
@@ -152,6 +159,16 @@
       <p class="empty" id="settleEmpty" hidden>예산 항목이 없어. 예산부터 적어 줘.</p>
       <p class="msg" id="settleMsg" role="status"></p>
       <div class="stack" id="settleCats"></div>
+      <section class="card" aria-labelledby="etcH">
+        <div class="card-h"><h2 id="etcH">기타 소비</h2><small class="num" id="etcSum"></small></div>
+        <p class="mini">예산에 없던 돈을 찾으면 여기에 적어. 적는 만큼 모르는 돈이 줄어.</p>
+        <ul class="money-rows" id="etcRows"></ul>
+        <form class="add-money" id="etcForm" autocomplete="off">
+          <input class="field" name="etcName" maxlength="20" placeholder="항목 이름" aria-label="기타 소비 새 항목 이름">
+          <input class="field mono won" name="etcAmount" inputmode="numeric" placeholder="금액" aria-label="기타 소비 새 항목 금액">
+          <button class="btn btn-primary" type="submit">추가</button>
+        </form>
+      </section>
     </div>
 
     <div class="stack" id="page-buy" hidden>
