@@ -29,6 +29,7 @@ const GROUPS = [
   ] },
   { title: "보관", items: [
     { id: "backup", label: "데이터 백업", icon: "archive", state: backupState },
+    { id: "export", label: "기록 내보내기", icon: "download", state: () => "JSON" },
   ] },
 ];
 const ITEMS = GROUPS.flatMap((g) => g.items);
